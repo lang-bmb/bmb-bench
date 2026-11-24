@@ -61,6 +61,11 @@ scripts/check.sh quick                 # manifests, and the jobs that need no co
 scripts/check.sh /path/to/lang-bmb     # everything; or LANG_BMB=/path/to/lang-bmb scripts/check.sh
 ```
 
+CI runs the full check on every push against `lang-bmb`'s main (`.github/workflows/check.yml`), and `lang-bmb`'s CI
+runs it against each of its own pushes. Every night (`.github/workflows/nightly.yml`) the baseline benches are timed
+against safe Rust, failing above a ratio of 1.05 in two measurements, build times are recorded, and the pinned Verus
+release is run over the references and weak controls of `bench/bvb`.
+
 `scripts/check.sh` is the one check, judged by its exit code:
 
 1. every `MANIFEST` matches its files (`scripts/manifests.py check`);

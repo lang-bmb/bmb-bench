@@ -1,0 +1,40 @@
+name: check
+
+# The check of this repository against the compiler at lang-bmb's main:
+# the frozen sets, the import proof and every harness's self-check.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: bmb-bench
+      - uses: actions/checkout@v4
+        with:
+          repository: lang-bmb/lang-bmb
+          path: lang-bmb
+          # The import proof reads the commit bench/SOURCE names, and the
+          # port-twin tasks take the twin from fixed commits.
+          fetch-depth: 0
+      - name: Rust toolchain (pinned by lang-bmb's rust-toolchain.toml)
+        working-directory: lang-bmb
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Pinned tools (z3, LLVM)
+        run: sudo ./lang-bmb/scripts/setup.sh
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            lang-bmb/target
+          key: bench-${{ runner.os }}-${{ hashFiles('lang-bmb/Cargo.lock') }}
+      - name: Check
+        run: ./bmb-bench/scripts/check.sh "$PWD/lang-bmb"

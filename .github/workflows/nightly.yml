@@ -1,0 +1,79 @@
+name: nightly
+
+# What is measured every night against lang-bmb's main: the performance
+# limit, and the original-Verus side of the verification benchmark.
+on:
+  schedule:
+    - cron: "43 19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Performance regression: BMB against safe Rust on the baseline benches;
+  # fails when a ratio exceeds 1.05 in two measurements (bench/baseline/run.py).
+  # Build times are only recorded. Both results are kept as artifacts.
+  perf:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: bmb-bench
+      - uses: actions/checkout@v4
+        with:
+          repository: lang-bmb/lang-bmb
+          path: lang-bmb
+      - name: Rust toolchain (pinned by lang-bmb's rust-toolchain.toml)
+        working-directory: lang-bmb
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Pinned tools (z3, LLVM)
+        run: sudo ./lang-bmb/scripts/setup.sh
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            lang-bmb/target
+          key: bench-release-${{ runner.os }}-${{ hashFiles('lang-bmb/Cargo.lock') }}
+      - name: Build times (recorded, never a failure)
+        working-directory: lang-bmb
+        run: |
+          cargo build --release --quiet
+          mkdir -p ../perf
+          git rev-parse HEAD > ../perf/lang-bmb-commit.txt
+          python3 scripts/build_time.py --defs 1000 --out ../perf/build-time.jsonl
+      - name: BMB against safe Rust (fails above 1.05)
+        env:
+          LANG_BMB: ${{ github.workspace }}/lang-bmb
+          BMB: ${{ github.workspace }}/lang-bmb/target/release/bmb
+        run: python3 bmb-bench/bench/baseline/run.py --runs 15 --out perf/baseline.md --max-ratio 1.05
+      - name: Keep the results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-${{ github.run_number }}
+          path: perf/
+          if-no-files-found: ignore
+
+  # The original-Verus side of bench/bvb: the pinned Verus release must
+  # verify every task's Verus reference against the hidden original
+  # specification, and reject every weak control (the reference with the
+  # target's `ensures` removed).
+  bvb-verus:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/bmb/verus
+          key: verus-${{ runner.os }}-${{ hashFiles('bench/bvb/verus/verus.env') }}
+      - name: Pinned Verus
+        run: bench/bvb/verus/install.sh
+      - name: Oracle passes, weak controls are rejected
+        run: |
+          python3 bench/bvb/verus/harness.py run --agent oracle --expect all-pass --jobs 4 --out oracle.jsonl > /dev/null
+          python3 bench/bvb/verus/harness.py run --agent weak --expect weak-fail --jobs 4 --out weak.jsonl > /dev/null
+          python3 bench/bvb/verus/harness.py strength oracle.jsonl | grep -qF '"spec_accepted": 45, "eligible": 45'
+          python3 bench/bvb/verus/harness.py strength weak.jsonl | grep -qF '"spec_accepted": 0, "eligible": 45'
