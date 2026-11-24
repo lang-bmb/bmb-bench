@@ -42,6 +42,8 @@ from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 sys.path.insert(0, HERE)
 import index  # noqa: E402
 import port_change as ch  # noqa: E402
@@ -319,7 +321,7 @@ def code_sites(texts):
 
 def doc_rows(commit):
     """{code: what the diagnostics page says of it}."""
-    text = subprocess.run(["git", "show", f"{commit}:docs/diagnostics.md"], cwd=ROOT, capture_output=True, text=True,
+    text = subprocess.run(["git", "show", f"{commit}:docs/diagnostics.md"], cwd=lang_bmb.root(), capture_output=True, text=True,
                           check=True).stdout
     return {m.group(1): m.group(2).strip() for m in re.finditer(r"^\| (E\d{4}) \| (.*?) \|$", text, re.M)}
 
@@ -327,9 +329,9 @@ def doc_rows(commit):
 def corpus_of(commit):
     """{code: [(file, [(source line, expected JSON line)])]} over the
     checker's error corpus at `commit`."""
-    names = subprocess.run(["git", "ls-tree", "--name-only", f"{commit}:{CORPUS}"], cwd=ROOT, capture_output=True,
+    names = subprocess.run(["git", "ls-tree", "--name-only", f"{commit}:{CORPUS}"], cwd=lang_bmb.root(), capture_output=True,
                            text=True, check=True).stdout.split()
-    show = lambda f: subprocess.run(["git", "show", f"{commit}:{CORPUS}/{f}"], cwd=ROOT, capture_output=True,  # noqa: E731
+    show = lambda f: subprocess.run(["git", "show", f"{commit}:{CORPUS}/{f}"], cwd=lang_bmb.root(), capture_output=True,  # noqa: E731
                                     text=True, check=True).stdout
     out = defaultdict(list)
     for f in sorted(n for n in names if n.endswith(".jsonl")):
@@ -426,7 +428,7 @@ def source_of(code):
 
 
 def make(commit):
-    commit = subprocess.run(["git", "rev-parse", commit], cwd=ROOT, capture_output=True, text=True,
+    commit = subprocess.run(["git", "rev-parse", commit], cwd=lang_bmb.root(), capture_output=True, text=True,
                             check=True).stdout.strip()
     twin = ch.Twin(commit)
     pool, docs, corpus = candidates(twin, commit)
@@ -524,13 +526,13 @@ def cmd_check(a):
 def cmd_sources(a):
     """The first commit before `a.commit` whose `compiler/src` has each
     code (needs the repository's whole history)."""
-    twin = ch.Twin(subprocess.run(["git", "rev-parse", a.commit], cwd=ROOT, capture_output=True, text=True,
+    twin = ch.Twin(subprocess.run(["git", "rev-parse", a.commit], cwd=lang_bmb.root(), capture_output=True, text=True,
                                   check=True).stdout.strip())
     codes = sorted(set(code_sites(twin.files)) & set(code_sites(twin.bf)))
     print("SOURCES = {")
     for code in codes:
         r = subprocess.run(["git", "log", "--reverse", "--format=%h\t%s", f"-S\"{code}\"", a.commit, "--",
-                            "compiler/src"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+                            "compiler/src"], cwd=lang_bmb.root(), capture_output=True, text=True, check=True).stdout
         if r.strip():
             sha, subject = r.splitlines()[0].split("\t", 1)
             print(f"    {code!r}: ({sha[:9]!r}, {subject!r}),")

@@ -220,6 +220,10 @@ def report(paths, skipped):
 
 def preflight_real(sets):
     problems = []
+    if not os.environ.get("LANG_BMB"):
+        problems.append("LANG_BMB is not set: the rows of a real run name the lang-bmb commit of the compiler")
+    elif (condition.lang_bmb.commit() or "").endswith("+dirty"):
+        problems.append("the lang-bmb checkout has uncommitted changes (+dirty results are not reported)")
     if subprocess.run(["git", "status", "--porcelain", "--", ".", ":!bench/*/results/*"], cwd=ROOT,
                       capture_output=True, text=True).stdout.strip():
         problems.append("커밋되지 않은 변경이 있다(+dirty 결과는 보고에 쓰지 않는다)")
@@ -253,32 +257,38 @@ def repeat_problem(repeat, agent, sets):
     return None
 
 
-def earlier_run(results_dir, model, suffix, agent, commit, claim=None):
+def earlier_run(results_dir, model, suffix, agent, commit, claim=None, product=None):
     """("finished" | "partial", path) of this set's results file for this
-    model, agent and commit, or (None, None). A run is named by its first day,
+    model, agent and commit (and, with `product`, this lang-bmb commit), or
+    (None, None). A run is named by its first day,
     so a resumed run keeps its file."""
     d = os.path.join(ROOT, results_dir)
     pattern = re.compile(r"\d{4}-\d{2}-\d{2}-" + re.escape(model + suffix) + r"\.jsonl$")
     for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
         if pattern.match(f):
             state, head = resultlog.status(os.path.join(d, f))
-            if state and head.get("agent") == agent and head.get("commit") == commit and head.get("condition") == claim:
+            if (state and head.get("agent") == agent and head.get("commit") == commit and head.get("condition") == claim
+                    and (product is None or head.get("lang_bmb_commit") == product)):
                 return state, os.path.join(d, f)
     return None, None
 
 
-def same_as(commit, sets, agent):
+def same_as(commit, sets, agent, compiler=None):
     """({set: its condition claim}, the pinned `bmb`) for a run under
     `commit`'s condition, or exit naming what is missing (ADR-0070). Each
     set's claim names that set's own report, so a run resumed with fewer sets
     makes the same claims (backlog INF-21)."""
+    # The harness commit is this repository's, or lang-bmb's for a run made
+    # before the harnesses moved; the compiler commit is always lang-bmb's.
     try:
-        base = condition.git("rev-parse", commit)
+        base = condition.git("rev-parse", commit, cwd=condition.repository(commit))
+        compiler = condition.git("rev-parse", compiler, cwd=condition.lang_bmb.root()) if compiler else base
     except subprocess.CalledProcessError:
         sys.exit(f"--same-as {commit}: not a commit")
-    prov = condition.provenance(base)
+    prov = condition.provenance(compiler)
     if not prov:
-        sys.exit(f"--same-as {commit}: no build of its compiler; run `bench/condition.py build {commit}`")
+        sys.exit(f"--same-as {commit}: no build of its compiler; run `bench/condition.py build {compiler[:12]}` "
+                 "(a lang-bmb commit: --same-compiler names it when --same-as is a commit of this repository)")
     provider = agent.split(":", 1)[0]
     reports = {}
     for s in sets:
@@ -286,9 +296,10 @@ def same_as(commit, sets, agent):
             sys.exit(f"--same-as {commit}: no committed report shows {s} ({provider}) to be the same condition; "
                      f"run `bench/condition.py same --base {commit} --sets {s}` on a clean tree and commit it")
         reports[s] = os.path.relpath(path, ROOT)
-    claims = {s: {"same_as": base, "compiler_tree": prov["compiler_tree"], "bmb_sha256": prov["bmb_sha256"],
+    claims = {s: {"same_as": base, "compiler": compiler, "compiler_tree": prov["compiler_tree"],
+                  "bmb_sha256": prov["bmb_sha256"],
                   "reports": [reports[s]]} for s in sets}
-    return claims, os.path.join(condition.build_dir(base), "bmb")
+    return claims, os.path.join(condition.build_dir(compiler), "bmb")
 
 
 def head_commit():
@@ -310,6 +321,8 @@ def main(argv=None):
     ap.add_argument("--jobs", type=int, help="sessions at a time (default: 2 in a dry run, 1 in a real run; "
                     "BRB real runs always 1)")
     ap.add_argument("--same-as", metavar="COMMIT", help="real run under COMMIT's condition (ADR-0070)")
+    ap.add_argument("--same-compiler", metavar="COMMIT",
+                    help="the lang-bmb commit of that condition's compiler (default: --same-as, a lang-bmb commit)")
     ap.add_argument("--repeat", type=int, metavar="K", help=f"the K-th of {REPEATS} declared repeated runs (ADR-0077)")
     args = ap.parse_args(argv)
 
@@ -338,7 +351,7 @@ def main(argv=None):
         commit = head_commit()
         claims = {}
         if args.same_as:
-            claims, bmb = same_as(args.same_as, sets, args.agent)
+            claims, bmb = same_as(args.same_as, sets, args.agent, args.same_compiler)
             env["BMB"] = bmb
     elif args.same_as:
         sys.exit("--same-as is for real runs")
@@ -366,7 +379,8 @@ def main(argv=None):
             claim = claims.get(name)
             if claim is not None:
                 env["BMB_CONDITION"] = json.dumps(claim, sort_keys=True)
-            state, out = earlier_run(results_dir, model, suffix, args.agent, commit, claim)
+            state, out = earlier_run(results_dir, model, suffix, args.agent, commit, claim,
+                                     condition.lang_bmb.commit())
             if state == "finished":
                 print(f"run_models: {name}: already measured on this commit ({os.path.relpath(out, ROOT)})",
                       file=sys.stderr)

@@ -31,6 +31,8 @@ import sys
 import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import measure  # noqa: E402
 
@@ -47,7 +49,7 @@ def corpora(tmp):
     return [
         ("m3 300 defs, seed 1", sorted(glob.glob(os.path.join(m3, "src", "*.bmb")))),
         ("m1b seed", sorted(glob.glob(os.path.join(ROOT, "bench/m1b/seed/src/*.bmb")))),
-        ("tests/verify/pass", sorted(glob.glob(os.path.join(ROOT, "tests/verify/pass/*.bmb")))),
+        ("tests/verify/pass", sorted(glob.glob(lang_bmb.path("tests/verify/pass/*.bmb")))),
     ]
 
 

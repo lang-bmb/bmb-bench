@@ -46,6 +46,8 @@ import sys
 import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 
 HABITS = [
     ("let-type", re.compile(r"let (mut )?(\w+): [^=;]+ = "), lambda m: f"let {m.group(1) or ''}{m.group(2)} = "),
@@ -83,7 +85,7 @@ def ir(bmb, path, d):
 def main():
     bmb = sys.argv[1]
     write = sys.argv[sys.argv.index("--write") + 1] if "--write" in sys.argv else None
-    files = sorted(glob.glob(os.path.join(ROOT, "tests/run/*.bmb")))
+    files = sorted(glob.glob(lang_bmb.path("tests/run/*.bmb")))
     counts = {h: {"sites": 0, "exact": 0, "normal": 0, "same": 0, "changed": 0, "stuck": 0, "codes": {}} for h, _, _ in HABITS}
     cases = []
     with tempfile.TemporaryDirectory() as tmp:
@@ -129,7 +131,7 @@ def main():
                     same = (verdicts(bmb, p), ir(bmb, p, d)) == base[f]
                     kind = "same" if same else "changed"
                 c[kind] += 1
-                cases.append({"file": os.path.relpath(f, ROOT), "habit": name, "code": errs[0], "result": kind})
+                cases.append({"file": os.path.relpath(f, lang_bmb.root()), "habit": name, "code": errs[0], "result": kind})
     for name, _, _ in HABITS:
         line = {"habit": name, **counts[name]}
         print(json.dumps(line, ensure_ascii=False))

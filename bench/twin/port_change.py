@@ -38,6 +38,8 @@ from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 sys.path.insert(0, HERE)
 import index  # noqa: E402
 import pair  # noqa: E402
@@ -415,7 +417,7 @@ def candidates(twin):
 
 
 def make(commit):
-    commit = subprocess.run(["git", "rev-parse", commit], cwd=ROOT, capture_output=True, text=True,
+    commit = subprocess.run(["git", "rev-parse", commit], cwd=lang_bmb.root(), capture_output=True, text=True,
                             check=True).stdout.strip()
     twin = Twin(commit)
     cands = candidates(twin)

@@ -33,6 +33,8 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 BENCHES = ["sieve", "isort", "kadane", "gcdsum", "hist", "gather", "vadd"]
 VARIANTS = ["bmb", "safe", "unck"]
 RUSTC = ["rustc", "-C", "opt-level=2", "-A", "warnings"]
@@ -43,8 +45,8 @@ def sh(cmd, **kw):
 
 
 def build(tmp):
-    bmb = os.path.join(ROOT, "target", "release", "bmb")
-    sh(["cargo", "build", "--release", "--quiet"], cwd=ROOT)
+    bmb = lang_bmb.path("target", "release", "bmb")
+    sh(["cargo", "build", "--release", "--quiet"], cwd=lang_bmb.root())
     exes = {}
     for b in BENCHES:
         exes[(b, "bmb")] = os.path.join(tmp, f"{b}.bmb")

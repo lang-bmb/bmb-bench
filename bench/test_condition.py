@@ -20,6 +20,7 @@ def copy_tree(dst):
     """The parts of the repository the m1 harness reads."""
     shutil.copytree(os.path.join(condition.ROOT, "bench", "m1"), os.path.join(dst, "bench", "m1"),
                     ignore=shutil.ignore_patterns("results", "__pycache__"))
+    shutil.copy(os.path.join(condition.ROOT, "bench", "lang_bmb.py"), os.path.join(dst, "bench"))
     return dst
 
 

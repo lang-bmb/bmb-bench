@@ -786,7 +786,7 @@ def make_tasks():
 def machine():
     rev = subprocess.run(["git", "-C", ROOT, "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip()
     dirty = bool(subprocess.run(["git", "-C", ROOT, "status", "--porcelain"], capture_output=True, text=True).stdout.strip())
-    return {"kind": "machine", "commit": rev + ("+dirty" if dirty else ""), "bmb": harness.bmb_bin(),
+    return {"kind": "machine", "commit": rev + ("+dirty" if dirty else ""), **harness.lang_bmb.stamp(), "bmb": harness.bmb_bin(),
             "task_set": task_set(), "manifest": manifest_digest()[:16]}
 
 

@@ -25,6 +25,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from measure import lex  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 
 
 def verdicts(bmb, path):
@@ -47,9 +49,10 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         for f in rest:
             if rev:
-                text = subprocess.run(["git", "show", f"{rev}:{f}"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+                repo = lang_bmb.repository_of(rev, ROOT) if f.split("/")[0] == "bench" else lang_bmb.root()
+                text = subprocess.run(["git", "show", f"{rev}:{f}"], cwd=repo, capture_output=True, text=True, check=True).stdout
             else:
-                text = open(os.path.join(ROOT, f)).read()
+                text = open(lang_bmb.locate(f, ROOT)).read()
             before = os.path.join(tmp, "before.bmb")
             open(before, "w").write(text)
             rep = subprocess.run([bmb, "fix", before], capture_output=True, text=True).stdout

@@ -37,6 +37,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 sys.path.insert(0, HERE)
 from measure import lex  # noqa: E402
 
@@ -374,6 +376,7 @@ def defined_names():
     repository's BMB code and the benches' task solutions."""
     names = set()
     files = glob.glob(os.path.join(ROOT, "**", "*.bmb"), recursive=True)
+    files += glob.glob(lang_bmb.path("**", "*.bmb"), recursive=True)
     texts = [open(f).read() for f in files if "/target/" not in f]
     for f in glob.glob(os.path.join(ROOT, "bench", "*", "tasks", "*.json")):
         t = json.load(open(f))

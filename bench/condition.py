@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The same measurement condition across commits (ADR-0070).
 
-  condition.py build COMMIT                      build `bmb` from COMMIT's compiler
+  condition.py build COMMIT                      build `bmb` from COMMIT's compiler (a lang-bmb commit)
   condition.py same --base COMMIT --sets a,b     is HEAD's harness the same instrument?
   condition.py probe --tree DIR --set NAME ...    (internal: one probe run, one tree per process)
 
@@ -31,6 +31,17 @@ made with `run_models.py --same-as BASE` refers to.
 `provenance.json` (commit, `compiler/` tree, binary hash), so the compiler of
 a run is known by construction.
 
+Two repositories. The harness is this repository's and the compiler is
+lang-bmb's (the checkout `$LANG_BMB` names): `build` takes a lang-bmb commit,
+works in that checkout and keeps the binary under its `target/`. `same` takes
+the base harness from this repository when `--base` is a commit of it; a
+commit this repository does not have is looked up in lang-bmb, whose history
+holds the harnesses of the runs made before they moved here (`bench/`, the
+same layout). The compiler that drives both harnesses is then named apart:
+`--compiler COMMIT` (lang-bmb; default `--base` when that is a lang-bmb
+commit) or `--bmb`. The report records which repository the base is from
+(`base_repository`) and the compiler commit (`compiler`).
+
 What the scripts do not reach is not checked: an adapter path only a real
 model takes (a `length` stop, an API error) is compared only as code. Standard
 library only.
@@ -49,6 +60,8 @@ import types
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+sys.path.append(HERE)
+import lang_bmb  # noqa: E402
 PY = sys.executable
 SETS = ("m1", "m1b", "bvb", "bvb-verus", "brb-bmb", "brb-rust")
 PROVIDERS = {"openai": "openai:qwen3.8-27b", "anthropic": "anthropic:claude-sonnet-5-5"}
@@ -59,6 +72,11 @@ def git(*args, cwd=ROOT):
     return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=True).stdout.strip()
 
 
+def repository(commit):
+    """The repository that has `commit`: this one, else the lang-bmb checkout."""
+    return lang_bmb.repository_of(commit, ROOT)
+
+
 def sha256_file(path):
     with open(path, "rb") as f:
         return hashlib.sha256(f.read()).hexdigest()
@@ -67,7 +85,7 @@ def sha256_file(path):
 # ---------- pinned compiler ----------
 
 def build_dir(commit):
-    return os.path.join(ROOT, "target", "conditions", commit)
+    return lang_bmb.path("target", "conditions", commit)
 
 
 def provenance(commit):
@@ -83,25 +101,26 @@ def provenance(commit):
 
 
 def build(commit):
-    commit = git("rev-parse", commit)
+    product = lang_bmb.root()
+    commit = git("rev-parse", commit, cwd=product)
     if p := provenance(commit):
         return p
     tmp = tempfile.mkdtemp(prefix="bmb-condition-")
     tree = os.path.join(tmp, "tree")
     try:
-        git("worktree", "add", "--detach", tree, commit)
+        git("worktree", "add", "--detach", tree, commit, cwd=product)
         target = os.path.join(tmp, "target")
         env = {**os.environ, "CARGO_TARGET_DIR": target}
         subprocess.run(["cargo", "build", "--bin", "bmb"], cwd=os.path.join(tree, "compiler"), env=env, check=True)
         os.makedirs(build_dir(commit), exist_ok=True)
         out = os.path.join(build_dir(commit), "bmb")
         shutil.copy2(os.path.join(target, "debug", "bmb"), out)
-        p = {"commit": commit, "compiler_tree": git("rev-parse", f"{commit}:compiler"), "bmb_sha256": sha256_file(out)}
+        p = {"commit": commit, "compiler_tree": git("rev-parse", f"{commit}:compiler", cwd=product), "bmb_sha256": sha256_file(out)}
         with open(os.path.join(build_dir(commit), "provenance.json"), "w") as f:
             json.dump(p, f, indent=1)
         return p
     finally:
-        subprocess.run(["git", "worktree", "remove", "--force", tree], cwd=ROOT, capture_output=True)
+        subprocess.run(["git", "worktree", "remove", "--force", tree], cwd=product, capture_output=True)
         shutil.rmtree(tmp, ignore_errors=True)
 
 
@@ -311,20 +330,22 @@ def run_probe(tree, set_name, provider, script, out, bmb, tasks):
         raise SystemExit(f"probe {set_name} {provider} {script} in {tree} failed:\n{r.stderr[-2000:]}")
 
 
-def same(base, sets, providers, scripts, bmb, tasks=None, head_tree=ROOT):
+def same(base, sets, providers, scripts, bmb, tasks=None, head_tree=ROOT, compiler=None):
     """The equivalence report of `head_tree`'s harness against `base`'s."""
-    base = git("rev-parse", base)
+    base_repo = repository(base)
+    base = git("rev-parse", base, cwd=base_repo)
     if harness_changed("HEAD"):
         raise SystemExit("uncommitted harness changes: the report must name the harness that was checked")
     tmp = tempfile.mkdtemp(prefix="bmb-same-")
     base_tree = os.path.join(tmp, "base")
     report = {"base": base, "head": git("rev-parse", "HEAD", cwd=head_tree), "bmb_sha256": sha256_file(bmb),
+              "base_repository": "bmb-bench" if base_repo == ROOT else "lang-bmb", "compiler": compiler,
               "scripts": list(scripts), "providers": list(providers), "sets": {}}
     try:
-        git("worktree", "add", "--detach", base_tree, base)
+        git("worktree", "add", "--detach", base_tree, base, cwd=base_repo)
         for s in sets:
             entry = {"same": True, "diffs": []}
-            if manifests(base, s) != manifests(report["head"], s):
+            if manifests(base, s, base_repo) != manifests(report["head"], s):
                 entry["same"] = False
                 entry["diffs"].append("MANIFEST differs (frozen inputs or hidden mutants)")
             for provider in providers:
@@ -342,7 +363,7 @@ def same(base, sets, providers, scripts, bmb, tasks=None, head_tree=ROOT):
             report["sets"][s] = entry
             print(f"condition: {s}: {'same' if entry['same'] else 'DIFFERENT'}", file=sys.stderr)
     finally:
-        subprocess.run(["git", "worktree", "remove", "--force", base_tree], cwd=ROOT, capture_output=True)
+        subprocess.run(["git", "worktree", "remove", "--force", base_tree], cwd=base_repo, capture_output=True)
         shutil.rmtree(tmp, ignore_errors=True)
     report["same"] = all(e["same"] for e in report["sets"].values())
     return report
@@ -362,23 +383,24 @@ HARNESS_PATHS = ["bench/m1", "bench/m1b", "bench/bvb", "bench/brb", "bench/run_m
 INSTRUMENT = {"bench/brb/MANIFEST": {"harness.py", "judge.py", "rust_tools.py"}}
 
 
-def manifests(commit, set_name):
+def manifests(commit, set_name, repo=ROOT):
     """{path: frozen task-input lines} of every MANIFEST of the set (frozen
     inputs, hidden mutants) at `commit`."""
-    files = git("ls-tree", "-r", "--name-only", commit, "--", SET_DIRS[set_name]).split("\n")
+    files = git("ls-tree", "-r", "--name-only", commit, "--", SET_DIRS[set_name], cwd=repo).split("\n")
     out = {}
     for f in files:
         if os.path.basename(f) == "MANIFEST":
             skip = INSTRUMENT.get(f, set())
-            lines = git("show", f"{commit}:{f}").split("\n")
+            lines = git("show", f"{commit}:{f}", cwd=repo).split("\n")
             out[f] = [x for x in lines if x.split("  ", 1)[-1] not in skip]
     return out
 
 
 def harness_changed(commit):
     """Whether the harnesses, their sets or the orchestrator differ between
-    `commit` and the working tree (uncommitted changes included)."""
-    r = subprocess.run(["git", "diff", "--quiet", commit, "--", *HARNESS_PATHS], cwd=ROOT)
+    `commit` and the working tree (uncommitted changes included). A commit
+    this repository does not have (a lang-bmb one) counts as different."""
+    r = subprocess.run(["git", "diff", "--quiet", commit, "--", *HARNESS_PATHS], cwd=ROOT, stderr=subprocess.DEVNULL)
     return r.returncode != 0
 
 
@@ -413,7 +435,9 @@ def main():
     s.add_argument("--sets", required=True)
     s.add_argument("--providers", default=",".join(PROVIDERS))
     s.add_argument("--scripts", default=",".join(SCRIPTS))
-    s.add_argument("--bmb", help="default: the build of --base (`build`)")
+    s.add_argument("--compiler", metavar="COMMIT", help="the lang-bmb commit whose build (`build`) drives both "
+                   "harnesses; default: --base, when it is a lang-bmb commit")
+    s.add_argument("--bmb", help="default: the build of --compiler")
     s.add_argument("--tasks", help="comma list (a partial check; its report cannot be cited by a run)")
     s.add_argument("--report", help="default: bench/conditions/BASE-HEAD.json")
     p = sub.add_parser("probe")
@@ -433,11 +457,21 @@ def main():
         sets = [x for x in args.sets.split(",") if x]
         if unknown := [x for x in sets if x not in SETS]:
             sys.exit(f"unknown sets: {unknown}")
-        base = git("rev-parse", args.base)
-        bmb = args.bmb or os.path.join(build_dir(base), "bmb")
-        if not args.bmb and not provenance(base):
-            sys.exit(f"no build of {base[:12]}: run `condition.py build {base[:12]}` first")
-        report = same(base, sets, args.providers.split(","), args.scripts.split(","), bmb, args.tasks)
+        base_repo = repository(args.base)
+        base = git("rev-parse", args.base, cwd=base_repo)
+        compiler = None
+        if args.compiler:
+            compiler = git("rev-parse", args.compiler, cwd=lang_bmb.root())
+        elif base_repo != ROOT:
+            compiler = base
+        elif not args.bmb:
+            sys.exit("--base is a commit of this repository: name the compiler with --compiler COMMIT "
+                     "(a lang-bmb commit) or --bmb")
+        bmb = args.bmb or os.path.join(build_dir(compiler), "bmb")
+        if not args.bmb and not provenance(compiler):
+            sys.exit(f"no build of {compiler[:12]}: run `condition.py build {compiler[:12]}` first")
+        report = same(base, sets, args.providers.split(","), args.scripts.split(","), bmb, args.tasks,
+                      compiler=compiler)
         if args.tasks:
             report["tasks_limit"] = args.tasks
         out = args.report or report_path(report["base"], report["head"])

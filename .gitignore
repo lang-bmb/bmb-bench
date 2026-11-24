@@ -1,0 +1,4 @@
+# Python caches, build output and the proof caches the harnesses leave.
+__pycache__/
+target/
+.bmb-cache/

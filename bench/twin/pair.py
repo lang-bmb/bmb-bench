@@ -61,6 +61,8 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 BENCH = os.path.dirname(HERE)
 ROOT = os.path.dirname(BENCH)
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 sys.path.insert(0, os.path.join(BENCH, "m1"))
 import harness  # noqa: E402
 sys.path.insert(0, HERE)
@@ -236,7 +238,8 @@ def materialize(task, arm, dest):
     if task.get("commit"):
         rel = os.path.relpath(src, ROOT)
         tmp = tempfile.mkdtemp(prefix="pair-src-")
-        tar = subprocess.run(["git", "archive", task["commit"], rel], cwd=ROOT, capture_output=True, check=True).stdout
+        tar = subprocess.run(["git", "archive", task["commit"], rel],
+                             cwd=lang_bmb.repository_of(task["commit"], ROOT), capture_output=True, check=True).stdout
         subprocess.run(["tar", "-x", "-C", tmp], input=tar, check=True)
         src = os.path.join(tmp, rel)
     if arm == "bmb":
@@ -268,7 +271,7 @@ def materialize_repo(task, arm, dest, spec):
     docs = docs_of(task["fixture"])
     tmp = tempfile.mkdtemp(prefix="pair-src-")
     try:
-        tar = subprocess.run(["git", "archive", task["commit"], spec["dir"]], cwd=ROOT, capture_output=True,
+        tar = subprocess.run(["git", "archive", task["commit"], spec["dir"]], cwd=lang_bmb.root(), capture_output=True,
                              check=True).stdout
         subprocess.run(["tar", "-x", "-C", tmp], input=tar, check=True)
         src = os.path.join(tmp, spec["dir"])
@@ -287,7 +290,7 @@ def materialize_repo(task, arm, dest, spec):
             # from outside it, beside it.
             shutil.copytree(src, dest, ignore=shutil.ignore_patterns("target", "tests"))
             for rel in spec.get("beside", []):
-                tar = subprocess.run(["git", "archive", task["commit"], rel], cwd=ROOT, capture_output=True,
+                tar = subprocess.run(["git", "archive", task["commit"], rel], cwd=lang_bmb.root(), capture_output=True,
                                      check=True).stdout
                 subprocess.run(["tar", "-x", "-C", os.path.dirname(dest)], input=tar, check=True)
             if docs != "all":
@@ -318,7 +321,7 @@ def commit_tree(commit, paths):
     need = [p for p in paths if not os.path.exists(os.path.join(d, p))]
     if need:
         os.makedirs(d, exist_ok=True)
-        tar = subprocess.run(["git", "archive", commit, *need], cwd=ROOT, capture_output=True, check=True).stdout
+        tar = subprocess.run(["git", "archive", commit, *need], cwd=lang_bmb.root(), capture_output=True, check=True).stdout
         subprocess.run(["tar", "-x", "-C", d], input=tar, check=True)
     return d
 
@@ -334,7 +337,7 @@ def proof_cache(commit, spec):
         tree = commit_tree(commit, [spec["dir"]])
         src = os.path.join(tree, spec["dir"])
         files = sorted(os.path.join(src, f) for f in os.listdir(src) if f.endswith(".bmb"))
-        seed = os.path.join(ROOT, "target", "port-proof")
+        seed = lang_bmb.path("target", "port-proof")
         if os.path.isdir(seed) and not os.path.exists(d):
             shutil.copytree(seed, d)
         r = subprocess.run([bmb_bin(), "verify", "--cache", d, *files], capture_output=True, text=True)

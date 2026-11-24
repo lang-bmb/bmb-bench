@@ -71,6 +71,7 @@ def main():
         "summary": True, "pilot": True, "agent": f"claude-cli:{args.model}", "cli": cli_version,
         "effort": cli_pilot.anthropic_agent.EFFORT, "tasks": len(results), "task_set": "bvb-verus",
         "manifest": vh.bmb_harness.manifest_digest(), "verus_version": verifier.version, "commit": commit,
+        **vh.bmb_harness.lang_bmb.stamp(),
         "write_success": f"{sum(r['success'] for r in results)}/{len(results)}",
         "cost_usd": round(sum(r.get("cost_usd") or 0 for r in results), 4),
     }

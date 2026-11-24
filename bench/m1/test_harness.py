@@ -493,7 +493,9 @@ class Resume(unittest.TestCase):
         cut = os.path.join(d, "cut.jsonl")
         with open(cut, "w") as f:  # stopped after the first session
             head = {"partial": True, "agent": "oracle", "task_set": "m1", "manifest": s["manifest"],
-                    "commit": s["commit"], "tasks": ["n01-callers", "w02-abs-diff"]}
+                    "commit": s["commit"], "tasks": ["n01-callers", "w02-abs-diff"],
+                    # The compiler's commit is part of what names a run (two repositories).
+                    **{k: s[k] for k in ("lang_bmb_commit",) if k in s}}
             f.write(json.dumps(head) + "\n" + json.dumps(whole[0]) + "\n")
         resumed = self.run_harness(cut)
         self.assertEqual(resumed[:-1], whole[:-1])

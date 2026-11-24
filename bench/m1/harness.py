@@ -39,6 +39,8 @@ import threading
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 # The task set in use (backlog 2A-04). `main` changes it with --set.
 SET = HERE
 MAX_TOOL_CALLS = 40
@@ -140,6 +142,9 @@ def condition_fields():
     # declared repeated runs of the same (set, model, commit) this is.
     if r := os.environ.get("BMB_REPEAT"):
         out["repeat"] = int(r)
+    # The compiler's repository is another one: `commit` is this repository's
+    # (the harness and the sets), `lang_bmb_commit` the checkout `$LANG_BMB` names.
+    out.update(lang_bmb.stamp())
     return out
 
 

@@ -145,7 +145,7 @@ def main():
     summary = {
         "summary": True, "pilot": True, "task_set": os.path.basename(variant) if variant else "brb", "arm": args.arm, "agent": f"claude-cli:{args.model}",
         "cli": cli_version, "tasks": n, "proptest": proptest if args.arm == "rust" else None,
-        "manifest": brb.manifest_digest(), "commit": commit,
+        "manifest": brb.manifest_digest(), "commit": commit, **brb.m1.lang_bmb.stamp(),
         "variant_manifest": hashlib.sha256(open(os.path.join(variant, "MANIFEST"), "rb").read()).hexdigest()
         if variant else None,
         "limits": {"tool_calls": brb.MAX_TOOL_CALLS, "session_output_tokens": None},

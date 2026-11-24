@@ -260,7 +260,7 @@ def tree(d):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--bmb", default=os.path.join(ROOT, "target", "debug", "bmb"))
+    ap.add_argument("--bmb", default=os.environ.get("BMB", os.path.join(ROOT, "target", "debug", "bmb")))
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
     units, defs = seed_names(args.bmb)

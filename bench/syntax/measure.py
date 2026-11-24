@@ -33,6 +33,8 @@ import sys
 import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 
 TOK = re.compile(
     r'"(?:[^"\\]|\\.)*"|[A-Za-z_][A-Za-z0-9_]*|\d[\d_]*|==>|::|->|=>|==|!=|<=|>=|&&|\|\||\.\.|//[^\n]*|\S'
@@ -245,7 +247,7 @@ def units_of(text):
 
 
 def read_corpus(pattern="bench/m1b/seed/src/*.bmb"):
-    files = sorted(glob.glob(os.path.join(ROOT, pattern)))
+    files = sorted(glob.glob(lang_bmb.locate(pattern, ROOT)))
     return [(os.path.basename(f), open(f, encoding="utf-8").read()) for f in files]
 
 

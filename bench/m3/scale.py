@@ -35,6 +35,8 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 BMB = os.environ.get("BMB", os.path.join(ROOT, "target", "release", "bmb"))
 sys.path.insert(0, HERE)
 import gen  # noqa: E402
@@ -264,7 +266,7 @@ def machine():
     z3 = subprocess.run(["z3", "--version"], capture_output=True, text=True).stdout.strip()
     rev = subprocess.run(["git", "-C", ROOT, "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip()
     return {"kind": "machine", "cpu": cpu, "cpus": os.cpu_count(), "os": platform.platform(),
-            "python": platform.python_version(), "z3": z3, "commit": rev,
+            "python": platform.python_version(), "z3": z3, "commit": rev, **lang_bmb.stamp(),
             "loadavg": open("/proc/loadavg").read().split()[:3] if os.path.exists("/proc/loadavg") else None}
 
 

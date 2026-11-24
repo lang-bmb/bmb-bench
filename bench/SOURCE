@@ -5,3 +5,27 @@ transformation: scripts/import_bench.py
 
 # Files under bench/ that differ from the transformed source, changed or
 # added in this repository. `scripts/import_bench.py --check` keeps this exact.
+changed: bench/baseline/run.py
+changed: bench/bnb/bnb.py
+changed: bench/condition.py
+changed: bench/hname/gen.py
+changed: bench/lib/run.py
+changed: bench/m1/harness.py
+changed: bench/m1/test_harness.py
+changed: bench/m3/scale.py
+changed: bench/pilot/brb_pilot.py
+changed: bench/pilot/cli_pilot.py
+changed: bench/pilot/verus_pilot.py
+changed: bench/run_models.py
+changed: bench/syntax/ab_surface.py
+changed: bench/syntax/fix_recovery.py
+changed: bench/syntax/for_tokens.py
+changed: bench/syntax/measure.py
+changed: bench/syntax/surface2b.py
+changed: bench/syntax/uses_default.py
+changed: bench/test_condition.py
+changed: bench/twin/pair.py
+changed: bench/twin/port_change.py
+changed: bench/twin/port_replay.py
+changed: bench/twin/port_tasks.py
+added: bench/lang_bmb.py

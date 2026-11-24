@@ -27,6 +27,8 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 
 
 def arg(name, default):
@@ -37,7 +39,7 @@ def build(rev, out):
     """The `bmb` of commit `rev`, built in a worktree under `out`."""
     wt = os.path.join(out, "before-src")
     if not os.path.isdir(wt):
-        subprocess.run(["git", "worktree", "add", "--detach", wt, rev], cwd=ROOT, check=True)
+        subprocess.run(["git", "worktree", "add", "--detach", wt, rev], cwd=lang_bmb.root(), check=True)
     subprocess.run(["cargo", "build", "--quiet", "--manifest-path", os.path.join(wt, "compiler", "Cargo.toml")],
                    cwd=wt, check=True, env=dict(os.environ, CARGO_TARGET_DIR=os.path.join(out, "before-target")))
     return os.path.join(out, "before-target", "debug", "bmb")
@@ -65,7 +67,7 @@ def main():
     agent = arg("--agent", "oracle")
     jobs = arg("--jobs", "2")
     before = build(arg("--before", "99138a9d"), out)
-    after = os.path.abspath(arg("--after", os.path.join(ROOT, "target", "debug", "bmb")))
+    after = os.path.abspath(arg("--after", os.environ.get("BMB") or lang_bmb.path("target", "debug", "bmb")))
     for label, bmb in (("before", before), ("after", after)):
         print(f"## {label} ({bmb})\n")
         print(run(label, bmb, out, task_set, agent, jobs))

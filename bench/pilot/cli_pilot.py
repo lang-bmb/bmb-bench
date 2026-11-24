@@ -134,7 +134,7 @@ def main():
     summary = {
         "summary": True, "pilot": True, "agent": f"claude-cli:{args.model}", "cli": cli_version,
         "effort": anthropic_agent.EFFORT, "tasks": len(results), "task_set": harness.set_name(),
-        "manifest": harness.manifest_digest(), "commit": commit,
+        "manifest": harness.manifest_digest(), "commit": commit, **harness.lang_bmb.stamp(),
         "write_success": f"{sum(r['success'] for r in write)}/{len(write)}",
         "navigate_success": f"{sum(r['success'] for r in nav)}/{len(nav)}",
         "cost_usd": round(sum(r.get("cost_usd") or 0 for r in results), 4),

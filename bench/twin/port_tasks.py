@@ -51,6 +51,8 @@ from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path.append(os.path.join(ROOT, "bench"))
+import lang_bmb  # noqa: E402
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "m1"))
 import harness  # noqa: E402
@@ -106,7 +108,7 @@ def write_pattern(field):
 def tree_of(commit):
     """The twin's files at `commit`, under a new directory."""
     tmp = tempfile.mkdtemp(prefix="port-tasks-")
-    tar = subprocess.run(["git", "archive", commit, "selfhost", "compiler/src"], cwd=ROOT, capture_output=True,
+    tar = subprocess.run(["git", "archive", commit, "selfhost", "compiler/src"], cwd=lang_bmb.root(), capture_output=True,
                          check=True).stdout
     subprocess.run(["tar", "-x", "-C", tmp], input=tar, check=True)
     return tmp
@@ -279,7 +281,7 @@ def review(tree, commit, tasks):
 
 
 def make(commit):
-    commit = subprocess.run(["git", "rev-parse", commit], cwd=ROOT, capture_output=True, text=True,
+    commit = subprocess.run(["git", "rev-parse", commit], cwd=lang_bmb.root(), capture_output=True, text=True,
                             check=True).stdout.strip()
     tree = tree_of(commit)
     out = {}
