@@ -1,0 +1,7 @@
+repository: https://github.com/lang-bmb/lang-bmb
+commit: 6bbf72cbd482b5d8e7cd59db1e9b8d826122f784
+path: bench
+transformation: scripts/import_bench.py
+
+# Files under bench/ that differ from the transformed source, changed or
+# added in this repository. `scripts/import_bench.py --check` keeps this exact.
