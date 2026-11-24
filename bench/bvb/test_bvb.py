@@ -1,4 +1,4 @@
-"""BVB task set (backlog 2A-08): frozen inputs, selection record, BMB judging extensions.
+"""BVB task set: frozen inputs, selection record, BMB judging extensions.
 
 Needs the `bmb` binary like bench/m1/test_harness.py. No network, no Verus.
 """

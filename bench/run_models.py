@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One command for the real-model measurements (backlog INF-14).
+"""One command for the real-model measurements.
 
   run_models.py --agent openai:MODEL|anthropic:MODEL --price-in P --price-out Q --budget USD [--sets ..]
   run_models.py --dry-run [--limit N] [--sets ..] [--out-dir DIR]
@@ -8,12 +8,12 @@ Runs the frozen task sets that need a real model, in a fixed order, with the
 existing harnesses (each checks its own MANIFEST and keeps the ADR-0021 rules:
 one session per task, no retry):
 
-  m1         bench/m1        G2 (write), G4 navigation              1E-10
-  m1b        bench/m1b       G2, G3 (BSB kill rate)                 2A-06
-  bvb        bench/bvb       BMB side of H-FAMILIAR, H-SPEC column  2A-08
-  bvb-verus  bench/bvb/verus original Verus side (needs Verus)      2A-09
-  brb-bmb    bench/brb       G5, H-ORACLE, G8 (BMB arm)             2H-03
-  brb-rust   bench/brb       G5, H-ORACLE, G8 (Rust arm)            2H-03
+  m1         bench/m1        G2 (write), G4 navigation
+  m1b        bench/m1b       G2, G3 (BSB kill rate)
+  bvb        bench/bvb       BMB side of H-FAMILIAR, H-SPEC column
+  bvb-verus  bench/bvb/verus original Verus side (needs Verus)
+  brb-bmb    bench/brb       G5, H-ORACLE, G8 (BMB arm)
+  brb-rust   bench/brb       G5, H-ORACLE, G8 (Rust arm)
 
 then prints one report with every summary (`m1` summarize, BVB `compare` or
 `strength`, BRB `summarize`) and a line per metric saying whether it was filled.
@@ -27,25 +27,25 @@ it is the smallest (m1, 15 sessions). A set is never cut in the middle.
 
 --dry-run runs every set with the scripted reference agents (no model, no
 cost), `--limit N` tasks per set, into a temporary directory, and checks that
-each metric line appears. The gate runs it (backlog INF-14). The Verus side is
+each metric line appears. The gate runs it. The Verus side is
 skipped when Verus is not installed, so H-FAMILIAR then reads "skipped".
 
-Interrupted runs resume (backlog INF-16). The harnesses write each session's
+Interrupted runs resume. The harnesses write each session's
 row as it finishes. Run again with the same arguments: a set already finished on
 this commit with this model is not run again and its file is reported, and a
 set left partial on this commit continues from the tasks without a row (a task
 is never run twice, so this is not a retry).
 
-Session records (backlog INF-17). A real run keeps every session's record
+Session records. A real run keeps every session's record
 (calls with full results, requests, final workspace; bench/m1/sessionlog.py)
 in `<results file without .jsonl>.sessions/`, committed with the results.
 
-Parallel sessions (backlog INF-18). `--jobs N` runs N sessions of a set at a
+Parallel sessions. `--jobs N` runs N sessions of a set at a
 time in a real run too: sessions are independent and judged by deterministic
 solver limits, and the model's time is the gateway's. The BRB arms stay at one:
 their judges run programs under wall-clock timeouts.
 
-Repeated runs (ADR-0077, backlog T0-12). `--repeat K` makes this the K-th of
+Repeated runs (ADR-0077). `--repeat K` makes this the K-th of
 the declared repeated runs of the same (set, model, commit): qwen
 (`openai:qwen3.8-27b`) on m1 and m1b only, K from 1 to `REPEATS`. Each is a
 whole set run once more, one session per task, nothing chosen between runs; its
@@ -116,7 +116,7 @@ SETS = [
      "bench/bvb/results"),
     ("brb-bmb", brb_ids, brb_run("bmb"), "bench/brb/results"),
     ("brb-rust", brb_ids, brb_run("rust"), "bench/brb/results"),
-    # The one-call `write` surface of the same tasks (backlog T0-13, H-GRAIN):
+    # The one-call `write` surface of the same tasks (H-GRAIN):
     # run only when named in --sets. brb-write is BRB's BMB arm with the
     # variant's prompt and tools; its Rust arm is brb-rust.
     ("m1b-write", lambda: json_ids(os.path.join(HERE, "m1b-write")), m1_run("bench/m1b-write"),
@@ -160,7 +160,7 @@ def over_budget(spent, sessions, next_sessions, budget):
         return None
     projected = spent / sessions * next_sessions
     if spent + projected > budget:
-        return f"예산: 지출 ${spent:.2f} + 예상 ${projected:.2f} > ${budget:.2f}"
+        return f"budget: spent ${spent:.2f} + projected ${projected:.2f} > ${budget:.2f}"
     return None
 
 
@@ -168,7 +168,7 @@ def report(paths, skipped):
     """The summaries of every finished set, then one line per metric."""
     def sh(*argv):
         r = subprocess.run([PY, *argv], cwd=ROOT, capture_output=True, text=True)
-        return r.stdout if r.returncode == 0 else f"(실패: {r.stderr.strip()[-300:]})\n"
+        return r.stdout if r.returncode == 0 else f"(failed: {r.stderr.strip()[-300:]})\n"
 
     # A metric reads the official `write` set of its role when that set ran,
     # else the transaction original (ADR-0101).
@@ -182,39 +182,39 @@ def report(paths, skipped):
             out += [f"## {n}" + ("(BMB)" if n in ("bvb", "bvb-write") else ""), "",
                     sh("bench/m1/harness.py", "summarize", paths[n])]
     if bvb in paths and "bvb-verus" in paths:
-        out += ["## BVB: BMB 대 Verus", "", sh("bench/bvb/verus/harness.py", "compare", paths[bvb], paths["bvb-verus"])]
+        out += ["## BVB: BMB versus Verus", "", sh("bench/bvb/verus/harness.py", "compare", paths[bvb], paths["bvb-verus"])]
     elif bvb in paths:
-        out += ["## BVB 명세 강도(BMB만)", "", sh("bench/bvb/verus/harness.py", "strength", paths[bvb])]
+        out += ["## BVB specification strength (BMB only)", "", sh("bench/bvb/verus/harness.py", "strength", paths[bvb])]
     if "brb-bmb" in paths and "brb-rust" in paths:
         out += ["## BRB", "", sh("bench/brb/harness.py", "summarize", paths["brb-bmb"], paths["brb-rust"])]
     if "brb-write" in paths:
         both = [paths[n] for n in ("brb-bmb", "brb-write", "brb-rust") if n in paths]
-        out += ["## BRB 쓰기 표면", "", sh("bench/brb/harness.py", "summarize", *both)]
+        out += ["## BRB write surface", "", sh("bench/brb/harness.py", "summarize", *both)]
     text = "\n".join(out)
     sections = {n: text.split(f"## {n}\n", 1)[1].split("\n## ", 1)[0]
                 for n in ("m1", "m1b", "m1b-write") if f"## {n}\n" in text}
     checks = [
-        ("G2 작성 1회 성공률(m1·m1b)", "| 작성 1회 성공률 |", (("m1",) if "m1" in paths else ()) + (m1b,)),
-        ("G3 명세 변이체 판별률(m1b, BSB)", "| 명세 변이체 판별률 |", (m1b,)),
-        ("H-SPEC 보조: BVB 명세 강도", "spec_accepted" if "bvb-verus" not in paths else "| 명세 강도(", (bvb,)),
-        ("H-FAMILIAR: BVB 1회 성공률 BMB 대 Verus", "| 1회 성공률 |", (bvb, "bvb-verus")),
-        ("G5 결함률·총 토큰(BRB)", "G5 (", (brb, "brb-rust")),
+        ("G2 write first-attempt success rate (m1, m1b)", "| Write first-attempt success rate |", (("m1",) if "m1" in paths else ()) + (m1b,)),
+        ("G3 specification mutant kill rate (m1b, BSB)", "| Specification mutant kill rate |", (m1b,)),
+        ("H-SPEC auxiliary: BVB specification strength", "spec_accepted" if "bvb-verus" not in paths else "| Specification strength (", (bvb,)),
+        ("H-FAMILIAR: BVB first-attempt success rate, BMB versus Verus", "| First-attempt success rate |", (bvb, "bvb-verus")),
+        ("G5 defect rate and total tokens (BRB)", "G5 (", (brb, "brb-rust")),
         ("H-ORACLE(BRB)", "H-ORACLE (", (brb, "brb-rust")),
-        ("G8 테스트 코드(BRB)", "G8 (", (brb, "brb-rust")),
+        ("G8 test code (BRB)", "G8 (", (brb, "brb-rust")),
     ]
-    status, lines = {}, ["## 지표", ""]
+    status, lines = {}, ["## Metrics", ""]
     for label, marker, need in checks:
         missing = [n for n in need if n not in paths]
         if missing:
-            why = "; ".join(f"{n}: {skipped.get(n, '선택 안 됨')}" for n in missing)
+            why = "; ".join(f"{n}: {skipped.get(n, 'not selected')}" for n in missing)
             status[label] = "skipped"
-            lines.append(f"- {label}: 건너뜀({why})")
+            lines.append(f"- {label}: skipped ({why})")
         elif all(marker in sections.get(n, text) for n in need if n in sections) and marker in text:
             status[label] = "filled"
-            lines.append(f"- {label}: 채움")
+            lines.append(f"- {label}: filled")
         else:
             status[label] = "missing"
-            lines.append(f"- {label}: **빠짐**")
+            lines.append(f"- {label}: **missing**")
     return text + "\n" + "\n".join(lines) + "\n", status
 
 
@@ -226,9 +226,9 @@ def preflight_real(sets):
         problems.append("the lang-bmb checkout has uncommitted changes (+dirty results are not reported)")
     if subprocess.run(["git", "status", "--porcelain", "--", ".", ":!bench/*/results/*"], cwd=ROOT,
                       capture_output=True, text=True).stdout.strip():
-        problems.append("커밋되지 않은 변경이 있다(+dirty 결과는 보고에 쓰지 않는다)")
+        problems.append("there are uncommitted changes (+dirty results are not used in a report)")
     if "bvb-verus" in sets and not verus_installed():
-        problems.append("Verus가 없다: bench/bvb/verus/install.sh, 또는 --sets에서 bvb-verus를 뺀다")
+        problems.append("Verus is not installed: bench/bvb/verus/install.sh, or leave bvb-verus out of --sets")
     for argv in ([PY, "bench/m1/harness.py", "manifest"], [PY, "bench/m1/harness.py", "--set", "bench/m1b", "manifest"],
                  [PY, "bench/m1/harness.py", "--set", "bench/bvb", "manifest"], [PY, "bench/brb/harness.py", "manifest"],
                  *([PY, "bench/m1/harness.py", "--set", f"bench/{v}", "manifest"] for v in ("m1b-write", "bvb-write")
@@ -277,7 +277,7 @@ def same_as(commit, sets, agent, compiler=None):
     """({set: its condition claim}, the pinned `bmb`) for a run under
     `commit`'s condition, or exit naming what is missing (ADR-0070). Each
     set's claim names that set's own report, so a run resumed with fewer sets
-    makes the same claims (backlog INF-21)."""
+    makes the same claims."""
     # The harness commit is this repository's, or lang-bmb's for a run made
     # before the harnesses moved; the compiler commit is always lang-bmb's.
     try:
@@ -365,7 +365,7 @@ def main(argv=None):
         if name not in sets:
             continue
         if name == "bvb-verus" and not verus_installed():
-            skipped[name] = "Verus 없음"
+            skipped[name] = "no Verus"
             print(f"run_models: {name}: skipped (Verus not installed)", file=sys.stderr)
             continue
         task_ids = ids()
@@ -393,7 +393,7 @@ def main(argv=None):
                 skipped[name] = why
                 print(f"run_models: stop before {name}: {why}", file=sys.stderr)
                 for rest in sets[sets.index(name) + 1:]:
-                    skipped[rest] = "예산으로 멈춤"
+                    skipped[rest] = "stopped by the budget"
                 break
             os.makedirs(os.path.join(ROOT, results_dir), exist_ok=True)
             if state == "partial":

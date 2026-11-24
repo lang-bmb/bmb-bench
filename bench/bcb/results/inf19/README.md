@@ -1,28 +1,28 @@
-# INF-19: 측정 세션과 겹친 BCB CPU 측정
+# inf19: BCB CPU measurement overlapping with measurement sessions
 
-백로그 INF-19. 같은 BCB 조각을 두 조건에서 각각 3회 돌렸다.
+`inf19` is the label of this measurement. The same BCB piece was run 3 times under each of two conditions.
 
-- 조각: body-heavy, N=100, K=40 이력(`H.jsonl`, 사본은 없음), `bcb.py run --arms rust,b1`.
-- 컴파일러: `a512adfb`의 release `bmb`.
-- 겹침(`overlap-*`): qwen 측정 세션 2개와 동시에 돌렸다. 부하 평균 1.3~1.4(`overlap.log`).
-- 조용함(`quiet-*`): 모델 세션 없이 돌렸다. 부하 평균 0.1~0.9(`quiet.log`).
+- Piece: a body-heavy history with N=100, K=40 (`H.jsonl`, no copy kept), `bcb.py run --arms rust,b1`.
+- Compiler: the release `bmb` of `a512adfb`.
+- Overlap (`overlap-*`): run at the same time as 2 qwen measurement sessions. Load average 1.3 to 1.4 (`overlap.log`).
+- Quiet (`quiet-*`): run without model sessions. Load average 0.1 to 0.9 (`quiet.log`).
 
-| 누적 CPU(사건 0) | 겹침 | 조용함 |
+| Cumulative CPU (0 events) | Overlap | Quiet |
 | --- | --- | --- |
-| R1 | 14.0, 14.3, 14.1초 | 15.5, 15.2, 15.5초 |
-| B1 | 5.4, 5.6, 5.7초 | 5.7, 6.1, 6.0초 |
+| R1 | 14.0, 14.3, 14.1 s | 15.5, 15.2, 15.5 s |
+| B1 | 5.4, 5.6, 5.7 s | 5.7, 6.1, 6.0 s |
 | C_B1/C_R1 | 0.390, 0.390, 0.403 | 0.365, 0.402, 0.388 |
 
-## 판정
+## Verdict
 
-- 조건 사이의 절대 초 차이(R1 약 9%)는 조건 안의 변동(약 2%)보다 크다.
-- 그러나 방향이 오염의 반대다. 겹친 쪽이 더 빨랐다. 그래서 겹침이 아니라 몇 시간 사이에 생긴 호스트 변동으로 본다.
-- 판정에 쓰는 양인 비율 C_B1/C_R1은 두 조건의 범위가 겹친다.
+- The difference in absolute seconds between the conditions (R1 about 9%) is larger than the variation within a condition (about 2%).
+- But its direction is the opposite of contamination. The overlapping side was faster. So it is taken as host variation that arose over a few hours, not as the overlap.
+- For the ratio C_B1/C_R1, the quantity the verdict uses, the ranges of the two conditions overlap.
 
-## 결론
+## Conclusion
 
-- 2A-14e는 측정 세션과 겹쳐 돌려도 된다.
-- 이 조각은 두 팔을 한 실행(`--arms rust,b1`)에서 돌렸다. 그러나 `suite`(2A-14e)는 팔마다 따로, 몇 시간 간격으로 돈다.
-- 그래서 2A-14e의 C_B1/C_R1은 실행 사이의 비율이고, 여기서 본 호스트 변동(절대 초 약 9%)을 탄다.
-- 2A-14e는 그 변동을 판정 규칙으로 다룬다(`../2a14e/README.md`, 측정 전 등록).
-- 검증한 겹침은 BMB 팔 모델 세션(부하 약 1.4)뿐이다. 컴파일·게이트·cargo test를 도는 판정과의 겹침은 검증하지 않았다(BCB README의 규칙 그대로).
+- The `2a14e` measurement may run overlapping with measurement sessions.
+- This piece ran both arms in one run (`--arms rust,b1`). But `suite` (the `2a14e` measurement) runs each arm separately, hours apart.
+- So C_B1/C_R1 of `2a14e` is a ratio between runs and carries the host variation seen here (about 9% in absolute seconds).
+- `2a14e` handles that variation by a verdict rule (`../2a14e/README.md`, registered before the measurement).
+- The only overlap checked is with model sessions of a BMB arm (load about 1.4). Overlap with judging that runs compilation, the gate or cargo test was not checked (the rule of the BCB README stands).

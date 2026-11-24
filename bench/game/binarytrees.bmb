@@ -1,4 +1,4 @@
-#[summary("Benchmarks Game binary-trees(T3-01): 바닥부터 만든 완전 이진 트리의 할당·순회·해제. 깊이 인자 n = 21")]
+#[summary("Benchmarks Game binary-trees: allocation, traversal and release of complete binary trees built from the bottom. Depth argument n = 21")]
 mod bt {
     enum Tree { Leaf, Node(Box<Tree>, Box<Tree>) }
 

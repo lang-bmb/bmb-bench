@@ -1,4 +1,4 @@
-#[summary("벤치(T4-02): 16MiB의 섞인 UTF-8(1·2·3·4바이트)을 std::utf8::valid_up_to로 20번 검사. 쌍둥이는 utf8_speed.rs(Rust str::from_utf8)")]
+#[summary("bench: std::utf8::valid_up_to over 16 MiB of mixed UTF-8 (1, 2, 3 and 4 bytes), 20 times. The twin is utf8_speed.rs (Rust str::from_utf8)")]
 mod app {
     spec fn size_ok(n: usize) -> bool { n <= 16777216 }
 

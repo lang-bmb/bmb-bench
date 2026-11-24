@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pilot runs of the Verus side of BVB through the Claude Code CLI (backlog T3-03).
+"""Pilot runs of the Verus side of BVB through the Claude Code CLI.
 
   verus_pilot.py --model MODEL [--tasks ID,..] [--jobs N] --out FILE
 

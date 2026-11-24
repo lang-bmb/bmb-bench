@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""H-REPAIR's ablation (backlog T1-45): the generated set differs from
+"""H-REPAIR's ablation: the generated set differs from
 m1b-write only in its tool filter, the filter takes out exactly the repair
 information, the harness counts failed proofs, the scripted agents still pass
 and fail, and the verdict follows the registered rule. No network, no model.
@@ -146,11 +146,11 @@ class Counting(unittest.TestCase):
 class Verdict(unittest.TestCase):
     def test_rule(self):
         v = compare.verdict
-        self.assertIn("감소 40.0% → 확정", v((10, 3, 3), (10, 5, 5)))
-        self.assertIn("→ 반증", v((10, 4, 3), (10, 5, 5)))
-        self.assertIn("→ 반증", v((10, 6, 6), (10, 5, 5)))
-        self.assertIn("판정 불가(성공한 작성 세션이 없는 쪽)", v((0, 0, 0), (10, 5, 5)))
-        self.assertIn("판정 불가(절제 쪽 비용 0)", v((10, 0, 0), (10, 0, 0)))
+        self.assertIn("reduction 40.0% → confirmed", v((10, 3, 3), (10, 5, 5)))
+        self.assertIn("→ refuted", v((10, 4, 3), (10, 5, 5)))
+        self.assertIn("→ refuted", v((10, 6, 6), (10, 5, 5)))
+        self.assertIn("cannot be judged (a side without a successful write session)", v((0, 0, 0), (10, 5, 5)))
+        self.assertIn("cannot be judged (the ablated side's cost is 0)", v((10, 0, 0), (10, 0, 0)))
 
     def write_run(self, path, task_set, rows, **head):
         with open(path, "w") as f:
@@ -167,8 +167,8 @@ class Verdict(unittest.TestCase):
                                             {"kind": "navigate", "success": True}])
             self.write_run(b, "m1b-write-norepair", [dict(row, proofs_failed=3), dict(row, proofs_failed=5)])
             text = compare.compare(a, b)
-            self.assertIn("| 작성 과제 성공 | 1/2 | 2/2 |", text)
-            self.assertIn("전체 (1+1)/1 = 2.00, 절제 (2+8)/2 = 5.00, 감소 60.0% → 확정", text)
+            self.assertIn("| Write tasks succeeded | 1/2 | 2/2 |", text)
+            self.assertIn("full (1+1)/1 = 2.00, ablated (2+8)/2 = 5.00, reduction 60.0% → confirmed", text)
             self.write_run(b, "m1b-write-norepair", [row], commit="other")
             with self.assertRaises(SystemExit):
                 compare.compare(a, b)

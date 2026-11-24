@@ -1,4 +1,4 @@
-#[summary("벤치: 모든 쌍의 최대공약수 합")]
+#[summary("bench: sum of the greatest common divisors of all pairs")]
 mod gcdsum {
     spec fn positive(a: i64, b: i64) -> bool { a > 0 && b >= 0 }
 
@@ -45,7 +45,7 @@ mod gcdsum {
     spec fn n_ok(n: i64) -> bool { 1 <= n && n <= 2000 }
 }
 
-#[summary("진입점")]
+#[summary("entry point")]
 mod app {
     #[effects(io)]
     #[uses(gcdsum::n_ok)]

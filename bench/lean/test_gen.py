@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The lean sets (`gen.py`, backlog 2D-28) differ from the write sets only in
+"""The lean sets (`gen.py`) differ from the write sets only in
 what every request carries, the tools the prompt stops describing are
 described by the server, and the scripted reference and weak agents still
 pass and fail on the committed sets."""

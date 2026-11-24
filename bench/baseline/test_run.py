@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """bench/baseline/run.py: a ratio above the limit fails only when a second
-measurement confirms it (backlog INF-25)."""
+measurement confirms it."""
 import os
 import sys
 

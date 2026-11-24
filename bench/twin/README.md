@@ -1,118 +1,118 @@
-# 포팅 쌍둥이 하네스 (ADR-0104, 백로그 3P-01)
+# Port-twin harness (ADR-0104)
 
-같은 기능의 BMB 프로그램과 Rust 프로그램(쌍둥이)에 같은 과제를 같은 모델·같은 호출 한도(60회)로 주고, 세션이 끝난 뒤 숨은 판정으로 잰다. 주 측정 장은 stage0과 그 BMB 포트이고(포팅 P3 통과 뒤, 3P-05), 지금 있는 `fixtures/stk`는 하네스와 판정기를 게이트에 거는 작은 고정 장치다. 과제·프롬프트는 3P-02~04에서 측정 집합을 만들 때 동결한다(아직 MANIFEST 없음).
+The same task is given to a BMB program and a Rust program with the same function (twins), with the same model and the same call limit (60), and is measured after the session with a hidden judge. The main field of measurement is stage0 and its BMB port (after porting phase P3), and `fixtures/stk` is a small fixture that puts the harness and the judge under the gate. Tasks and prompts are frozen when the measurement set is made from the comprehension, refactoring and replay tasks (no MANIFEST yet).
 
-| 팔 | 코드 | 도구 |
+| Arm | Code | Tools |
 | --- | --- | --- |
-| `bmb` | `bmb import`한 작업 공간 | `bmb mcp --write-tool`(정식 쓰기 표면 ADR-0101, `tx_*` 숨김): `query`, `map`, `verify`, `build`, `write` |
-| `rust` | 크레이트 사본 | `list_dir`, `read_file`(줄 범위), `grep`, `write_file`, `edit_file`(정확히 한 곳 바꾸기), `cargo_build`, `cargo_test` |
+| `bmb` | a workspace made by `bmb import` | `bmb mcp --write-tool` (the official write surface of ADR-0101, `tx_*` hidden): `query`, `map`, `verify`, `build`, `write` |
+| `rust` | a copy of the crate | `list_dir`, `read_file` (line range), `grep`, `write_file`, `edit_file` (changes exactly one place), `cargo_build`, `cargo_test` |
 
-이해 과제는 두 팔 모두 `answer`(정의 경로 `module::name`)로 끝난다.
+Comprehension tasks end with `answer` (definition paths `module::name`) in both arms.
 
-## 판정
+## Judging
 
-| 과제 종류 | 성공 |
+| Task kind | Success |
 | --- | --- |
-| `comprehend` | 답한 정의 집합이 `truth`와 같다(정밀도·재현율 1) |
-| `change` | 넷이 모두 참이다(넷째는 `must_change`가 있는 과제). (1) 빌드: BMB는 `bmb build`(모든 의무 증명), Rust는 `cargo build`와 `cargo test`. (2) 말뭉치: 고정 장치의 `corpus/NAME.in`마다 `NAME.out`의 바이트를 그대로 출력하고, 과제의 `cases`(새 기능의 숨은 시험)도 그렇다. (3) 범위: 바뀌거나 생기거나 없어진 정의가 과제의 `scope` 안이다(`new`가 참이면 새 정의는 허용). (4) 한 일: 과제의 `must_change`의 정의가 모두 바뀌거나 생기거나 없어졌다(백로그 3P-13: 이것이 없으면 아무것도 바꾸지 않은 세션이 앞의 셋을 통과한다. `3P-05a`의 행은 이 조건 전의 판정이고 `report.py worked`가 사후로 센다) |
+| `comprehend` | the set of definitions answered equals `truth` (precision and recall 1) |
+| `change` | all four hold (the fourth for tasks that have `must_change`). (1) Build: for BMB `bmb build` (every obligation proved), for Rust `cargo build` and `cargo test`. (2) Corpus: for every `corpus/NAME.in` of the fixture it prints the bytes of `NAME.out` exactly, and the same for the task's `cases` (hidden tests of the new feature). (3) Scope: the definitions that changed, appeared or went are inside the task's `scope` (new definitions are allowed when `new` is true). (4) Work done: every definition of the task's `must_change` changed, appeared or went (without this, a session that changes nothing passes the first three. The rows of the measurement `3p-05a` were judged before this condition, and `report.py worked` counts it after the fact) |
 
-범위는 정의별 원문으로 가린다. BMB는 작업 공간의 정규형 원문(ADR-0019)을 정의 단위로 자르므로 정확하다. Rust는 파일의 최상위 항목(`fn`·`const`·`struct` 등, 문서 줄 포함)으로 자르고, 그 밖의 줄(`use`, `mod`, 매크로)은 `module::<rest>` 하나로 센다(근사).
+Scope is decided by the source text per definition. For BMB the canonical source of the workspace (ADR-0019) is cut per definition, so it is exact. For Rust the file is cut into top-level items (`fn`, `const`, `struct` and so on, with their documentation lines), and the other lines (`use`, `mod`, macros) count as one `module::<rest>` (an approximation).
 
-정체성 해시(`bmb hash`, ADR-0059)를 쓰지 않는 이유: 정체성은 피호출자를 그 정체성으로 담는다. 그래서 피호출자의 본문을 바꾸면 모든 호출자의 정체성이 바뀐다(3P-01 첫 실행에서 `vm::neg`를 더하고 `main::step`을 고치자 `main::run_line`·`main::main`이 바뀐 것으로 나왔다). 그것은 호출자를 편집한 것이 아니다.
+Why the identity hash (`bmb hash`, ADR-0059) is not used: an identity holds its callees by their identities. So changing the body of a callee changes the identity of every caller (in the first run of the harness, adding `vm::neg` and changing `main::step` made `main::run_line` and `main::main` come out as changed). That is not an edit of the caller.
 
-## 공정성: 문서 조건 (ADR-0118, ADR-0106)
+## Fairness: documentation conditions (ADR-0118, ADR-0106)
 
-환경 변수 `PAIR_DOCS`가 조건을 고르고, 결과 행의 `docs`가 그것을 적는다.
+The environment variable `PAIR_DOCS` picks the condition, and `docs` of the result row records it.
 
-| 조건 | BMB 팔 | Rust 팔 | 쓰임 |
+| Condition | BMB arm | Rust arm | Use |
 | --- | --- | --- | --- |
-| `summary`(`stk`의 기본) | 정의 요약(원문의 `///` → 정규형의 `#[summary]`, 맵 L1) | `///`만 남기고 나머지 주석을 지움 | `stk`의 주 조건 |
-| `none`(포팅 쌍둥이의 기본) | 정의 요약 없음 | 주석 없음 | 포팅 쌍둥이의 주 조건(ADR-0144: 포트의 요약은 한국어, stage0의 `///`는 영어라 "같은 글"이 아니다) |
-| `all` | `summary`와 같음 | 쓰인 그대로 | 대조: 차이가 D 안으로 줄면 주장을 "문서 주석만 있는 Rust 대비"로 한정 |
+| `summary` (default of `stk`) | definition summaries (`///` of the source → `#[summary]` of the canonical form, map L1) | only `///` kept, other comments removed | main condition of `stk` |
+| `none` (default of the port twin) | no definition summaries | no comments | main condition of the port twin (ADR-0144: the port's summaries are Korean and the `///` of stage0 English, so they are not "the same text") |
+| `all` | as `summary` | as written | control: if the difference shrinks to inside D, the claim is limited to "against Rust with documentation comments only" |
 
-- **같은 글.** 단위의 `#[summary]`는 Rust 모듈의 `//!`와 글자 그대로 같다. BMB 정의의 `///`는 같은 이름의 Rust 항목의 `///`와 같고, Rust 쪽은 그 뒤에 `Requires ..`·`Ensures ..` 문장만 더할 수 있다(BMB 팔이 계약으로 읽는 내용). `spec fn`·`proof fn`에는 요약을 달지 않는다. `doc_parity`가 확인한다.
-- **범위.** Rust 정의 원문은 주석을 모두 지운 뒤 비교하고, BMB의 해시는 요약을 읽지 않는다. 문서만 고친 정의는 바뀐 것이 아니다.
-- **BMB 팔의 서버.** `stk`는 `bmb mcp --write-tool`, 포팅 쌍둥이는 `bmb mcp --write-tool --compact --bounded`(ADR-0146: 응답은 32,768바이트의 창이고 설명문이 본문의 글 찾기 `query text`를 말한다. 첫 측정 `3P-05a`·`3P-05b`는 `--bounded` 없이 돌았다: `PAIR_MCP="--write-tool --compact"`). `--compact`는 ADR-0144, 백로그 3P-10( 증명 결과가 실패한 정의의 상태 줄과 증명된 정의의 수 한 줄이다. 압축 뷰가 없으면 포트에서 쓰기 한 번의 응답이 약 4만 토큰이다). `PAIR_MCP`가 바꾸고 결과 행의 `mcp`가 적는다.
-- **게이트.** `check`가 세 조건의 크레이트와 두 조건의 BMB 원문을 모두 빌드해 말뭉치와 대조한다. 오라클과 약한 대조군은 주 조건에서 돈다.
+- **The same text.** The `#[summary]` of a unit is letter for letter the `//!` of the Rust module. The `///` of a BMB definition equals the `///` of the Rust item of the same name, and the Rust side may only add `Requires ..` and `Ensures ..` sentences after it (what the BMB arm reads as contracts). `spec fn` and `proof fn` get no summary. `doc_parity` checks this.
+- **Scope.** Rust definition text is compared after all comments are removed, and BMB's hash does not read summaries. A definition with only its documentation changed has not changed.
+- **The server of the BMB arm.** `stk` uses `bmb mcp --write-tool`, the port twin `bmb mcp --write-tool --compact --bounded` (ADR-0146: a response is a window of 32,768 bytes and the description mentions the text search of bodies, `query text`. The first measurements, `3p-05a` and `3p-05b`, ran without `--bounded`: `PAIR_MCP="--write-tool --compact"`). `--compact` is ADR-0144 (the proof result is the status lines of the definitions that failed and one line with the number of proved definitions. Without the compact view the response to one write on the port is about 40 thousand tokens). `PAIR_MCP` changes it and `mcp` of the result row records it.
+- **Gate.** `check` builds the crates of the three conditions and the BMB sources of the two conditions and compares them all with the corpus. The oracle and the weak controls run in the main condition.
 
-## 고정 장치 `stk`
+## The fixture `stk`
 
-표준 입력의 명령을 한 스택에서 실행하는 프로그램이다(`lex`·`vm`·`main` 세 단위, Rust는 같은 이름의 모듈 셋). 오류는 `error LINE: WHAT`, 끝에 `depth N`. BMB 쪽은 전부 증명된다. 말뭉치 8개(넘침, `i64::MIN`, 스택 한도 4096, 공백·CR, UTF-8이 아닌 바이트, 빈 입력)에서 두 쪽의 출력 바이트가 같다(`check`가 매번 확인).
+A program that executes the commands on standard input on one stack (three units `lex`, `vm`, `main`; in Rust three modules of the same names). Errors are `error LINE: WHAT`, with `depth N` at the end. The BMB side is fully proved. On the 8 corpus files (overflow, `i64::MIN`, the stack limit of 4096, whitespace and CR, bytes that are not UTF-8, empty input) the output bytes of the two sides are the same (`check` verifies this every time).
 
-| 과제 | 종류 | 약한 대조군(실패해야 하는 검사) |
+| Task | Kind | Weak control (the check that must fail) |
 | --- | --- | --- |
-| `c01-callers-is` | `lex::is`의 전이 호출자 | 직접 호출자만(answer) |
-| `r01-rename-drop` | `vm::drop`을 `vm::discard`로 이름 바꾸기 | 빈 스택에서 오류를 내지 않음(corpus), 범위 밖 `vm::swap` 편집(scope) |
-| `t01-neg` | 새 명령 `neg`(커밋 재연 꼴: 문제문 + 숨은 시험) | 넘침을 감싸 버림(corpus) |
+| `c01-callers-is` | the transitive callers of `lex::is` | only the direct callers (answer) |
+| `r01-rename-drop` | rename `vm::drop` to `vm::discard` | no error on an empty stack (corpus), an edit of `vm::swap` outside the scope (scope) |
+| `t01-neg` | a new command `neg` (the shape of a commit replay: a problem statement + hidden tests) | wraps on overflow (corpus) |
 
-첫 게이트 실행에서 약한 대조군 "빈 스택의 `drop`이 오류를 내지 않음"이 말뭉치를 통과했다. 말뭉치에 그 경우가 없었기 때문이고, `errors.in`에 더했다. 측정 과제의 숨은 판정도 같은 방식(약한 대조군이 떨어지는지)으로 적정성을 확인한다.
+In the first gate run the weak control "`drop` on an empty stack gives no error" passed the corpus. The corpus did not have that case, and it was added to `errors.in`. The adequacy of the hidden judge of the measurement tasks is checked the same way (do the weak controls fail).
 
-## 포팅 쌍둥이의 이해 과제 (3P-02, H-COMPREHEND)
+## Comprehension tasks of the port twin (H-COMPREHEND)
 
-측정 장은 stage0의 구성 요소 C0~C4(`compiler/src`의 16개 파일, Rust)와 그 포트(`selfhost/`, BMB)다. 고정 장치 `fixtures/port/fixture.json`이 저장소의 그 자리를 가리키고, 과제의 `commit`에서 꺼낸다(작업 공간은 `bmb import`, Rust 팔은 그 파일들만 든 `src/`). 과제는 `port/c*.json` 24개이고 `port_tasks.py make COMMIT`이 만든다. 손으로 쓴 정답은 없다.
+The field of measurement is the components C0 to C4 of stage0 (16 files of `compiler/src`, Rust) and their port (`selfhost/`, BMB). The fixture `fixtures/port/fixture.json` points at those places of the `lang-bmb` repository, and they are taken at the task's `commit` (the workspace by `bmb import`; the Rust arm gets a `src/` with only those files). The tasks are the 24 `port/c*.json`, made by `port_tasks.py make COMMIT`. No answer is written by hand.
 
-| 갈래 | 질문 | 수 | 정답의 출처 |
+| Family | Question | Count | Source of the answer |
 | --- | --- | --- | --- |
-| `callers` | 두 쪽에 같은 이름으로 있는 함수의 직접 호출자 | 7 | BMB: 맵의 호출 간선. Rust: 정의 글에서 이름으로 |
-| `impact` | 그 호출자를 두 단계까지(바꾸면 먼저 닿는 곳) | 5 | 같음 |
-| `diag` | 진단 코드를 제 몸에 쓴 함수(그 진단이 나오는 경로) | 7 | 두 쪽 모두 정의 글 |
-| `state` | 검사기·출력기 상태의 필드 하나를 바꾸는 함수 | 5 | 두 쪽 모두 정의 글 |
+| `callers` | the direct callers of a function that exists under the same name on both sides | 7 | BMB: the call edges of the map. Rust: by name in the definition texts |
+| `impact` | those callers up to two steps (what a change reaches first) | 5 | the same |
+| `diag` | the functions that have a diagnostic code in their own body (the paths on which that diagnostic comes out) | 7 | definition texts on both sides |
+| `state` | the functions that change one field of the checker's or printer's state | 5 | definition texts on both sides |
 
-- **두 쪽의 답은 다르다.** 포트는 줄 단위 사본이 아니다(Rust 함수 630개, BMB 1,426개). 같은 질문을 팔마다 제 이름으로 묻고(`prompt`가 팔별), 정답도 팔별이다(`truth`가 팔별). 정의의 단위는 함수와 메서드다(`index.py`: BMB는 맵의 경로, Rust는 `module::Type::method`).
-- **이름으로 찾는 호출처의 믿을 만함.** Rust 쪽에는 호출 그래프 도구가 없다. 그래서 대상은 두 쪽에서 이름이 하나뿐인 함수로 한정하고, 같은 방법을 BMB 쪽에 돌려 맵의 간선과 정확히 같은 대상만 쓴다(답을 아는 쪽에서 방법을 확인한다). 두 쪽에 같은 이름으로 하나씩 있는 417개 가운데 405개가 그렇다.
-- **대상 고르기는 기계가 한다.** 갈래의 규칙에 맞는 후보를 줄 세워 고정 씨앗으로 섞고 앞에서부터 고른다(Rust 파일 하나에 갈래당 `PER_FILE`개까지). 규칙, 후보, 씨앗은 `port_tasks.py`에 있다.
-- **확인.** `port_tasks.py check`(게이트): 커밋된 과제와 `REVIEW.md`가 `make`의 출력과 같고, 색인의 BMB 함수가 맵의 함수와 같다(1,426개). `pair.py check --tasks bench/twin/port`: 24개 과제의 오라클이 두 팔에서 통과하고 약한 대조군(정의 하나가 빠진 답)이 떨어진다(약 6분, 게이트는 두 과제만 돌린다).
-- **사람이 볼 것.** `port/REVIEW.md`: 갈래마다 두 과제의 질문과 두 쪽의 답, 답마다 그 정의를 답에 넣은 줄. 첫 모델 실행 전에 사람이 표본을 확인한다(백로그 행의 조건).
+- **The answers of the two sides differ.** The port is not a line-by-line copy (630 Rust functions, 1,426 BMB ones). The same question is asked in each arm with its own names (`prompt` is per arm), and the answer is per arm too (`truth` is per arm). The unit of a definition is a function or method (`index.py`: for BMB the path of the map, for Rust `module::Type::method`).
+- **How far call sites found by name can be trusted.** The Rust side has no call graph tool. So the targets are limited to functions whose name is unique on both sides, and the same method is run on the BMB side and only targets for which it agrees exactly with the edges of the map are used (the method is checked on the side where the answer is known). Of the 417 that exist once under the same name on both sides, 405 do.
+- **The targets are picked by machine.** The candidates that fit a family's rule are put in order, shuffled with a fixed seed and picked from the front (up to `PER_FILE` per family for one Rust file). The rules, the candidates and the seed are in `port_tasks.py`.
+- **Check.** `port_tasks.py check` (gate): the committed tasks and `REVIEW.md` equal the output of `make`, and the BMB functions of the index equal the functions of the map (1,426). `pair.py check --tasks bench/twin/port`: the oracle of the 24 tasks passes in both arms and the weak control (an answer with one definition missing) fails (about 6 minutes; the gate runs only two tasks).
+- **For a person to look at.** `port/REVIEW.md`: for every family the questions of two tasks and the answers of both sides, and for every answer the line that put that definition into the answer. A person checks the sample before the first model run (a condition of the measurement).
 
-## 포팅 쌍둥이의 리팩터링 과제 (3P-03, H-REFACTOR)
+## Refactoring tasks of the port twin (H-REFACTOR)
 
-`port/r*.json`, `port_change.py make COMMIT`이 만든다. `rename`·`swap`은 기준 해법(`oracle`)도 약한 해법(`weak`)도 생성기가 만든다. 나머지 두 갈래는 해법을 손으로 썼다(`port_hand.py`: 과제의 커밋의 글에 정확히 한 번 맞아야 하는 치환으로 적고, 도구 호출과 범위는 거기서 만든다. 맞지 않으면 `make`가 멈춘다).
+`port/r*.json`, made by `port_change.py make COMMIT`. For `rename` and `swap` the generator makes both the reference solution (`oracle`) and the weak solutions (`weak`). The solutions of the other two families were written by hand (`port_hand.py`: written as substitutions that must match the text of the task's commit exactly once, from which the tool calls and the scope are made. If one does not match, `make` stops).
 
-| 갈래 | 과제 | 수 | 기준 해법 |
+| Family | Task | Count | Reference solution |
 | --- | --- | --- | --- |
-| `rename` | 두 쪽에 같은 이름으로 하나씩 있는 함수의 이름을 바꾸고 쓰임을 모두 따르게 | 10 | 낱말의 치환(그 낱말의 모든 출현이 선언이나 호출인 함수만 고른다) |
-| `swap` | 그런 함수의 첫 두 매개변수(`self` 뒤)의 자리를 바꾸고 호출을 모두 고친다 | 6 | 선언과 호출의 인자 목록을 괄호 깊이로 잘라 두 조각을 맞바꾼다 |
-| `inline` | 함수를 없애고 호출마다 그 몸을 넣는다(`type_def`, `sha`) | 2 | 손 |
-| `extract` | 함수의 한 부분을 새 함수로 빼고 부른다(`reserved_name`, `rationale_line`) | 2 | 손 |
+| `rename` | rename a function that exists once under the same name on both sides, and make every use follow | 10 | substitution of the word (only functions for which every occurrence of the word is the declaration or a call are picked) |
+| `swap` | swap the first two parameters (after `self`) of such a function and fix every call | 6 | the argument lists of the declaration and the calls are cut by parenthesis depth and the two pieces exchanged |
+| `inline` | remove a function and put its body at every call (`type_def`, `sha`) | 2 | by hand |
+| `extract` | take a part of a function out into a new function and call it (`reserved_name`, `rationale_line`) | 2 | by hand |
 
-성공은 `change` 과제의 세 조건이다(빌드, 말뭉치, 범위). 포팅 쌍둥이에서의 뜻:
+Success is the three conditions of a `change` task (build, corpus, scope). What they mean on the port twin:
 
-- **빌드.** BMB 팔은 `bmb build`(모든 의무 증명)이고 작업 공간에 포트의 증명 캐시가 들어 있다(`.bmb-cache`, 커밋마다 한 번 짓는다): 세션은 바꾼 것만큼만 증명한다. 따뜻한 캐시에서 포트 전체의 검증은 릴리스 빌드로 19초다(`BMB=target/release/bmb`로 돌린다; 디버그 빌드는 쓰기 한 번에 약 1분). Rust 팔은 크레이트 전체(`compiler/`, `tests/` 없이)와 빌드가 밖에서 읽는 것(`scripts/toolchain.env`, `lib/std`)을 받고 `cargo build`와 `cargo test`(단위 시험)를 통과해야 한다.
-- **말뭉치.** 고정 장치의 `corpus` 78개: 두 프로그램이 같은 바이트를 내는 명령줄이다(`check`·`fmt`·`hash`·`dump types`·`moves`·`texts`·`lower`·`decls`·`codes`를 생성 프로그램, 가장자리 입력, 실행 코퍼스의 파일에). 기대 출력은 과제의 커밋에서 지은 Rust 쪽(릴리스)의 출력과 종료 코드다. 포트의 차등 시험이 두 쪽의 같음을 보이므로 기준은 하나로 족하다.
-- **범위.** 함수와 메서드 단위(`index.py`의 `rest=True`: 함수는 제 속성 줄과 함께, 그 밖의 줄은 `단위::<rest>`). 요약과 주석은 글이 아니다.
-- **약한 해법.** 과제마다 셋: 기준 해법에 범위 밖 함수(`sha256`)의 편집을 더한 것(범위에서 떨어져야 한다), 진단의 출력 글자를 바꾼 것(말뭉치에서 떨어져야 한다), 아무것도 하지 않는 것(한 일에서 떨어져야 한다: `must_change`는 과제의 범위, 곧 기준 해법이 바꾸는 정의다).
-- **단위를 넘는 변경.** `write`는 단위 하나씩 쓰고 쓸 때마다 프로그램 전체가 검사를 통과해야 한다. 호출처가 다른 단위에 있는 시그니처 변경은 한 번에 쓸 수 없다: 기준 해법은 새 시그니처를 다른 이름으로 넣고, 호출을 단위마다 옮기고, 옛것을 지우고, 같은 일을 한 번 더 해 이름을 되돌린다(`r12`가 그렇다: 쓰기 6번). Rust 팔에는 그 제약이 없다. 후보를 한 단위 안의 것으로 줄이지 않았다(줄이면 BMB 쪽의 비용을 가린다).
-- **없는 갈래.** 자료 구조 교체와 단위 분할은 없다(백로그 `3P-11`). 함수 하나를 다른 단위로 옮기는 과제(`identity::sha` → `sha256::sha`)는 해법까지 썼지만 뺐다: BMB 쪽 해법 뒤에 모든 정의가 증명되는데 `bmb build`가 프로그램을 거부한다(백로그 `4D-37`).
-- **뺀 대상.** `port_change.py`의 `EXCLUDE`: 생성기의 규칙이 맞지 않는 함수와 그 이유(섞은 뒤에 빼므로 다른 과제는 제자리다).
-- **문서 조건과 기준 해법.** Rust 팔의 기준 해법(`edit_file`의 `old`)은 `none` 조건의 글(주석 없음)에 맞춰 만든다. 다른 조건에서는 맞지 않을 수 있다.
+- **Build.** The BMB arm is `bmb build` (every obligation proved), and the workspace holds the proof cache of the port (`.bmb-cache`, built once per commit): a session proves only as much as it changed. With a warm cache, verifying the whole port takes 19 seconds with the release build (run it with `BMB=target/release/bmb`; with the debug build one write takes about 1 minute). The Rust arm gets the whole crate (`compiler/`, without `tests/`) and what the build reads from outside (`scripts/toolchain.env`, `lib/std`), and must pass `cargo build` and `cargo test` (the unit tests).
+- **Corpus.** The 78 `corpus` entries of the fixture: command lines for which the two programs give the same bytes (`check`, `fmt`, `hash`, `dump types`, `moves`, `texts`, `lower`, `decls` and `codes` on generated programs, edge inputs and files of the run corpus). The expected output is the output and exit code of the Rust side (release) built at the task's commit. The port's differential tests show that the two sides are the same, so one reference is enough.
+- **Scope.** Per function and method (`rest=True` of `index.py`: a function with its own attribute lines, the other lines as `unit::<rest>`). Summaries and comments are not text.
+- **Weak solutions.** Three per task: the reference solution plus an edit of a function outside the scope (`sha256`) (must fail the scope), one with the printed characters of a diagnostic changed (must fail the corpus), and one that does nothing (must fail the work done: `must_change` is the task's scope, that is, the definitions the reference solution changes).
+- **Changes across units.** `write` writes one unit at a time, and after every write the whole program must pass the check. A signature change whose call sites are in other units cannot be written in one go: the reference solution puts in the new signature under another name, moves the calls unit by unit, deletes the old one, and does the same once more to restore the name (`r12` is such a case: 6 writes). The Rust arm has no such restriction. The candidates were not narrowed to those inside one unit (narrowing would hide the cost on the BMB side).
+- **Missing families.** Replacing a data structure and splitting a unit are absent. A task that moves one function to another unit (`identity::sha` → `sha256::sha`) was written down to its solution and left out: after the BMB solution every definition is proved, and `bmb build` still refuses the program.
+- **Excluded targets.** `EXCLUDE` of `port_change.py`: the functions the generator's rules do not fit, with the reasons (they are removed after the shuffle, so the other tasks stay in place).
+- **Documentation condition and reference solutions.** The reference solutions of the Rust arm (`old` of `edit_file`) are made for the text of the `none` condition (no comments). In other conditions they may not match.
 
-## 포팅 쌍둥이의 재연 과제 (3P-04, H-TASK와 G5-L)
+## Replay tasks of the port twin (H-TASK and G5-L)
 
-`port/t*.json`(22개)과 `port/h*.json`(이력 4개), `port_replay.py make COMMIT`이 만든다.
+`port/t*.json` (22) and `port/h*.json` (4 histories), made by `port_replay.py make COMMIT`.
 
-- **무엇을 재연하나.** 진단 하나를 처음 낸 커밋이다. 두 쪽이 그 코드를 제 문장 하나로 내는 진단만 고른다(`self.diags.push(Diag::new("E0250", ..))`, `self.c.help("E0250", ..)`). 그 문장을 지운 상태가 과제의 시작이다(`setup`: `pair.py`가 세션 전에 적용한다. BMB 쪽은 한 번 증명해 커밋별 캐시에 둔다). 둘레의 코드는 남으므로 두 쪽 모두 빌드되고, 프로그램은 그 규칙이 막던 것을 받아들인다. 그런 코드가 두 쪽에 51개다.
-- **문제문.** 그 코드를 처음 넣은 커밋의 제목(`SOURCES`, `port_replay.py sources`가 이력에서 찾는다), 진단 문서(`docs/diagnostics.md`)의 그 줄, 그리고 예시 둘까지(말뭉치의 기대 출력 한 줄과 그것이 가리키는 원문 줄). 두 팔이 같은 글을 받는다.
-- **숨은 판정.** `tests/check/err`에서 기대 출력에 그 코드가 있는 파일마다 `check`(과제의 `cases`), 그리고 고정 장치의 말뭉치. 범위는 묻지 않는다(`scope: "any"`): 어디에 넣을지 찾는 것이 과제다.
-- **약한 해법.** 아무것도 하지 않는 것(규칙이 여전히 없다), 기준 해법에 진단 출력 글자를 바꾼 것. 둘 다 말뭉치에서 떨어져야 한다.
-- **이력(`h*`).** 낱개 과제가 쓰지 않은 코드 다섯을 함께 지우고 하나씩 차례로 묻는다. 걸음마다 새 세션이고 코드는 앞 걸음이 남긴 그대로다(ADR-0102의 G5-L: 같은 코드베이스의 후속 변경). 걸음의 판정은 그 걸음까지의 `cases`이고, 마지막 걸음만 고정 장치의 말뭉치도 본다(그 전에는 뒤 걸음의 진단이 아직 없다). 한 걸음의 파일은 그 이력의 다른 코드가 없는 것만 쓴다. 결과 행은 걸음별 값(`steps`)과 합이고, 성공은 마지막 걸음의 판정이다.
-- **한계.** 지운 것이 문장 하나라 실제 커밋보다 작다(조건식과 복구 코드는 남는다). 난도는 "어디에, 어떤 글자로"에 있다. 문제문의 예시가 글자를 준다.
+- **What is replayed.** The commit that first gave one diagnostic. Only diagnostics that both sides emit with one statement of their own are picked (`self.diags.push(Diag::new("E0250", ..))`, `self.c.help("E0250", ..)`). The state with that statement removed is the start of the task (`setup`: `pair.py` applies it before the session. On the BMB side it is proved once and kept in a cache per commit). The code around it stays, so both sides build, and the program accepts what that rule used to stop. There are 51 such codes on both sides.
+- **Problem statement.** The subject of the commit that first added the code (`SOURCES`; `port_replay.py sources` finds it in the history), the line of the diagnostics document (`docs/diagnostics.md`), and up to two examples (one line of expected output of the corpus and the source line it points at). Both arms get the same text. The commit subjects are quoted as they were written, some of them in Korean and with the labels the project planned its work under.
+- **Hidden judge.** `check` on every file of `tests/check/err` whose expected output has the code (the task's `cases`), and the corpus of the fixture. The scope is not asked (`scope: "any"`): finding where to put it is the task.
+- **Weak solutions.** One that does nothing (the rule is still missing), and the reference solution with the printed characters of a diagnostic changed. Both must fail the corpus.
+- **Histories (`h*`).** Five codes that the single tasks do not use are removed together and asked for one after the other. Every step is a new session and the code is as the previous step left it (G5-L of ADR-0102: follow-up changes on the same code base). The verdict of a step is the `cases` up to that step, and only the last step also looks at the corpus of the fixture (before it, the diagnostics of the later steps are still missing). The files of a step are only those without another code of that history. The result row holds the values per step (`steps`) and their sum, and success is the verdict of the last step.
+- **Limits.** What was removed is one statement, so it is smaller than the real commit (the condition and the recovery code stay). The difficulty is in "where, and with which characters". The examples of the problem statement give the characters.
 
-알려진 치우침(측정 보고에 적는다):
+Known biases (stated in the measurement report):
 
-- **문서 조건.** 주 조건 `none`은 Rust 팔에서 `///`를 빼는 쪽이다. 주석 있는 Rust 대조(`PAIR_DOCS=all`, Rust 팔만)가 그 크기를 잰다(ADR-0144 결정 2).
-- **압축 뷰.** BMB 팔은 `--compact`로 돈다. 압축 뷰가 성공률을 낮추지 않는지는 따로 재지 않았다(T0-15).
-- **글 찾기.** 첫 측정(`3P-05a`)의 BMB 팔에는 글 찾기가 없었다: `diag`·`state`는 Rust 팔이 `grep` 한 번으로 닿는 질문이고 BMB 팔은 정의를 읽어야 했다(sonnet 23배·7배). ADR-0146 뒤로는 `query text`가 있다(글자 그대로, 패턴 언어 없음; Rust 팔의 `grep`은 정규식이다). 갈래별로 따로 보고한다.
-- **크기.** Rust 팔은 C0~C4의 파일만 본다(주석을 지우고 약 2.3만 줄의 함수 본문). 포트는 약 3.0만 줄이다. stage0 전체(6.7만 줄)를 주면 Rust 팔만 더 큰 코드를 뒤진다.
-- **같은 계보.** 두 쪽 모두 같은 작성자가 옮긴 것이다(ADR-0104 결정 4).
+- **Documentation condition.** The main condition `none` takes `///` away from the Rust arm. The control with commented Rust (`PAIR_DOCS=all`, Rust arm only) measures its size (ADR-0144 decision 2).
+- **Compact view.** The BMB arm runs with `--compact`. Whether the compact view lowers the success rate was not measured separately.
+- **Text search.** The BMB arm of the first measurement (`3p-05a`) had no text search: `diag` and `state` are questions the Rust arm reaches with one `grep`, and the BMB arm had to read definitions (sonnet 23 times and 7 times). Since ADR-0146 there is `query text` (literal, no pattern language; the `grep` of the Rust arm is a regular expression). Reported per family.
+- **Size.** The Rust arm sees only the files of C0 to C4 (about 23 thousand lines of function bodies with comments removed). The port is about 30 thousand lines. Given all of stage0 (67 thousand lines), only the Rust arm would search larger code.
+- **The same lineage.** Both sides were carried over by the same author (ADR-0104 decision 4).
 
 ```
-python3 bench/twin/pair.py check                                   # 게이트(test_pair.py가 돌림)
-python3 bench/twin/port_tasks.py make COMMIT                       # 포팅 쌍둥이의 이해 과제를 그 커밋에서 다시 만든다
-python3 bench/twin/port_change.py make COMMIT                      # 리팩터링 과제
-python3 bench/twin/port_replay.py make COMMIT                      # 재연 과제와 이력
-BMB=target/release/bmb python3 bench/twin/pair.py check --tasks bench/twin/port   # 모든 과제의 오라클과 약한 대조군(몇 시간)
-python3 bench/twin/report.py R.jsonl..                             # 결과 행의 표(축과 갈래별)
-python3 bench/twin/pair.py run --agent openai:qwen3.8-27b --out R.jsonl   # 실제 모델(ADR-0066)
+python3 bench/twin/pair.py check                                   # gate (run by test_pair.py)
+python3 bench/twin/port_tasks.py make COMMIT                       # make the comprehension tasks of the port twin again at that commit
+python3 bench/twin/port_change.py make COMMIT                      # refactoring tasks
+python3 bench/twin/port_replay.py make COMMIT                      # replay tasks and histories
+BMB=target/release/bmb python3 bench/twin/pair.py check --tasks bench/twin/port   # the oracle and weak controls of every task (hours)
+python3 bench/twin/report.py R.jsonl..                             # tables of the result rows (per axis and family)
+python3 bench/twin/pair.py run --agent openai:qwen3.8-27b --out R.jsonl   # a real model (ADR-0066)
 ```
 
-비용은 BNB와 같다. 도구 응답 바이트 전부, 토큰 = ceil(bytes/4)(ADR-0021). 요청 바이트는 따로 적는다.
+The cost is as in BNB. All bytes of tool responses, tokens = ceil(bytes/4) (ADR-0021). Request bytes are recorded apart.

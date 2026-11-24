@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Definitions of the port twin, one per function or method (backlog 3P-02).
+"""Definitions of the port twin, one per function or method.
 
 The twin is stage0's components C0~C4 (`compiler/src`, Rust) and their port
 (`selfhost/`, BMB). A comprehension question's answer is a set of definitions,
@@ -20,8 +20,8 @@ where an item starts and ends. Test modules (`#[cfg(test)]`) are left out.
 import os
 import re
 
-# stage0's files of the components the port has (dev-docs/health/components.json,
-# C0~C4), without `escape.rs`: it is not ported yet.
+# stage0's files of the components the port has (C0~C4),
+# without `escape.rs`: it is not ported yet.
 RUST_FILES = ["source.rs", "diag.rs", "sha256.rs", "json.rs", "lexer.rs", "parser.rs", "ast.rs", "fmt.rs",
               "identity.rs", "check.rs", "check/text.rs", "moves.rs", "consts.rs", "closures.rs", "refs.rs",
               "stdlib.rs"]

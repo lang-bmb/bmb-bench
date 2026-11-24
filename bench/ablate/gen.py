@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The ablation sets of backlog T0-37: `bvb-write` and `brb-write`, each with
+"""The ablation sets of H-UNDECIDE, H-PROBE and H-HISTORY: `bvb-write` and `brb-write`, each with
 one thing changed and nothing else.
 
   python3 bench/ablate/gen.py            writes the six sets
@@ -47,11 +47,11 @@ SOURCES = ("bvb-write", "brb-write")
 # name -> (what it changes in `set.json`, the ADR, the hypothesis, one line)
 VARIANTS = {
     "undecided": ({"mcp_flags": "--undecided-info"}, "ADR-0108", "H-UNDECIDE",
-                  "서버 플래그 `--undecided-info`(미결정 의무에 범위 탐색의 판정)"),
+                  "the server flag `--undecided-info` (the verdict of a bounded search on an undecided obligation)"),
     "probe": ({"mcp_flags": "--probe-tool"}, "ADR-0109", "H-PROBE",
-              "서버 플래그 `--probe-tool`(후보 불변식을 커밋 없이 시험하는 읽기 도구)"),
+              "the server flag `--probe-tool` (a read tool that tries a candidate invariant without a commit)"),
     "stateless": ({"history": "stateless"}, "ADR-0110", "H-HISTORY",
-                  "`\"history\": \"stateless\"`(수리 차례마다 고정 문맥·현재 상태·시도마다 한 줄)"),
+                  "`\"history\": \"stateless\"` (every repair turn gets the fixed context, the current state and one line per attempt)"),
 }
 
 
@@ -91,10 +91,10 @@ def build_set(root, source, variant):
         f.write(text)
     _, adr, hyp, what = VARIANTS[variant]
     with open(os.path.join(out, "README.md"), "w") as f:
-        f.write(f"# {name} ({hyp}, 백로그 T0-37)\n\n`bench/ablate/gen.py`가 `bench/{source}`에서 만든 판이다(동결). "
-                f"직접 고치지 않고 생성기로 다시 만든다. {source}와 `set.json`의 한 가지만 다르다: {what}. "
-                f"프롬프트·씨앗·과제·판정은 그대로다. 비교와 반증 조건은 {adr}에 실행 전에 등록돼 있다"
-                + ("(Rust 팔은 `harness.py --history stateless`)" if brb and variant == "stateless" else "")
+        f.write(f"# {name} ({hyp})\n\nA variant that `bench/ablate/gen.py` makes from `bench/{source}` (frozen). "
+                f"It is not edited by hand; the generator makes it again. It differs from {source} in one thing in `set.json`: {what}. "
+                f"The prompt, seed, tasks and judging are unchanged. The comparison and the refutation condition were registered in {adr} before the run"
+                + (" (the Rust arm is `harness.py --history stateless`)" if brb and variant == "stateless" else "")
                 + ".\n")
     return out
 

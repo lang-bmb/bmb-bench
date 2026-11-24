@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""H-NAME task sets (backlog T1-04): the m1b set with its names taken away.
+"""H-NAME task sets: the m1b set with its names taken away.
 
   python3 bench/hname/gen.py [--bmb PATH]          writes bench/m1b-alpha and bench/m1b-mislead
   python3 bench/hname/gen.py --check [--bmb PATH]  fails if the committed twins differ from a fresh build
 
-The hypothesis (dev-docs/reviews/direction-2026-10-28.md §6.2): in BMB the
+The hypothesis (H-NAME): in BMB the
 contracts carry the meaning that names carry elsewhere, so a model's one-shot
 success drops less when names lose their meaning. Two twins of m1b, built by
 one renaming applied consistently to the seed, the task prompts, signatures,
@@ -241,8 +241,8 @@ def build(name, umap, dmap, neutral_summaries, root):
     with open(os.path.join(out, "MANIFEST"), "w") as fh:
         fh.write(harness.manifest_text())
     with open(os.path.join(out, "README.md"), "w") as fh:
-        fh.write(f"# m1b-{name} (H-NAME, 백로그 T1-04)\n\n`bench/hname/gen.py`가 `bench/m1b`에서 만든 쌍둥이 과제 집합이다(동결). "
-                 "직접 고치지 않고 생성기로 다시 만든다. 규칙은 생성기 머리 주석에 있다.\n")
+        fh.write(f"# m1b-{name} (H-NAME)\n\nA twin task set that `bench/hname/gen.py` makes from `bench/m1b` (frozen). "
+                 "It is not edited by hand; the generator makes it again. The rules are in the generator's header comment.\n")
     return out
 
 

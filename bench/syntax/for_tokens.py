@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Token cost of counting loops: `while` against the range `for` (backlog
-2R-04f, ADR-0049 §2, ADR-0057).
+"""Token cost of counting loops: `while` against the range `for`
+(ADR-0049 §2, ADR-0057).
 
 Deterministic, offline. For each program, `bmb fix --print` applies the
 canonical-loop rewrite (W0907, ADR-0057) and nothing else (the programs
@@ -44,7 +44,7 @@ def main():
     if rest[:1] == ["--rev"]:
         rev, rest = rest[1], rest[2:]
     total = [0, 0, 0]
-    print("| 프로그램 | 바뀐 루프 | 토큰 전 | 토큰 뒤 | 판정 |")
+    print("| Program | Loops rewritten | Tokens before | Tokens after | Verdict |")
     print("| --- | ---: | ---: | ---: | --- |")
     with tempfile.TemporaryDirectory() as tmp:
         for f in rest:
@@ -66,10 +66,10 @@ def main():
             total[0] += len(codes)
             total[1] += tb
             total[2] += ta
-            print(f"| `{f}` | {len(codes)} | {tb} | {ta} | {'같음' if same else '다름'} |")
+            print(f"| `{f}` | {len(codes)} | {tb} | {ta} | {'same' if same else 'different'} |")
     n, tb, ta = total
     per = (tb - ta) / n if n else 0
-    print(f"| 합 | {n} | {tb} | {ta}({(ta - tb) / tb * 100:+.1f}%) | 루프당 {per:.1f}토큰 |")
+    print(f"| Sum | {n} | {tb} | {ta} ({(ta - tb) / tb * 100:+.1f}%) | {per:.1f} tokens per loop |")
 
 
 if __name__ == "__main__":

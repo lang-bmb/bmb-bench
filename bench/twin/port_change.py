@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refactoring tasks on the port twin (backlog 3P-03, ADR-0104: H-REFACTOR).
+"""Refactoring tasks on the port twin (ADR-0104: H-REFACTOR).
 
     port_change.py make COMMIT     write bench/twin/port/r*.json for that commit
     port_change.py check           the committed tasks are what `make` writes for
@@ -268,7 +268,7 @@ class Twin:
 
 
 # The control that does nothing: the change did not take place (`must_change`
-# is the scope: what the reference solution changes, backlog 3P-13).
+# is the scope: what the reference solution changes).
 NOTHING = {"fails": "done", "bmb": [], "rust": []}
 
 

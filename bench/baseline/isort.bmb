@@ -1,4 +1,4 @@
-#[summary("벤치: 의사 난수 배열 삽입 정렬")]
+#[summary("bench: insertion sort of a pseudo-random array")]
 mod isort {
     spec fn len_ok(a: &[i64]) -> bool { 1 <= a.len() && a.len() <= 1000000 }
 
@@ -73,7 +73,7 @@ mod isort {
     }
 }
 
-#[summary("진입점")]
+#[summary("entry point")]
 mod app {
     #[effects(io)]
     #[uses(isort::len_ok)]

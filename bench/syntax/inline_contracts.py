@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Contract clauses as inline expressions (backlog 2R-04b).
+"""Contract clauses as inline expressions.
 
 Deterministic, offline. BMB requires every `requires`/`ensures` clause to be
 a call of a named `spec fn` (E0501); Verus writes the expression inline.
-2R-02 (syntax-eval-1.md §2.3) counted the single-use predicates. This
+The token measurement (`measure.py`; syntax-eval-1.md §2.3) counted the single-use predicates. This
 transforms them: each `spec fn` named by exactly one contract clause and by
 nothing else (no other spec body, invariant or assert) is inlined into that
 clause, its parameters replaced by the call's arguments (each in
@@ -15,7 +15,7 @@ parentheses), and the result is measured against the written form:
   contracts     `bmb query contracts`' answer for the clause: a name now,
                 an expression inline
   quantifiers   how many of the inlined predicates hold a quantifier
-                (variant T2 of 2R-02: only quantifier-free clauses inline)
+                (variant T2 of the token measurement: only quantifier-free clauses inline)
   leaves        how many are leaves (call no other spec fn): their query is
                 the same either way, since a leaf spec fn is a macro in the
                 query (ADR-0067)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""H-REVIEW's change set and the review harness (ADR-0078, backlog T1-44):
+"""H-REVIEW's change set and the review harness (ADR-0078):
 the set is frozen and is what the generator makes, every program of every
 change is proved, the hidden labels are what the compiler says of the
 contracts, the views are deterministic and do not depend on the label, the

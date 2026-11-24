@@ -1,4 +1,4 @@
-# The `sha2` crate arm of the SHA-256 speed bench (backlog T4-01, approved
+# The `sha2` crate arm of the SHA-256 speed bench (approved
 # 2026-11-01: bench only, not a compiler dependency). Same data and output as
 # ../sha256_speed.bmb and ../sha256_speed.rs; opt-level 2 as their rustc.
 [package]

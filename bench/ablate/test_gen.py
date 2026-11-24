@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The ablation sets (`gen.py`, backlog T0-37) are the committed ones, differ
+"""The ablation sets (`gen.py`) are the committed ones, differ
 from their source in one key of `set.json` and nothing else the model or the
 judge reads, their servers show the tool list each should, and the scripted
 reference and weak agents pass and fail through the harness of each."""

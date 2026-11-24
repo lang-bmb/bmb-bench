@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate test for BCB (backlog 2A-14, ADR-0042): histories are deterministic,
+"""Gate test for BCB (ADR-0042): histories are deterministic,
 replay reproduces every recorded digest, every commit of every profile keeps
 the BMB workspace fully proved and the Rust twin with its tests compiling
 (`cargo check --tests`, warnings as errors), each edit kind changes what it
@@ -119,7 +119,7 @@ def check_profile(t, profile):
 
 
 def check_harness(t):
-    """Replay harness (2A-14c): every arm measures every commit it should, the
+    """Replay harness: every arm measures every commit it should, the
     selections nest (R2 within R1 within R0), events add cold rows, B0 proves
     everything, and the table reads the result."""
     path = os.path.join(t, "harness.jsonl")
@@ -145,7 +145,7 @@ def check_harness(t):
     assert all(r["encoded"] > warm[r["k"]]["encoded"] for r in cold), "a cold build re-proves everything"
     b0 = [r for r in rows if r["arm"] == "b0"]
     assert b0[0]["encoded"] == [r for r in rows if r["arm"] == "b1" and r["k"] == 0][0]["encoded"], b0
-    # Planted defects (2A-14d): a Rust catch is always a proof failure too (Rust
+    # Planted defects: a Rust catch is always a proof failure too (Rust
     # tests check only the contract), the selections nest, B0 sees what B1 sees.
     dpath = os.path.join(t, "defects.jsonl")
     bcb.main(["defects", path, "--work", os.path.join(t, "defects"), "--out", dpath])
@@ -238,7 +238,7 @@ def check_suite(t):
 
 
 def check_localization(t):
-    """Edit localization (1B-41, H-MAINT): in every commit of the three
+    """Edit localization (H-MAINT): in every commit of the three
     histories the incremental build re-proves only definitions inside the
     impact set of the edits; and the check does fail when that set is empty."""
     for profile in sorted(history.PROFILES):
@@ -255,7 +255,7 @@ def check_localization(t):
 
 
 def check_compat(t):
-    """H-COMPAT (T1-46): at every contract edit of the contract-heavy history,
+    """H-COMPAT: at every contract edit of the contract-heavy history,
     `impact` names every caller the generator says reads the contract, and
     `bmb weaken` gives the generator's verdict; and the check does fail when
     `impact` names nothing."""
@@ -292,7 +292,7 @@ def main():
         r = subprocess.run([sys.executable, os.path.join(HERE, "history.py"), "replay", path, "--bmb",
                             os.path.join(t, "x"), "--rust", os.path.join(t, "y")], capture_output=True, text=True)
         assert r.returncode != 0 and "differs from the recorded digest" in r.stderr, r.stderr
-        # Test equality (2A-14b): after the contract-heavy history, the Rust tests kill
+        # Test equality: after the contract-heavy history, the Rust tests kill
         # every mutant whose contract violation the BMB gate rejects, and nothing it proves.
         code = kills.main(["--history", os.path.join(t, "contract-heavy.jsonl"), "--at", str(COMMITS),
                            "--work", os.path.join(t, "kills")])

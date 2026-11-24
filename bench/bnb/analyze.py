@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rust-side analyzer of a twin crate (backlog 3A-05, BNB).
+"""Rust-side analyzer of a twin crate (BNB).
 
 Reads src/m<U>.rs as text (the fixed layout twin.py writes, not general Rust)
 and rebuilds the structure the BMB maps report, so a test can check that the

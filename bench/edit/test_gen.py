@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The write-surface sets (`gen.py`, backlog T1-06, ADR-0073) differ from their
+"""The write-surface sets (`gen.py`, ADR-0073) differ from their
 source sets only in the write surface, the model is shown exactly the tools
 the prompt names, and the scripted agents' surface translation
 (`bench/m1/surface.py`) writes what the transaction would. The full scripted

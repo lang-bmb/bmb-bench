@@ -55,7 +55,7 @@ class OpenAI(unittest.TestCase):
         self.assertEqual(a.stop, "stop")
 
     def test_context_log_is_opt_in(self):
-        # BMB_CONTEXT_LOG=1 adds per-request tokens (backlog 2D-25); without it
+        # BMB_CONTEXT_LOG=1 adds per-request tokens; without it
         # the usage is the same as before (previous test).
         post = StubPost([resp("tool_calls", calls=[("c1", "verify", "{}")], usage=(7, 3)),
                          resp("stop", usage=(9, 4))])
@@ -116,7 +116,7 @@ class ApiErrors(unittest.TestCase):
 
     def test_the_spend_cap_stops_the_run(self):
         # HTTP 402 `cap_reached` is not a session outcome: it escapes the
-        # agent, so the harness writes no row and resumes later (INF-23).
+        # agent, so the harness writes no row and resumes later.
         import io
         import urllib.error
         body = b'{"type":"error","error":{"type":"cap_reached"}}'
@@ -136,7 +136,7 @@ class ApiErrors(unittest.TestCase):
 
     def test_a_refused_key_stops_the_run(self):
         # HTTP 401 (2026-11-06: a service key not yet active) answered every
-        # session in two minutes and was recorded as failures (INF-28).
+        # session in two minutes and was recorded as failures.
         import io
         import urllib.error
         body = b'{"type":"error","error":{"type":"unauthenticated","message":"The service key is not known."}}'
@@ -202,7 +202,7 @@ class Streams(unittest.TestCase):
 
     def test_a_stream_past_its_deadline_is_cut(self):
         # Keep-alive lines reset the read timeout; the deadline bounds the
-        # whole request (T0-13 stall, 2026-11-02).
+        # whole request (a stalled stream, 2026-11-02).
         lines = [b": keep-alive\n"] * 3 + [b'data: {"x": 1}\n']
         with self.assertRaises(model_api.StreamCut):
             list(model_api.sse_events(lines, deadline=model_api.time.monotonic() - 1))

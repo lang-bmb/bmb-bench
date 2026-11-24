@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The measurement queue's table (backlog INF-39): estimates come only from
+"""The measurement queue's table: estimates come only from
 committed result files, and the committed queue names files that exist."""
 import json
 import os
@@ -51,11 +51,11 @@ class Queue(unittest.TestCase):
         ]}
         rows = bench_queue.rows_of(spec, self.root, self.usage)
         text = bench_queue.table(rows, {"m": (1000000.0, 0.0)}, 250.0)
-        self.assertIn("| 1 | `T-1` | set | m | 3 | 10 | 200 | 30 | 600 | 90 | 결과 파일 2개 |", text)
-        self.assertIn("모델 없음", text)
-        self.assertIn("지난 실행 없음", text)
+        self.assertIn("| 1 | `T-1` | set | m | 3 | 10 | 200 | 30 | 600 | 90 | 2 result files |", text)
+        self.assertIn("no model", text)
+        self.assertIn("no earlier run", text)
         self.assertIn("| first | m | 5 | 600 | 90 | 2 | 600.00 |", text)
-        self.assertIn("- first: 3일(누적 3일)", text)
+        self.assertIn("- first: 3 days (3 cumulative)", text)
         plain = bench_queue.table(rows, {}, None)
         self.assertNotIn("USD", plain)
 

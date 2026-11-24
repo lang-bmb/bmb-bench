@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compact agent view task sets (backlog 2D-23, 2D-25, ADR-0068): prepared, not frozen.
+"""Compact agent view task sets (ADR-0068): prepared, not frozen.
 
   python3 bench/view/gen.py OUT     writes OUT/m1b-write-compact and OUT/bvb-write-compact
 
@@ -50,9 +50,9 @@ def build_set(root, source):
     with open(os.path.join(out, "MANIFEST"), "w") as f:
         f.write(harness.manifest_text())
     with open(os.path.join(out, "README.md"), "w") as f:
-        f.write(f"# {source}-compact (압축 에이전트 투영, 백로그 2D-23·2D-25, ADR-0068)\n\n"
-                f"`bench/view/gen.py`가 `bench/{source}`에서 만든 판이다. {source}와 MCP 서버 플래그 `--compact` 하나만 "
-                "다르다(생성기 머리 주석).\n")
+        f.write(f"# {source}-compact (compact agent view, ADR-0068)\n\n"
+                f"A variant that `bench/view/gen.py` makes from `bench/{source}`. It differs from {source} only in the MCP server flag `--compact` "
+                "(the generator's header comment).\n")
     return out
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Port-twin harness (ADR-0104, backlog 3P-01).
+"""Port-twin harness (ADR-0104).
 
 One task, two arms, the same statement, model and tool-call budget:
 
@@ -424,8 +424,8 @@ def ws_files(ws):
 # ---------- the BMB arm ----------
 
 # The server's flags. `--write-tool` is the official write surface (ADR-0101).
-# The port twin is measured with `--write-tool --compact` (ADR-0144, backlog
-# 3P-10; `PAIR_MCP` overrides): a `write` then returns the definitions that failed and a count of
+# The port twin is measured with `--write-tool --compact` (ADR-0144;
+# `PAIR_MCP` overrides): a `write` then returns the definitions that failed and a count of
 # the proved ones, not one line per definition of the workspace.
 def mcp_flags(fixture):
     if "PAIR_MCP" in os.environ:
@@ -773,7 +773,7 @@ def judge_change(task, arm, root, before, work):
                                                         else run_cases(exe, cases))
     out["out_of_scope"] = out_of_scope(task, arm, before, after)
     out["changed"] = changed(before, after)
-    # The change that was asked for took place (backlog 3P-13): every
+    # The change that was asked for took place: every
     # definition of `must_change` changed, appeared or went. Without it a
     # session that changes nothing passes the three checks above.
     out["not_done"] = sorted(set(task.get("must_change", {}).get(arm, [])) - set(out["changed"]))
@@ -824,7 +824,7 @@ def make_agent(kind, arm, task, script=None):
 def set_up(task, arm, dest, work):
     """The arm's starting copy with the task's `setup` applied: the tool
     calls that take the code back to the state the task starts from (a
-    replayed commit undone, backlog 3P-04). A BMB setup proves the
+    replayed commit undone). A BMB setup proves the
     workspace, so its result is kept per commit, task and condition."""
     calls = task.get("setup", {}).get(arm)
     if not calls:

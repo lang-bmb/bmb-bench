@@ -1,3 +1,3 @@
-# m1b-write-lean (고정 문맥, 백로그 2D-28)
+# m1b-write-lean (fixed context)
 
-`bench/lean/gen.py`가 `bench/m1b-write`에서 만든 판이다(동결). 직접 고치지 않고 생성기로 다시 만든다. m1b-write와 매 요청에 들어가는 부분(프롬프트, 도구 설명 `--tool-docs`, 보이는 도구)만 다르다(생성기 머리 주석).
+A variant that `bench/lean/gen.py` makes from `bench/m1b-write` (frozen). It is not edited by hand; the generator makes it again. It differs from m1b-write only in what goes into every request (the prompt, the tool descriptions `--tool-docs`, the visible tools; see the generator's header comment).

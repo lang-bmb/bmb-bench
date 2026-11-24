@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate test for BNB (backlog 3A-05): frozen tasks, the Rust twin (cargo check,
+"""Gate test for BNB: frozen tasks, the Rust twin (cargo check,
 locality), the file tools, and at N=100 the same ground truth from the BMB
 maps and from the twin's text, with both scripted oracles answering every task
 exactly within the budget. Uses $BMB or target/debug/bmb."""
@@ -112,7 +112,7 @@ VARIANTS = {"bnb-bounded": ("--bounded", 32768), "bnb-bounded-16k": ("--bounded-
 
 
 def test_variants_frozen():
-    """The bounded variants (2D-39a): frozen, the flag and the prompt name the
+    """The bounded variants: frozen, the flag and the prompt name the
     same budget, and the prompt differs from the original only where it says."""
     base = open(os.path.join(HERE, "prompt-bmb.md")).read().splitlines()
     for name, (flag, budget) in VARIANTS.items():

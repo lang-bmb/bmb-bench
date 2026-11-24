@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Query cost scale measurement (backlog 3A-02, DESIGN.md principle 7).
+"""Query cost scale measurement (DESIGN.md principle 7).
 
   scale.py verify  --work DIR [--sizes 100 1000 10000] [--out F.jsonl]
       generate each size with gen.py (same parameters), verify it cold with
@@ -220,7 +220,7 @@ def cmd_queries(a):
 
 
 def after_commit(s, sc, pr, rec, runs, d):
-    """Cost of a write and of the first read after it (backlog 3A-03): RUNS
+    """Cost of a write and of the first read after it: RUNS
     times, commit a body change of the first `shift` leaf of m1 (its
     branch constant, alternately +1 and back, through tx_put), then run
     `slice` and `surface` of the chain_top probe once. The server's
@@ -284,7 +284,7 @@ def cmd_table(a):
     sizes = sorted({r["size"] for r in rows if "size" in r})
     gens = {r["size"]: r for r in rows if r["kind"] == "gen"}
     if gens:
-        print("| N | 단위 | spec fn | 실행 fn | 원문 바이트 | 의무 | 콜드 verify(s) | 웜 verify(s) | 증분 verify(s) |")
+        print("| N | Units | spec fn | exec fn | Source bytes | Obligations | Cold verify (s) | Warm verify (s) | Incremental verify (s) |")
         print("| --- | --- | --- | --- | --- | --- | --- | --- | --- |")
         v = {(r["size"], r["phase"]): r for r in rows if r["kind"] == "verify"}
         for n in sizes:
@@ -302,8 +302,8 @@ def cmd_table(a):
             if k not in keys:
                 keys.append(k)
         by = {(r["probe"], r["query"], r["size"]): r for r in q}
-        head = " | ".join(f"{n} 바이트 | {n} 토큰 | {n} ms | {n} CPU ms" for n in sizes)
-        print(f"| 프로브 | 질의 | {head} |")
+        head = " | ".join(f"{n} bytes | {n} tokens | {n} ms | {n} CPU ms" for n in sizes)
+        print(f"| Probe | Query | {head} |")
         print("| --- | --- | " + " | ".join("---" for _ in range(4 * len(sizes))) + " |")
         for p, name in keys:
             cells = []

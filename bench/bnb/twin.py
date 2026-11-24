@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rust twin of a bench/m3 workspace (backlog 3A-05, BNB).
+"""Rust twin of a bench/m3 workspace (BNB).
 
 Writes OUT/Cargo.toml and OUT/src/{lib.rs, m<U>.rs}: an ordinary Rust library
 crate with the same definitions, call graph, `&mut` write paths and io
@@ -149,6 +149,8 @@ def render_unit(units, u, args):
             v, cn = ch[n]["callees"][0]
             defs[n] = fn_text(contract_doc(["inb(x)"], []), f"pub fn {n}(x: i64) {{",
                               [check(["inb(x)"]), f'    println!("{{}}", {call(v, cn)}(x));'])
+    # The same Korean text as the unit summary of bench/m3/gen.py: data of the
+    # generated twin, kept as it is.
     head = f"//! 생성 단위 {u}: 상한 산술, 배열 훑기, 변경 경로\n\n"
     if used:
         mods = ", ".join(f"m{v}" for v in sorted(used))

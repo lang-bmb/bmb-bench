@@ -1,45 +1,53 @@
-# 벤치
+# Benches
 
-| 디렉터리 | 벤치 | 모델 |
+| Directory | Bench | Model |
 | --- | --- | --- |
-| `m1`, `m1b` | 작성·탐색 1회 성공률, BSB 판별률(ADR-0021, 0025, 0035) | 필요 |
-| `bvb` | Verus 이식 과제, 원본 Verus와 비교(ADR-0038) | 필요 |
-| `impossible` | BMB-Impossible: 불가능 계약에서 정직 보고 대 게이트 우회(H-GAME, 2A-13) | 필요(증명서·대조군은 불필요) |
-| `brb` | BMB+증명 대 Rust+테스트(G5, H-ORACLE, G8) | 필요 |
-| `brb-encap` | 자료 구조 수정: 타입 불변식 대 private + 테스트(H-ENCAP, T0-09) | 필요(기준·약한·게이밍 해법은 불필요) |
-| `brb-encap-b` | `brb-encap`의 새 연산을 `impl` 메서드로(H-ENCAP, T0-29) | 필요(기준·약한·게이밍 해법은 불필요) |
-| `brb-effect` | 출력과 상태가 있는 과제: 남은 테스트 면적(H-EFFECT, T1-43) | 필요(기준·약한 해법은 불필요) |
-| `brb-hard` | 테스트가 놓치기 쉬운 결함, QuixBugs에서 옮긴 과제 12개(H-ORACLE, T0-08) | 필요(기준·약한 해법은 불필요) |
-| `repair` | `m1b-write`의 절제 판 `m1b-write-norepair`(반례·`fix` 없는 도구 결과, H-REPAIR, T1-45)와 판정 | 필요(스크립트 에이전트는 불필요) |
-| `ablate` | `bvb-write`·`brb-write`의 절제 판 여섯: `-undecided`(`--undecided-info`, H-UNDECIDE), `-probe`(`--probe-tool`, H-PROBE), `-stateless`(상태 없는 수리 차례, H-HISTORY). 원판과 `set.json`의 한 가지만 다르다(T0-37, ADR-0136) | 필요(스크립트 에이전트는 불필요) |
-| `review` | 변경 검토: 명세 diff(`bmb weaken` 판정 포함) 대 코드 diff, BVB에서 만든 변경 143개(H-REVIEW, T1-44) | 필요(대본 리뷰어는 불필요) |
-| `intent` | 계약 검토: 명세 + `bmb examples`의 예시·반례 대 코드 + 명세, BVB에서 만든 항목 90개(H-INTENT, T1-44e). `review` 하네스의 둘째 집합 | 필요(대본 리뷰어는 불필요) |
-| `bnb` | 맵 도구 대 파일 도구(Rust 쌍둥이) | 오라클 팔은 불필요 |
-| `twin` | 포팅 쌍둥이 하네스: 같은 프로그램의 BMB 작업 공간과 Rust 크레이트에서 이해·리팩터링·과업(ADR-0104, 3P) | 필요(기준·약한 대본은 불필요) |
-| `bcb` | 누적 검증 비용(ADR-0042) | 불필요 |
-| `m3` | 생성 코드베이스 | 불필요 |
-| `baseline` | 성능 기준선(안전 Rust 대비) | 불필요 |
+| `m1`, `m1b` | first-attempt success rate of writing and navigation, BSB kill rate (ADR-0021, 0025, 0035) | needed |
+| `bvb` | tasks ported from Verus, compared with the original Verus (ADR-0038) | needed |
+| `impossible` | BMB-Impossible: honest report against passing the gate on an infeasible contract (H-GAME) | needed (not for the certificates and controls) |
+| `brb` | BMB + proof against Rust + tests (G5, H-ORACLE, G8) | needed |
+| `brb-encap` | changing a data structure: type invariants against private fields + tests (H-ENCAP) | needed (not for the reference, weak and gaming solutions) |
+| `brb-encap-b` | the new operation of `brb-encap` as an `impl` method (H-ENCAP) | needed (not for the reference, weak and gaming solutions) |
+| `brb-effect` | tasks with output and state: the remaining test area (H-EFFECT) | needed (not for the reference and weak solutions) |
+| `brb-hard` | defects that tests miss easily, 12 tasks ported from QuixBugs (H-ORACLE) | needed (not for the reference and weak solutions) |
+| `repair` | `m1b-write-norepair`, the ablation variant of `m1b-write` (tool results without counterexamples and `fix`, H-REPAIR), and its verdict | needed (not for the scripted agents) |
+| `ablate` | the six ablation variants of `bvb-write` and `brb-write`: `-undecided` (`--undecided-info`, H-UNDECIDE), `-probe` (`--probe-tool`, H-PROBE), `-stateless` (stateless repair turns, H-HISTORY). Each differs from its original in one thing in `set.json` (ADR-0136) | needed (not for the scripted agents) |
+| `review` | reviewing a change: the specification diff (with the `bmb weaken` verdict) against the code diff, 143 changes made from BVB (H-REVIEW) | needed (not for the scripted reviewers) |
+| `intent` | reviewing a contract: specification + the examples and counterexamples of `bmb examples` against code + specification, 90 items made from BVB (H-INTENT). The second set of the `review` harness | needed (not for the scripted reviewers) |
+| `bnb` | map tools against file tools (Rust twin) | not needed for the oracle arm |
+| `twin` | port-twin harness: comprehension, refactoring and tasks on the BMB workspace and the Rust crate of the same program (ADR-0104) | needed (not for the reference and weak scripts) |
+| `bcb` | cumulative verification cost (ADR-0042) | not needed |
+| `m3` | generated code bases | not needed |
+| `baseline` | performance baseline (against safe Rust) | not needed |
 
-## 실제 모델 측정: 명령 하나 (`run_models.py`, 백로그 INF-14)
+## Names of measurements
 
-모델이 필요한 동결 과제 집합을 정해진 순서로 기존 하네스에 돌리고(기본은 정식 쓰기 표면 ADR-0101: bvb-verus, brb-rust, m1b-write, bvb-write, brb-write. 트랜잭션 원판 m1·m1b·bvb·brb-bmb는 이름을 줄 때만 돌고, 지표는 쓰기 판이 있으면 그것을 읽는다), 모든 요약과 지표별 채움 여부를 한 보고서로 낸다. 각 하네스가 자기 MANIFEST를 확인하고 1회·재시도 없음 규칙(ADR-0021)을 지킨다.
+Some result directories and scripts are named after the label a measurement was planned under, for example `bench/twin/results/3p-17/`, `bench/bnb/results/3a06/`, `bench/bcb/results/inf19/`, `bench/syntax/results/2r05/` and `bench/twin/run_3p05a.sh`. Such a name is only the label of that measurement: the README beside the rows says what was measured. The `task` field of `bench/waiting.json` holds labels of the same kind for runs that have not been made yet. The replay tasks of `bench/twin` quote the subjects of the commits they replay as they were written, with the labels those subjects carry.
+
+## The `commit` field of a result row
+
+Rows written before `bench/` moved to this repository (`bench/SOURCE` names the commit of the move) have one commit field: `commit` is a commit of `lang-bmb`, which then held the compiler, the harnesses and the sets together. Rows written from this repository carry two: `commit` is a commit of this repository (the harness and the sets), and `lang_bmb_commit` is the commit of the `lang-bmb` checkout that `LANG_BMB` names (the compiler). The harnesses that take their condition fields from `bench/m1/harness.py` write both (`bench/lang_bmb.py`). `bench/review/harness.py` and `bench/bcb/bcb.py` are frozen and write only `commit`; for their rows the compiler's commit has to be recorded with the run. The tables that frozen harnesses print keep their old label for the `commit` field, the Korean for "compiler commit": read it as the `commit` field as described here.
+
+## Measurements with a real model: one command (`run_models.py`)
+
+It runs the frozen task sets that need a model through the existing harnesses in a fixed order (by default the official write surface of ADR-0101: bvb-verus, brb-rust, m1b-write, bvb-write, brb-write. The transaction originals m1, m1b, bvb and brb-bmb run only when named, and a metric is read from the write variant when there is one), and gives every summary, and whether each metric was filled, in one report. Each harness checks its own MANIFEST and keeps the rule of one attempt without retry (ADR-0021).
 
 ```
-python3 bench/run_models.py --dry-run                     # 대본 기준 해법으로 끝까지(비용 0). 게이트는 --limit 2
+python3 bench/run_models.py --dry-run                     # to the end with the scripted reference solutions (no cost). The gate uses --limit 2
 python3 bench/run_models.py --agent openai:qwen3.8-27b \
-    --price-in 0 --price-out 0 --budget 0 --report report.md        # 기본 모델(ADR-0066, 로컬)
+    --price-in 0 --price-out 0 --budget 0 --report report.md        # the default model (ADR-0066, local)
 python3 bench/run_models.py --agent anthropic:claude-sonnet-5-5 \
-    --price-in P --price-out Q --budget USD --report report.md      # 프런티어 교차 비교
-python3 bench/run_models.py --agent ... --sets brb-bmb,brb-rust   # 일부만, 또는 예산으로 멈춘 뒤 나머지
+    --price-in P --price-out Q --budget USD --report report.md      # frontier cross-check
+python3 bench/run_models.py --agent ... --sets brb-bmb,brb-rust   # only some, or the rest after a stop by the budget
 ```
 
-- **모델 환경(ADR-0066).** 에이전트 종류는 `openai:MODEL`(Chat Completions)과 `anthropic:MODEL`(Messages API)이고, 주소는 환경 변수로 준다: `BMB_GATEWAY`(두 API를 `/openai/v1`, `/anthropic/v1` 아래에서 내는 게이트웨이의 주소)나 `BMB_OPENAI_BASE_URL`·`BMB_ANTHROPIC_BASE_URL`(주소 전체). 저장소에는 게이트웨이의 호스트 이름이 없고, 결과 행과 세션 기록에서는 `<gateway>`로 적혀 있다. 자격 증명은 환경이 넣고 저장소에는 키가 없다(`bench/m1/model_api.py`). 기본은 `qwen3.8-27b`, `claude-sonnet-5-5`는 같은 집합·같은 커밋의 교차 비교에만 쓴다. 각 하네스의 `run --agent`도 같은 문자열을 받는다.
+- **Model environment (ADR-0066).** The agent kinds are `openai:MODEL` (Chat Completions) and `anthropic:MODEL` (Messages API), and the address comes from the environment: `BMB_GATEWAY` (the URL of a gateway that serves both APIs under `/openai/v1` and `/anthropic/v1`) or `BMB_OPENAI_BASE_URL` and `BMB_ANTHROPIC_BASE_URL` (either base URL whole). The repository does not hold the gateway's host name, and in the result rows and session records it reads `<gateway>`. The environment supplies the credentials and the repository holds no keys (`bench/m1/model_api.py`). The default is `qwen3.8-27b`; `claude-sonnet-5-5` is used only for the cross-check on the same sets at the same commit. `run --agent` of each harness takes the same strings.
 
-- **가격은 인자다.** 가격이 바뀌므로 제공자의 가격표에서 백만 토큰당 USD를 넣는다.
-- **예산 장치.** 집합이 끝날 때마다 기록된 토큰으로 지출을 계산하고, 다음 집합을 시작하기 전에 (지금까지 세션당 평균 비용 × 그 집합의 세션 수)로 예상한다. 지출 + 예상이 예산을 넘으면 그 집합부터 시작하지 않는다. 집합을 중간에 끊지 않으므로 한 집합만큼 넘을 수 있다. 첫 집합(m1, 15세션)에는 예상이 없다.
-- **중단과 재개(INF-16).** 하네스는 세션이 끝날 때마다 결과 행을 덧붙이고(첫 줄은 실행을 밝히는 `partial` 머리), 집합이 끝나면 과제 순서대로 다시 써서 요약 행을 붙인다. 같은 인자로 다시 실행하면 이 커밋·모델에서 끝난 집합은 다시 돌지 않고 보고에 넣으며, 반쯤 돈 집합은 행이 없는 과제부터 잇는다. 행이 쓰인 과제는 다시 돌지 않으므로 재시도가 아니다. 이어 돈 횟수는 요약의 `resumes`에 남는다.
-- **시작 전 거부.** 커밋되지 않은 트리(`+dirty` 결과는 보고에 쓰지 않는다), MANIFEST 불일치, bvb-verus를 골랐는데 Verus 없음(`bench/bvb/verus/install.sh`). 같은 날짜·모델의 다른 커밋 결과 파일이 이미 있으면 덮어쓰지 않는다. 미커밋 판정은 결과 파일(`bench/*/results/`)을 세지 않는다.
-- **결과 위치.** `bench/<집합>/results/<날짜>-<모델>[-verus|-bmb|-rust].jsonl`. 보고서(1E-06)는 이 파일들로 쓴다.
-- **한 번에 채우는 지표.** G2(m1·m1b 작성 1회 성공률), G3(m1b BSB 판별률), H-SPEC 보조(BVB 명세 강도), H-FAMILIAR(BVB BMB 대 Verus, Verus 필요), G5·H-ORACLE·G8(BRB). 결과 행에 최종 파일이 남아(BRB `final_sources`) 나중에 정한 지표도 다시 돌리지 않고 계산한다.
-- **차례별 문맥 기록(선택, 백로그 2D-25).** `BMB_CONTEXT_LOG=1`이면 결과 행에 요청별 입력·출력 토큰(`model_usage.request_input_tokens`·`request_output_tokens`)과 호출별 도구·결과 바이트(`calls`)가 더해진다. 기본은 꺼져 결과 행이 그대로이고, 모델이 보는 것은 켜도 같다. 분해 도구는 `dev-docs/experiments/context-size/`.
-- 게이트(`bench run_models (dry run)`)는 Verus 없이 돌아 H-FAMILIAR를 "건너뜀"으로 보고하고 나머지 줄이 모두 채워지는지 확인한다.
+- **Prices are arguments.** Prices change, so give USD per million tokens from the provider's price list.
+- **Budget guard.** After each set the spend is computed from the recorded tokens, and before the next set starts its cost is projected as (the mean cost per session so far × the number of sessions of that set). When spend + projection exceeds the budget, that set and the ones after it do not start. A set is never cut in the middle, so the budget can be exceeded by one set. The first set (m1, 15 sessions) has no projection.
+- **Interruption and resumption.** A harness appends the result row as each session ends (the first line is a `partial` header that identifies the run), and when the set ends it writes the rows again in task order and adds the summary row. Run again with the same arguments, a set finished at this commit with this model is not run again and goes into the report, and a set left partial continues from the tasks without a row. A task with a row is not run again, so this is not a retry. The number of resumptions stays in `resumes` of the summary.
+- **Refused before the start.** An uncommitted tree (`+dirty` results are not used in a report), a MANIFEST mismatch, bvb-verus selected without Verus (`bench/bvb/verus/install.sh`). When a results file of the same date and model at another commit already exists, it is not overwritten. Result files (`bench/*/results/`) do not count as uncommitted changes.
+- **Where the results go.** `bench/<set>/results/<date>-<model>[-verus|-bmb|-rust].jsonl`. The reports are written from these files.
+- **Metrics filled in one go.** G2 (write first-attempt success rate of m1 and m1b), G3 (BSB kill rate of m1b), H-SPEC auxiliary (BVB specification strength), H-FAMILIAR (BVB, BMB against Verus; needs Verus), G5, H-ORACLE and G8 (BRB). The result rows keep the final files (BRB `final_sources`), so a metric defined later is computed without running again.
+- **Per-turn context record (optional).** With `BMB_CONTEXT_LOG=1` the result rows also get the input and output tokens of each request (`model_usage.request_input_tokens`, `request_output_tokens`) and the tool and result bytes of each call (`calls`). It is off by default and the rows are then unchanged; what the model sees is the same either way.
+- The gate (`bench run_models (dry run)`) runs without Verus, so it reports H-FAMILIAR as "skipped" and checks that every other line is filled.

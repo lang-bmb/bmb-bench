@@ -1,4 +1,4 @@
-"""The stateless repair condition (ADR-0110, backlog T0-36): every request
+"""The stateless repair condition (ADR-0110): every request
 starts a new conversation.
 
 A provider agent (`model_api.OpenAIAgent`, `anthropic_agent.AnthropicAgent`)
@@ -28,8 +28,8 @@ A set opts in with `{"history": "stateless"}` in its `set.json`
 (`configured`); without the key, or with `"full"`, the provider agent is
 returned as it is, so the default path is unchanged. The m1 harness
 (`bench/m1/harness.py`: m1, m1b, bvb and their variants) reads it; the BRB
-harness does not yet (its code is frozen in `bench/brb/MANIFEST`, backlog
-T0-36). Python standard library only.
+harness does not yet (its code is frozen in `bench/brb/MANIFEST`).
+Python standard library only.
 """
 import os
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""H-INTENT's item set (ADR-0078, backlog T1-44e) as a second set of the
+"""H-INTENT's item set (ADR-0078) as a second set of the
 review harness (`bench/review`): the set is frozen and is what the generator
 makes, the committed examples are what the compiler prints, every program is
 proved, the hidden labels are what the compiler says of the contracts, the

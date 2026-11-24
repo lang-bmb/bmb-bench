@@ -1,4 +1,4 @@
-"""Tests of bench/run_models.py beyond the dry run the gate does (backlog INF-14)."""
+"""Tests of bench/run_models.py beyond the dry run the gate does."""
 import json
 import os
 import sys
@@ -17,7 +17,7 @@ class Guard(unittest.TestCase):
         self.assertIsNone(run_models.over_budget(0.0, 0, 45, 1.0))  # no projection yet
         self.assertIsNone(run_models.over_budget(15.0, 15, 30, 50.0))  # 15 + 30 = 45 <= 50
         why = run_models.over_budget(15.0, 15, 40, 50.0)  # 15 + 40 = 55 > 50
-        self.assertIn("예상 $40.00", why)
+        self.assertIn("projected $40.00", why)
 
     def test_real_runs_need_prices_budget_and_whole_sets(self):
         for argv in (["--agent", "anthropic:m"],
@@ -55,7 +55,7 @@ class Guard(unittest.TestCase):
                 run_models.same_as("HEAD", ["m1"], "openai:qwen")
             self.assertIn("condition.py same", str(cm.exception.code))
             # Each set claims its own report: a run resumed with fewer sets
-            # makes the same claim for each (backlog INF-21).
+            # makes the same claim for each.
             run_models.condition.find_report = lambda _b, s, _p: os.path.join(run_models.ROOT, f"r-{s}.json")
             both, _ = run_models.same_as("HEAD", ["m1", "m1b"], "openai:qwen")
             one, _ = run_models.same_as("HEAD", ["m1b"], "openai:qwen")
@@ -85,8 +85,7 @@ class Guard(unittest.TestCase):
 
 
 class Resume(unittest.TestCase):
-    """A rerun skips sets finished on this commit and continues partial ones
-    (backlog INF-16)."""
+    """A rerun skips sets finished on this commit and continues partial ones."""
 
     def setUp(self):
         self.root, self.saved = tempfile.mkdtemp(), run_models.ROOT

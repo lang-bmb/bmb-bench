@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for failures.py (backlog T0-16)."""
+"""Tests for failures.py."""
 import json
 import os
 import sys
@@ -31,7 +31,7 @@ class Classify(unittest.TestCase):
         self.assertEqual(failures.verdict({"kind": "navigate"}), "navigate")
         self.assertEqual(failures.verdict({"delivered": False, "why": "not verified"}), "not-delivered (not verified)")
         self.assertEqual(failures.verdict({"delivered": True, "failed": 2}), "hidden-cases")
-        # From T1-40 on, a write's commit counts by its outcome on every
+        # With one-call writes counted, a write's commit counts by its outcome on every
         # surface: a one-call write session has `commits` 0 but commits.
         self.assertEqual(failures.verdict({**W, "commits": 0, "commits_ok": 2, "commits_rejected": 1}), "spec")
         self.assertEqual(failures.verdict({**W, "commits": 3, "commits_ok": 0, "commits_rejected": 3, "verified": False}), "no-commit")
@@ -45,14 +45,14 @@ class Classify(unittest.TestCase):
                 f.write(json.dumps(r) + "\n")
         text = failures.table(f.name)
         os.unlink(f.name)
-        self.assertIn("## bvb: 실패 1/2", text)
+        self.assertIn("## bvb: 1/2 failed", text)
         self.assertIn("| limit | 1 | 1 |", text)
         self.assertIn("| a | limit | signature |", text)
 
 
 
 class Undecided(unittest.TestCase):
-    """H-DECIDE as a metric (backlog T0-28): only sessions that reached the
+    """H-DECIDE as a metric: only sessions that reached the
     hidden spec check count, and an `undecided` rejection is undecided."""
 
     def test_counts_only_sessions_that_reached_the_spec_check(self):

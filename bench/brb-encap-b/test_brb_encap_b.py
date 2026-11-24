@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""BRB-ENCAP-B task set, judge and harness logic (backlog T0-29; BRB-ENCAP's
-tests, T0-09, with the new operation as an `impl` method). No network, no
+"""BRB-ENCAP-B task set, judge and harness logic (BRB-ENCAP's
+tests, with the new operation as an `impl` method). No network, no
 model. Needs `bmb` ($BMB or target/debug/bmb), clang and cargo (offline).
 
 The frozen tasks and seeds are only read; sessions run on temporary

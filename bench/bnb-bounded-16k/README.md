@@ -1,3 +1,3 @@
-# BNB 응답 창 판, 예산 16,384바이트 (ADR-0127, 백로그 2D-39a)
+# BNB response-window variant, budget 16,384 bytes (ADR-0127)
 
-`bench/bnb-bounded`와 같은 판이고 `bmb mcp`의 플래그가 `--bounded-16k`다. 설명, 실행 명령, 실행 전에 잰 값은 `bench/bnb-bounded/README.md`에 있다.
+The same variant as `bench/bnb-bounded` with the `bmb mcp` flag `--bounded-16k`. The description, the commands and the values measured before the run are in `bench/bnb-bounded/README.md`.

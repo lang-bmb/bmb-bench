@@ -60,7 +60,7 @@ class AnthropicAgent:
         self.usage = {"input_tokens": 0, "output_tokens": 0, "requests": 0, "visible_output_tokens": 0,
                       "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0}
         self.continued = False  # this turn was already continued once (ADR-0076)
-        self.requests = []  # per request, for the session record (backlog INF-17)
+        self.requests = []  # per request, for the session record
         if hasattr(client, "stats"):
             client.stats = self.usage  # transport retries land in the usage row
         self.stop = None
@@ -105,7 +105,7 @@ class AnthropicAgent:
         self.usage["cache_creation_input_tokens"] += written
         self.usage["cache_read_input_tokens"] += read
         self.usage["output_tokens"] += response.usage.output_tokens
-        if context_log():  # model_api: opt-in per-request tokens (backlog 2D-25)
+        if context_log():  # model_api: opt-in per-request tokens
             self.usage.setdefault("request_input_tokens", []).append(prompt)
             self.usage.setdefault("request_output_tokens", []).append(response.usage.output_tokens)
         text = "".join(getattr(b, "text", "") for b in response.content if getattr(b, "type", None) == "text")

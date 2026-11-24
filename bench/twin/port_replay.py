@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Commit replay tasks on the port twin (backlog 3P-04, ADR-0104: H-TASK).
+"""Commit replay tasks on the port twin (ADR-0104: H-TASK).
 
     port_replay.py make COMMIT     write bench/twin/port/t*.json for that commit
     port_replay.py check           the committed tasks are what `make` writes for

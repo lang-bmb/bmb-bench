@@ -1,148 +1,148 @@
-# 파일럿 실행 (ADR-0058 T0, 백로그 T0-01·T0-02)
+# Pilot runs (ADR-0058 T0)
 
-Claude Code CLI를 피험 에이전트로 동결 과제를 돌린다. 정식 경로(API 키 자동 실행, `T0-03`)가 승인되기 전에 방향을 판단할 데이터를 얻기 위한 표시된 임시 조치다(JUDGMENT §2.5). 해제 조건은 `T0-03`이다.
+The frozen tasks are run with the Claude Code CLI as the agent under test. It is a marked temporary measure to get data for judging the direction before the official path (automatic runs with an API key) was approved. It ends when the official path exists.
 
-**파일럿은 ADR-0021 측정이 아니다.** 결과 행마다 `"pilot": true`가 붙는다. 이 결과는 가설 등록부의 "파일럿" 상태와 우선순위 판단에만 쓰고, 문서의 주장 근거로 쓰지 않는다(C3).
+**A pilot is not an ADR-0021 measurement.** Every result row carries `"pilot": true`. These results are used only for the "pilot" state of the hypothesis register and for judging priorities, and not as the basis of a claim in the documents.
 
-| 파일 | 내용 |
+| File | Contents |
 | --- | --- |
-| `cli_pilot.py` | 과제마다 빈 디렉터리에서 `claude -p`를 한 번 실행하고 하네스 판정으로 채점 |
-| `mcp_proxy.py` | CLI와 `bmb mcp` 사이의 MCP 중계. 하네스의 지표(도구 호출, 읽기 바이트, 커밋, E02xx)와 40회 한도, 탐색 과제의 `answer` 도구 |
-| `verus_pilot.py`, `verus_mcp.py` | BVB의 Verus 쪽(T3-03): 같은 CLI 세션에 Verus 하네스의 도구 셋(`read_file`·`write_file`·`verify`)과 판정 |
-| `brb_pilot.py`, `rust_mcp.py` | BRB(T0-07): 동결 하네스 `bench/brb/harness.py`를 라이브러리로 써서 같은 작업 공간·크레이트·프롬프트·도구·숨은 판정, 세션만 CLI. Rust 쪽 도구는 `rust_tools.py`를 MCP로 감싼 것. 하네스의 세션당 출력 토큰 상한(64,000)은 지키지 못한다 |
-| `results/` | 결과 JSONL(마지막 줄이 요약) |
+| `cli_pilot.py` | runs `claude -p` once per task in an empty directory and scores with the harness's judging |
+| `mcp_proxy.py` | MCP relay between the CLI and `bmb mcp`. The harness's metrics (tool calls, bytes read, commits, E02xx), the limit of 40 calls, and the `answer` tool of navigation tasks |
+| `verus_pilot.py`, `verus_mcp.py` | the Verus side of BVB: the three tools of the Verus harness (`read_file`, `write_file`, `verify`) and its judging in the same kind of CLI session |
+| `brb_pilot.py`, `rust_mcp.py` | BRB: uses the frozen harness `bench/brb/harness.py` as a library for the same workspace, crate, prompts, tools and hidden judge; only the session is the CLI. The tools of the Rust side are `rust_tools.py` wrapped as MCP. The harness's limit on output tokens per session (64,000) cannot be kept |
+| `results/` | result JSONL (the last line is the summary) |
 
 ```
 python3 bench/pilot/cli_pilot.py --set bench/m1 --model claude-opus-5-5 --jobs 3 --out bench/pilot/results/DATE-m1-MODEL.jsonl
 ```
 
-## 정식 측정과 같은 것, 다른 것
+## What is the same as the official measurement, and what differs
 
-| 항목 | 정식(`bench/m1/anthropic_agent.py`) | 파일럿 |
+| Item | Official (`bench/m1/anthropic_agent.py`) | Pilot |
 | --- | --- | --- |
-| 과제·MANIFEST·프롬프트 | 동결본 | 같음(`prompt.md`가 시스템 프롬프트 전체, `--system-prompt`) |
-| 도구 | `bmb mcp`만 | 같음(`--tools ""`, `--strict-mcp-config`, 작업 디렉터리는 저장소 밖의 빈 디렉터리) |
-| 호출 한도·재시도 | 40회, 과제당 한 세션 | 같음(한도는 중계가 지킴) |
-| 판정 | 하네스 | 같은 함수(`judge_write`, `spec_kill`, `judge_navigate`) |
-| 추론 노력 | `high` | 같음(`--effort high`) |
-| 에이전트 루프 | 하네스가 Messages API를 직접 부름 | CLI가 쥔다(프롬프트 캐시, 사고, 내부 재시도, 보조 모델 호출) |
-| 비용 기록 | 토큰 | CLI가 보고한 토큰과 `total_cost_usd` |
+| tasks, MANIFEST, prompt | the frozen ones | the same (`prompt.md` is the whole system prompt, `--system-prompt`) |
+| tools | `bmb mcp` only | the same (`--tools ""`, `--strict-mcp-config`, the working directory is an empty directory outside the repository) |
+| call limit, retries | 40 calls, one session per task | the same (the relay keeps the limit) |
+| judging | the harness | the same functions (`judge_write`, `spec_kill`, `judge_navigate`) |
+| reasoning effort | `high` | the same (`--effort high`) |
+| agent loop | the harness calls the Messages API directly | the CLI holds it (prompt cache, thinking, internal retries, calls of auxiliary models) |
+| cost record | tokens | the tokens the CLI reports and `total_cost_usd` |
 
-## 결과 (2026-10-28, 모델 `claude-opus-5-5`)
+## Results (2026-10-28, model `claude-opus-5-5`)
 
-### 2차 실행(r2, 커밋 `d39ff084`): 판정에 쓰는 것
+### Second run (r2, commit `d39ff084`): the one used for verdicts
 
-1차 실행(아래)에는 파일럿 실행기 결함이 있었다. CLI는 일정 크기를 넘는 도구 결과를 대화에 넣지 않고 파일로 옮긴 뒤 앞 2KB만 보여 준다. 파일럿 에이전트에게는 파일을 읽을 도구가 없다. 그래서 큰 `map`·`query` 결과를 보지 못한 세션이 있었다(`T1-15`: `m1b/n12-io`의 첫 호출 `map L1` 59,442바이트). 정식 어댑터는 결과를 그대로 넘기므로 이것은 파일럿 조건의 결함이다. `mcp_proxy.py`가 도구 정의의 `_meta`(`anthropic/maxResultSizeChars`)로 문턱을 올리고, `cli_pilot.py`가 `MAX_MCP_OUTPUT_TOKENS`를 올려 고쳤다. 탐침으로 116행 전부가 보이는 것을 확인한 뒤 BMB 쪽 세 집합을 다시 돌렸다(`*-r2.jsonl`, 최종 소스는 `--keep`로 보존). Verus 쪽 결과는 가장 커도 5,782바이트라 이 결함의 영향이 없다.
+The first run (below) had a defect of the pilot runner. The CLI does not put a tool result over a certain size into the conversation; it moves it to a file and shows only the first 2 KB. The pilot agent has no tool to read files. So some sessions did not see large `map` and `query` results (the first call of `m1b/n12-io`, `map L1`, 59,442 bytes). The official adapter passes results on as they are, so this is a defect of the pilot condition. It was fixed by `mcp_proxy.py` raising the threshold through `_meta` of the tool definitions (`anthropic/maxResultSizeChars`) and `cli_pilot.py` raising `MAX_MCP_OUTPUT_TOKENS`. After a probe confirmed that all 116 rows are visible, the three sets of the BMB side were run again (`*-r2.jsonl`, the final sources kept with `--keep`). The largest result of the Verus side is 5,782 bytes, so this defect does not affect it.
 
-| 집합 | 작성 | 탐색 | 명세 강도(BSB 변이체 판별) | 비용 |
+| Set | Write | Navigation | Specification strength (BSB mutants killed) | Cost |
 | --- | --- | --- | --- | --- |
 | m1 | 10/10 | 5/5 | — | $1.17 |
 | m1b | 25/25 | 12/12 | 186/186 | $6.97 |
-| BVB(BMB) | 42/45 | — | — | $4.44 |
-| BVB(Verus, `verus_pilot.py`) | 44/45 | — | — | $2.07 |
+| BVB (BMB) | 42/45 | — | — | $4.44 |
+| BVB (Verus, `verus_pilot.py`) | 44/45 | — | — | $2.07 |
 
-**BVB 두 팔(T3-03, `bench/bvb/verus/harness.py compare`):**
+**The two arms of BVB (`bench/bvb/verus/harness.py compare`):**
 
-| 지표 | BMB | Verus |
+| Metric | BMB | Verus |
 | --- | --- | --- |
-| 1회 성공 | 42/45 | 44/45 |
-| 실패의 종류 | 셋 모두 명세 강도 검사의 "해법기 미결정" | 하나, 명세 강도 검사 실패(Verus 판정은 미결정과 반박을 나누지 않는다) |
-| 비용 | $4.44 | $2.07 |
-| 모델 출력 토큰 | 107,554 | 52,262 |
-| 도구 호출 | 407 | 111 |
+| first-attempt success | 42/45 | 44/45 |
+| kinds of failure | all three "undecided by the solver" in the specification strength check | one, a failed specification strength check (the Verus judging does not separate undecided from refuted) |
+| cost | $4.44 | $2.07 |
+| model output tokens | 107,554 | 52,262 |
+| tool calls | 407 | 111 |
 
-- 둘이 같은 과제에서 갈린 것은 넷이다: BMB만 실패 `vb-mbpp-454-contains-z`·`vb-misc-choose-odd`·`vc-va0093-max-balance`, Verus만 실패 `vc-va0590-boring-apartment`.
-- 도구 호출 차이의 일부는 쓰기 절차다. BMB는 한 번 쓰는 데 `tx_begin`·`tx_unit`·`tx_put`·`tx_commit`·`verify`(최소 다섯)이고, Verus는 `write_file`·`verify`(둘)다.
-- 표의 "모델 입력 토큰"은 CLI가 캐시 읽기를 빼고 보고하므로 비교에 쓰지 않는다. 비용(`total_cost_usd`)은 캐시를 포함한다.
+- The two differ on four tasks: only BMB fails `vb-mbpp-454-contains-z`, `vb-misc-choose-odd` and `vc-va0093-max-balance`; only Verus fails `vc-va0590-boring-apartment`.
+- Part of the difference in tool calls is the writing procedure. One write in BMB is `tx_begin`, `tx_unit`, `tx_put`, `tx_commit`, `verify` (at least five), in Verus `write_file`, `verify` (two).
+- The "model input tokens" of the table are reported by the CLI without cache reads, so they are not used for the comparison. The cost (`total_cost_usd`) includes the cache.
 
-### BRB: BMB+증명 대 Rust+테스트 (T0-07, `claude-opus-5-5`)
+### BRB: BMB + proof against Rust + tests (`claude-opus-5-5`)
 
-`bench/brb/harness.py summarize`로 낸 표의 요지다(원자료 `results/2026-10-28-brb-*-claude-opus-5-5.jsonl`).
+The gist of the table from `bench/brb/harness.py summarize` (raw data `results/2026-10-28-brb-*-claude-opus-5-5.jsonl`).
 
-| 지표 | BMB | Rust(proptest 켬) |
+| Metric | BMB | Rust (proptest on) |
 | --- | --- | --- |
-| 성공(숨은 케이스 9,651개 전부) | 24/24 | 24/24 |
-| 자기 검사 통과 & 숨은 실패 | 0/24 | 0/24 |
-| 테스트 코드 줄(통과 과제) | 0 | 834 |
-| 비용 | $3.56 | $1.45 |
-| 총 토큰(캐시 포함) | 1,308,034 | 361,488 |
-| 출력 토큰 | 105,571 | 35,916 |
-| 도구 호출 / 검사 호출 | 252 / 41 | 88 / 29 |
+| success (all 9,651 hidden cases) | 24/24 | 24/24 |
+| self-check passed & hidden failure | 0/24 | 0/24 |
+| test code lines (passed tasks) | 0 | 834 |
+| cost | $3.56 | $1.45 |
+| total tokens (cache included) | 1,308,034 | 361,488 |
+| output tokens | 105,571 | 35,916 |
+| tool calls / checker calls | 252 / 41 | 88 / 29 |
 
-- **H-ORACLE은 판정할 수 없다.** Rust 쪽에도 "테스트 통과 & 숨은 실패"가 없다. 이 모델에게 BRB 과제는 두 언어 모두에서 쉽다. 변별력은 작은 모델(ADR-0034 결정 3)이나 더 어려운 과제에서 나와야 한다.
-- **G8:** BMB 0줄 대 Rust 834줄(파일럿이라 주장 아님). 두 쪽 모두 맞았으므로, 이 834줄은 "맞는 코드에 붙은 테스트"의 양이다.
-- **G5의 비용 쪽은 미달 방향이다.** 총 토큰 비 3.6(잠정 기준 2 이내), 비용 비 2.45. 도구 호출이 2.9배이고, 그 일부는 쓰기 절차(트랜잭션 최소 다섯 호출)와 증명 반복(검사 41 대 29)이다. BVB에서도 같은 방향이었다(비용 2.1배).
-- **작은 모델(`claude-haiku-5-5`, 원자료 `results/2026-10-28-brb-*-claude-haiku-5-5.jsonl`)에서는 BMB가 진다.** BMB 21/24 대 Rust 24/24. 비용은 $0.45 대 $0.07, 총 토큰 7,433,902 대 624,498(11.9배), 출력 토큰 522,129 대 72,712, 도구 호출 435 대 155. 자기 검사 통과 & 숨은 실패는 0/21 대 0/22로 이번에도 H-ORACLE을 판정할 수 없다. Rust 쪽은 자기 테스트가 실패한 채 끝난 두 과제(22/24)도 숨은 판정을 통과했다. 테스트 코드는 0줄 대 1,277줄이다.
-- **BMB가 놓친 세 과제는 모두 비선형 정수 산술이다.** `t10-mod-floor`, `t16-gcd`, `t24-pow-mod`. 세 세션 모두 40회 한도에 걸려 증명된 상태를 남기지 못했다. 세션들은 필요한 사실을 `ensures`만 있고 본문이 `true`인 순수 함수로 적어 보조정리처럼 쓰려 했고, 트랜잭션 절차에 호출을 썼다(t10에서 `tx_begin` 9번, `tx_abort` 4번).
-- **정정: 실패 원인은 보조정리 결손이 아니라 호출 예산이었다.** 처음에는 이 실패를 사용자 보조정리가 없는 탓(ADR-0062)으로 읽었다. 같은 모델을 `write` 판(아래 쓰기 표면 절)으로 다시 돌리니 세 과제가 모두 성공했다. t10은 17회, t16은 5회, t24는 9회에 끝났다. t10과 t16은 결과를 완전히 정하는 명세를 증명했다. t10은 범위와 합동이고, 사실을 실행 함수로 나눠 보조정리처럼 썼다. t16은 재귀 명세 `gcd_spec`과 같다는 것이다. t24만 `0 <= r < m`이라는 범위 명세로 물러섰다. 이 판은 명세 강도를 판정하지 않으므로 t24의 성공은 숨은 테스트가 받친 것이다. 따라서 BRB는 ADR-0062의 증거가 아니다. 남는 것은 t24 하나가 "함수적 명세를 증명하지 않았다"는 관찰뿐이다.
-- **비용의 원인은 쓰기 절차다(BVB 호출 분해).** BMB는 쓰기 시도 69번에 `tx_begin`·`tx_unit`·`tx_put`·`tx_commit` 넷씩과 `verify` 68번, `query` 60번(합 407), Verus는 쓰기 51번에 `write_file`·`verify` 하나씩과 `read_file` 9번(합 111)이다. 쓰기 시도 수는 비슷한데 모델 차례가 452 대 156이고, 차례마다 대화 전체가 다시 들어가므로 비용이 차례 수에 붙는다. 귀속 층은 도구 표면이다(백로그 `2D-24`).
+- **H-ORACLE cannot be judged.** The Rust side has no "tests passed & hidden failure" either. For this model the BRB tasks are easy in both languages. Discrimination has to come from a small model (ADR-0034 decision 3) or from harder tasks.
+- **G8:** 0 lines for BMB against 834 for Rust (a pilot, so not a claim). Both sides were right, so these 834 lines are the amount of "tests attached to correct code".
+- **The cost side of G5 points to not met.** Total token ratio 3.6 (provisional criterion: within 2), cost ratio 2.45. Tool calls are 2.9 times, part of which is the writing procedure (a transaction is at least five calls) and proof iterations (checks 41 against 29). BVB pointed the same way (cost 2.1 times).
+- **With a small model (`claude-haiku-5-5`, raw data `results/2026-10-28-brb-*-claude-haiku-5-5.jsonl`) BMB loses.** BMB 21/24 against Rust 24/24. Cost $0.45 against $0.07, total tokens 7,433,902 against 624,498 (11.9 times), output tokens 522,129 against 72,712, tool calls 435 against 155. Self-check passed & hidden failure is 0/21 against 0/22, so H-ORACLE cannot be judged this time either. On the Rust side the two tasks that ended with their own tests failing (22/24) passed the hidden judge too. Test code is 0 lines against 1,277.
+- **The three tasks BMB missed are all non-linear integer arithmetic.** `t10-mod-floor`, `t16-gcd`, `t24-pow-mod`. All three sessions hit the limit of 40 calls and left no proved state. The sessions wrote the facts they needed as pure functions with only an `ensures` and the body `true`, to use them like lemmas, and spent calls on the transaction procedure (in t10, 9 `tx_begin` and 4 `tx_abort`).
+- **Correction: the cause of the failures was the call budget, not the lack of lemmas.** At first these failures were read as due to the absence of user lemmas (ADR-0062). Run again with the same model on the `write` variant (the write surface section below), all three tasks succeeded: t10 ended in 17 calls, t16 in 5, t24 in 9. t10 and t16 proved specifications that fix the result completely. For t10 it is the range and the congruence, with the facts split into executable functions and used like lemmas. For t16 it is equality with the recursive specification `gcd_spec`. Only t24 fell back to the range specification `0 <= r < m`. This variant does not judge specification strength, so the success of t24 rests on the hidden tests. So BRB is no evidence for ADR-0062. What remains is only the observation that t24 alone "did not prove a functional specification".
+- **The cause of the cost is the writing procedure (breakdown of the BVB calls).** BMB: 69 write attempts with the four `tx_begin`, `tx_unit`, `tx_put`, `tx_commit` each, 68 `verify` and 60 `query` (407 in all); Verus: 51 writes with one `write_file` and one `verify` each, and 9 `read_file` (111 in all). The numbers of write attempts are close, but the model turns are 452 against 156, and every turn takes the whole conversation in again, so the cost follows the number of turns. The layer it belongs to is the tool surface.
 
-### 쓰기 표면: 한 번에 쓰고 증명하는 `write` (T1-06·2D-24, `claude-opus-5-5`)
+### Write surface: `write`, which writes and proves in one call (`claude-opus-5-5`)
 
-`bench/m1b-write`는 m1b와 시드·과제·변이체가 같고, 모델에게 트랜잭션 도구 일곱 대신 `write` 하나를 보인다(`bmb mcp --write-tool`).
+`bench/m1b-write` has the seed, tasks and mutants of m1b and shows the model one `write` in place of the seven transaction tools (`bmb mcp --write-tool`).
 
-| 판 | 성공 | BSB | 도구 호출 | 모델 차례 | 출력 토큰 | 비용 |
+| Variant | Success | BSB | Tool calls | Model turns | Output tokens | Cost |
 | --- | --- | --- | --- | --- | --- | --- |
-| m1b(트랜잭션 도구, 2차) | 37/37 | 186/186 | 257 | 294 | 57,622 | $6.97 |
+| m1b (transaction tools, second run) | 37/37 | 186/186 | 257 | 294 | 57,622 | $6.97 |
 | m1b-write(`write`) | 37/37 | 186/186 | 138 | 175 | 47,984 | $5.43 |
 
-- 성공률과 명세 강도는 같고, 도구 호출 −46%, 모델 차례 −40%, 비용 −22%다. 작성 과제만 보면 차례 250 → 127(−49%), 비용 $5.78 → $4.20(−27%).
-- 비용 차이의 원인을 쓰기 절차로 본 분해(아래 BRB 절)가 맞았다. 귀속 층(도구)에서 고친 효과가 같은 과제로 확인되었다.
-- 측정 조건이 다르므로(도구 표면) 이 판은 원래 판과 섞어 보고하지 않는다.
+- The success rate and the specification strength are the same; tool calls −46%, model turns −40%, cost −22%. Over the write tasks alone: turns 250 → 127 (−49%), cost $5.78 → $4.20 (−27%).
+- The breakdown that put the cost difference down to the writing procedure (the BRB section above) was right. The effect of fixing it in the layer it belongs to (the tools) was confirmed on the same tasks.
+- The measurement condition differs (the tool surface), so this variant is not reported mixed with the original.
 
-**BVB·BRB의 같은 판(`bench/bvb-write`, `bench/brb-write`, 같은 생성기).**
+**The same variant of BVB and BRB (`bench/bvb-write`, `bench/brb-write`, the same generator).**
 
-| 판 | 성공 | 도구 호출 | 모델 차례 | 출력 토큰 | 캐시 읽기 | 비용 |
+| Variant | Success | Tool calls | Model turns | Output tokens | Cache reads | Cost |
 | --- | --- | --- | --- | --- | --- | --- |
-| BVB, BMB(트랜잭션, 2차) | 42/45 | 407 | 452 | 107,554 | 1,202,518 | $4.44 |
-| BVB, BMB(`write`) | 44/45 | 98 | 143 | 84,488 | 677,231 | $3.38 |
+| BVB, BMB (transactions, second run) | 42/45 | 407 | 452 | 107,554 | 1,202,518 | $4.44 |
+| BVB, BMB (`write`) | 44/45 | 98 | 143 | 84,488 | 677,231 | $3.38 |
 | BVB, Verus | 44/45 | 111 | 156 | 52,262 | 224,531 | $2.07 |
-| BRB 큰 모델, BMB(트랜잭션) | 24/24 | 252 | — | 105,571 | — | $3.56 |
-| BRB 큰 모델, BMB(`write`) | 24/24 | 51 | — | 72,709 | — | $2.47 |
-| BRB 큰 모델, Rust | 24/24 | 88 | — | 35,916 | — | $1.45 |
-| BRB 작은 모델, BMB(트랜잭션) | 21/24 | 435 | — | 522,129 | — | $0.45 |
-| BRB 작은 모델, BMB(`write`) | 24/24 | 132 | — | 477,686 | — | $0.64 |
-| BRB 작은 모델, Rust | 24/24 | 155 | — | 72,712 | — | $0.07 |
+| BRB large model, BMB (transactions) | 24/24 | 252 | — | 105,571 | — | $3.56 |
+| BRB large model, BMB (`write`) | 24/24 | 51 | — | 72,709 | — | $2.47 |
+| BRB large model, Rust | 24/24 | 88 | — | 35,916 | — | $1.45 |
+| BRB small model, BMB (transactions) | 21/24 | 435 | — | 522,129 | — | $0.45 |
+| BRB small model, BMB (`write`) | 24/24 | 132 | — | 477,686 | — | $0.64 |
+| BRB small model, Rust | 24/24 | 155 | — | 72,712 | — | $0.07 |
 
-- BVB: 성공률이 Verus와 같아졌고(44/45), 모델 차례는 Verus보다 적다. 비용 비는 2.15배에서 1.64배로 줄었다. 남은 실패 `vc-va0093-max-balance`는 증명은 통과했고 명세 강도가 미결정(반박 아님)이다.
-- BVB에 남은 비용 차이는 차례 수가 아니라 차례당 크기다. 차례당 캐시 읽기는 BMB 약 4,700토큰, Verus 약 1,400토큰이고, 출력 토큰은 1.6배다. 고정 부분만 봐도 시스템 프롬프트가 3,471바이트 대 1,131바이트이고, `bmb mcp` 도구 정의(`tools/list`)가 약 4KB다. 나머지 분해는 백로그 `2D-25`.
-- BRB 큰 모델: 성공은 그대로 24/24이고 비용 −31%, 총 토큰 1,308,034 → 562,600이다. Rust 대비 총 토큰 비는 3.6에서 1.56으로, G5 잠정 기준(2 이내)의 토큰 쪽 안에 들었다. 비용 비는 1.70이다. 도구 호출은 51로 Rust의 88보다 적고, `verify`는 한 번만 따로 불렸다(`write`가 증명 결과를 돌려준다). 결함률 쪽은 두 쪽 모두 0이라 G5는 여전히 판정 불가다.
-- BRB 작은 모델: 트랜잭션 판의 세 실패가 모두 성공으로 바뀌었다(위 정정). 비용이 오른 것은 과제 하나 탓이다. `t13-rotate-right`가 출력 161,868토큰, $0.39를 썼고, 이를 빼면 $0.25다. 1회 실행이라 분산을 가를 수 없다.
+- BVB: the success rate now equals Verus's (44/45), and the model turns are fewer than Verus's. The cost ratio went from 2.15 to 1.64. The remaining failure `vc-va0093-max-balance` passed the proof, and its specification strength is undecided (not refuted).
+- The cost difference left in BVB is not the number of turns but the size per turn. Cache reads per turn are about 4,700 tokens for BMB and about 1,400 for Verus, and the output tokens are 1.6 times. Of the fixed part alone, the system prompt is 3,471 bytes against 1,131, and the tool definitions of `bmb mcp` (`tools/list`) are about 4 KB. The rest of the breakdown was left as later work.
+- BRB large model: success stays 24/24, cost −31%, total tokens 1,308,034 → 562,600. The total token ratio to Rust went from 3.6 to 1.56, inside the token side of the provisional G5 criterion (within 2). The cost ratio is 1.70. Tool calls are 51, fewer than Rust's 88, and `verify` was called separately only once (`write` returns the proof result). On the defect-rate side both are 0, so G5 still cannot be judged.
+- BRB small model: the three failures of the transaction variant all turned into successes (the correction above). The cost rose because of one task: `t13-rotate-right` used 161,868 output tokens and $0.39; without it the cost is $0.25. With a single run the variance cannot be told apart.
 
-### H-NAME: 이름을 지우거나 속인 m1b (T1-04, `claude-opus-5-5`)
+### H-NAME: m1b with its names removed or misleading (`claude-opus-5-5`)
 
-`bench/hname/gen.py`의 두 쌍둥이를 2차 실행과 같은 조건으로 돌렸다. 오도판 실행 도중 컴파일러를 다시 빌드했지만, 바뀐 것은 `--write-tool`로만 켜지는 도구라 이 실행의 도구 목록과 동작은 같다.
+The two twins of `bench/hname/gen.py` were run under the conditions of the second run. The compiler was built again in the middle of the run of the misleading variant, but what changed is a tool that only `--write-tool` turns on, so the tool list and behaviour of this run are the same.
 
-| 판 | 성공 | BSB | 비용 | 도구 호출 | 모델 차례 | 출력 토큰 |
+| Variant | Success | BSB | Cost | Tool calls | Model turns | Output tokens |
 | --- | --- | --- | --- | --- | --- | --- |
-| m1b(원래 이름, 2차) | 37/37 | 186/186 | $6.97 | 257 | 294 | 57,622 |
-| m1b-alpha(불투명 이름, 중립 요약) | 37/37 | 186/186 | $7.69 | 293 | 330 | 64,125 |
-| m1b-mislead(같은 종류끼리 이름을 뒤섞음) | 37/37 | 186/186 | $7.86 | 301 | 339 | 69,265 |
+| m1b (original names, second run) | 37/37 | 186/186 | $6.97 | 257 | 294 | 57,622 |
+| m1b-alpha (opaque names, neutral summaries) | 37/37 | 186/186 | $7.69 | 293 | 330 | 64,125 |
+| m1b-mislead (names shuffled within the same kind) | 37/37 | 186/186 | $7.86 | 301 | 339 | 69,265 |
 
-- 이름이 의미를 잃거나 거짓을 말해도 성공률과 명세 강도는 그대로였다. 비용만 10~13% 늘었다(읽기 호출이 늘어남).
-- 이것은 H-NAME의 BMB 쪽 절반이다. 가설은 "하락폭이 Rust+테스트 쌍둥이보다 작다"이므로, 같은 변형을 한 Rust 쪽이 있어야 판정한다. 이 모델에서는 BMB 쪽 하락이 0이라, Rust 쪽 하락이 0보다 크기만 하면 지지 방향이다.
+- With names that lost their meaning or said something false, the success rate and the specification strength stayed the same. Only the cost grew by 10 to 13% (more read calls).
+- This is the BMB half of H-NAME. The hypothesis is "the drop is smaller than that of the Rust + tests twin", so a verdict needs a Rust side with the same transformation. For this model the drop on the BMB side is 0, so any drop greater than 0 on the Rust side would point toward support.
 
-### 실패 분석(T1-14, T1-15)
+### Failure analysis
 
-**명세 강도 실패는 명세가 약해서가 아니었다.** 판정기에 거부 이유를 기록하게 했다(`harness.py`의 `spec_rejections`: 반례가 있으면 `refuted`, 해법기가 결정하지 못하면 `undecided`, 판정 자체는 그대로). 분석할 수 있는 넷(1차 실패를 진단용으로 다시 돌려 다시 실패한 `vc-vv0039-max-of-list`, 2차 실행의 셋)은 모두 `undecided`이고, 에이전트 계약은 숨긴 계약과 같은 뜻이었다.
+**The specification strength failures were not due to weak specifications.** The judge was made to record the reason of a rejection (`spec_rejections` of `harness.py`: `refuted` when there is a counterexample, `undecided` when the solver does not decide; the verdict itself is unchanged). The four that can be analyzed (`vc-vv0039-max-of-list`, a failure of the first run that failed again when run again for diagnosis, and the three of the second run) are all `undecided`, and the agent's contract meant the same as the hidden contract.
 
-| 과제 | 에이전트 계약 | 판정이 결정하지 못한 이유 |
+| Task | Agent's contract | Why the judging did not decide |
 | --- | --- | --- |
-| `vc-vv0039-max-of-list` | 원소 포함을 재귀 술어 `contains_prefix`로 | 재귀 술어 → 존재 한정 기호의 함의에 귀납이 필요 |
-| `vb-mbpp-454-contains-z` | `z_in_prefix`(재귀) | 같음 |
-| `vb-misc-choose-odd` | 재귀 술어 | 같음 |
-| `vc-va0093-max-balance` | 0 쪽 나눗셈으로 다시 쓴 같은 식 | 상수 나눗셈·나머지의 비선형 산술. 정의역 -128..127 전수 비교로 두 식이 같음을 확인 |
+| `vc-vv0039-max-of-list` | membership of the element by a recursive predicate `contains_prefix` | recursive predicate → the implication to an existential quantifier needs induction |
+| `vb-mbpp-454-contains-z` | `z_in_prefix` (recursive) | the same |
+| `vb-misc-choose-odd` | a recursive predicate | the same |
+| `vc-va0093-max-balance` | the same expression rewritten with division toward 0 | non-linear arithmetic of division and remainder by a constant. The two expressions were confirmed equal by comparing all of the domain -128..127 |
 
-- 1차 실행의 `m1/w09-spread`, `bvb/vb-mbpp-62-smallest`는 진단 재실행에서 성공했다. 원래 소스가 남지 않아 원인을 볼 수 없다. 같은 과제의 결과가 실행마다 갈린다는 것만 확인했다.
-- **정정:** 1차 실행 뒤 이 문서와 백로그는 실패 셋을 "명세가 약했다"고 적고 ADR-0040의 "다음 병목은 명세 타당성" 방향의 근거로 읽었다. 분석 결과 그 해석은 틀렸다. 원인은 판정기와 증명기의 불완전성이다. 두 부류의 근본 해는 귀납 보조 정리(ADR-0062 제안)와 상수 나눗셈·나머지의 인코딩(1B-47)이다.
-- **탐색 실패(`m1b/n12-io`)는 파일럿 결함이었다**(위). 고친 뒤 성공했다.
+- `m1/w09-spread` and `bvb/vb-mbpp-62-smallest` of the first run succeeded when run again for diagnosis. The original sources were not kept, so the cause cannot be seen. Only that the result of the same task varies from run to run was confirmed.
+- **Correction:** after the first run this document and the project's planning notes recorded the three failures as "the specification was weak" and read them as grounds for the direction of ADR-0040, "the next bottleneck is the validity of specifications". The analysis showed that reading was wrong. The cause is the incompleteness of the judge and the prover. The root fixes of the two classes are inductive lemmas (the proposal of ADR-0062) and the encoding of division and remainder by a constant.
+- **The navigation failure (`m1b/n12-io`) was a defect of the pilot** (above). After the fix it succeeded.
 
-### 1차 실행(커밋 `327a391d`): 기록으로만 둔다
+### First run (commit `327a391d`): kept only as a record
 
-| 집합 | 작성 | 탐색 | 명세 강도(BSB 변이체 판별) | 비용 |
+| Set | Write | Navigation | Specification strength (BSB mutants killed) | Cost |
 | --- | --- | --- | --- | --- |
 | m1 | 9/10 | 5/5 | — | $1.22 |
 | m1b | 25/25 | 11/12 | 186/186 | $5.21 |
 | BVB | 43/45 | — | — | $4.68 |
 
-큰 도구 결과를 보지 못하는 결함 아래의 결과다. 판정과 등록부에는 2차 실행을 쓴다.
+Results under the defect of not seeing large tool results. Verdicts and the register use the second run.

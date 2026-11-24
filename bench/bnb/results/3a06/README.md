@@ -1,59 +1,59 @@
-# 3A-06: BNB 모델 실행 (H-SCALE, G4, ADR-0105 결정 4)
+# 3a06: BNB model runs (H-SCALE, G4, ADR-0105 decision 4)
 
-백로그 3A-06, 2H-01(ADR-0103)의 항목이다. 판정 규칙은 첫 모델 세션 전에 이 파일로 등록한다(2026-11-10).
+The model runs of BNB (`3a06` is the label of this measurement), an item of ADR-0103. The verdict rules are registered by this file before the first model session (2026-11-10).
 
-## 조건
+## Conditions
 
-- **과제·프롬프트:** 동결 과제 27개와 `prompt-{bmb,rust}.md`(`../../MANIFEST`)를 쓴다. 도구 호출 한도는 40회이고 `answer`도 한 번으로 센다.
-- **도구:**
-  - BMB 팔은 `bmb mcp`의 `query`·`map`만 보고 부를 수 있다. 서버가 함께 내놓는 `verify`·`build`·트랜잭션 도구는 동결 프롬프트에 없고, Rust 팔에도 쓰기·빌드 도구가 없다.
-  - Rust 팔은 `list_dir`·`read_file`·`grep`을 쓴다.
-- **실행 단위:** 결과 파일 하나가 (모델, 팔, 크기) 하나다.
-  - `bnb.py run --agent M --arms A --sizes N --jobs 2 --sessions S --out F`로 돈다.
-  - 결과 행은 세션이 끝날 때마다 쓰고, 끊기면 그 파일에서 이어 돈다.
-  - 컴파일러는 같은 커밋의 `target/release/bmb` 사본으로 고정한다. 하네스는 커밋되지 않은 트리를 거부한다.
-- **크기와 모델:** 크기 10,000과 1,000에서 qwen(`openai:qwen3.8-27b`)과 sonnet(`anthropic:claude-sonnet-5-5`)이 한 번씩 돈다. 3,000은 시간이 남을 때 같은 규칙으로 돈다.
-- **동시 실행:** 측정 머신에서 T0-08 qwen 반복과 겹쳐 돌 수 있다. BMB 질의 CPU(아래)가 작아서다. 이 실행은 `taskset -c 3`으로 한 코어에 묶고, 겹친 세션은 결과 기록에 적는다.
+- **Tasks and prompts:** the 27 frozen tasks and `prompt-{bmb,rust}.md` (`../../MANIFEST`). The tool call limit is 40, and `answer` counts as one call too.
+- **Tools:**
+  - The BMB arm sees and can call only `query` and `map` of `bmb mcp`. The `verify`, `build` and transaction tools the server also offers are not in the frozen prompt, and the Rust arm has no write or build tools either.
+  - The Rust arm uses `list_dir`, `read_file` and `grep`.
+- **Unit of a run:** one result file is one (model, arm, size).
+  - It runs as `bnb.py run --agent M --arms A --sizes N --jobs 2 --sessions S --out F`.
+  - A result row is written as each session ends, and when cut the run resumes from that file.
+  - The compiler is fixed as a copy of `target/release/bmb` of the same commit. The harness refuses an uncommitted tree.
+- **Sizes and models:** at sizes 10,000 and 1,000, qwen (`openai:qwen3.8-27b`) and sonnet (`anthropic:claude-sonnet-5-5`) run once each. 3,000 runs under the same rules if time is left.
+- **Concurrent runs:** on the measurement machine it may overlap with the qwen repeats of `brb-hard`, because the CPU of the BMB queries (below) is small. This run is bound to one core with `taskset -c 3`, and overlapping sessions are noted in the record of the results.
 
-## 지표
+## Metrics
 
-| 지표 | 정의 |
+| Metric | Definition |
 | --- | --- |
-| 성공 | 답 집합이 정답과 같다(정밀도 = 재현율 = 1) |
-| 읽은 토큰 | 세션의 모든 도구 응답 바이트를 ceil(bytes/4)로 센 값(ADR-0021). G4와 H-COMPREHEND의 "토큰"이 이것이다 |
-| 모델 토큰 | 입력 + 출력. 보조로 보고한다 |
-| 지역 과제 | 단위 `m1`·`m2`의 24개(n01~n24). 정답이 N ≥ 340의 모든 크기에서 같다. 전체 과제 3개(n25~n27)는 정답이 N에 비례한다 |
+| success | the answer set equals the correct answer (precision = recall = 1) |
+| tokens read | all bytes of tool responses of a session counted as ceil(bytes/4) (ADR-0021). This is the "tokens" of G4 and H-COMPREHEND |
+| model tokens | input + output. Reported as auxiliary |
+| local tasks | the 24 of the units `m1` and `m2` (n01~n24). Their answers are the same at every size N ≥ 340. The answers of the 3 whole-program tasks (n25~n27) are proportional to N |
 
-## 판정
+## Verdict
 
-크기 10,000의 비교로 판정한다. 주장의 기준 모델은 sonnet이고(ADR-0103 결정 3), qwen은 같은 표에 나란히 보고한다.
+The verdict is made on the comparison at size 10,000. The reference model of the claim is sonnet (ADR-0103 decision 3), and qwen is reported side by side in the same table.
 
-1. **G4(ADR-0034):** 크기 10,000, 27과제 전체로 본다.
-   - 통과 조건은 두 가지다. 토큰 비율(BMB 읽은 토큰 합 / Rust 읽은 토큰 합)이 1/3 이하이고, BMB 성공률이 Rust 성공률 이상이어야 한다.
-   - BMB 성공률이 Rust보다 낮으면 ADR-0077 §3 구간으로 다시 본다. 구간이 겹치면 "정확도 동등 미확인"으로 적는다.
-2. **ADR-0105 결정 4의 조건(sonnet, 10,000):** 등록된 문장 그대로 적용한다. 다음 중 하나이면 질의 표면 수정(2D-17 계열)을 3P-02보다 먼저 하고 P5 포팅 전에 끝낸다.
-   - BMB 성공률이 Rust보다 D(0.30)를 넘게 낮다.
-   - 토큰 비율이 1/3을 넘는다.
-3. **H-SCALE(BMB 팔):** 지역 과제 24개로 판정한다.
-   - **지지:** 1,000에서 10,000으로 갈 때 성공률 하락이 D 안이고, 읽은 토큰 합의 증가가 1.5배 이하다.
-   - **반증:** 성공률이 D를 넘게 떨어지거나, 토큰 합이 3배 이상 는다.
-   - **판정 불가:** 그 사이다.
-   - Rust 팔의 같은 배수는 비교로 함께 보고한다.
-4. **반복(ADR-0103 결정 2):** qwen 첫 실행의 10,000 비교에서 두 팔 성공률 차이가 D 안이면, 10,000의 두 팔을 같은 커밋·조건에서 3회까지 반복한다.
-   - 반복 여부는 그 한 수로만 정한다. 1,000은 반복하지 않는다.
-5. **사후 조정 금지:** 결과를 보고 과제·프롬프트·도구를 고쳐 다시 돌리지 않는다. 고칠 것이 나오면 다음 판의 항목으로 적는다.
+1. **G4 (ADR-0034):** at size 10,000, over all 27 tasks.
+   - There are two conditions to pass. The token ratio (sum of tokens read by BMB / sum of tokens read by Rust) is 1/3 or less, and the BMB success rate is at least the Rust success rate.
+   - When the BMB success rate is below Rust's, it is looked at again with the interval of ADR-0077 §3. If the intervals overlap it is written as "equal accuracy not confirmed".
+2. **The condition of ADR-0105 decision 4 (sonnet, 10,000):** applied as the registered sentence. If one of the following holds, the fix of the query surface comes before the comprehension tasks of the port twin and is finished before the P5 porting.
+   - The BMB success rate is lower than Rust's by more than D (0.30).
+   - The token ratio is over 1/3.
+3. **H-SCALE (BMB arm):** judged on the 24 local tasks.
+   - **Supported:** from 1,000 to 10,000 the drop of the success rate is inside D and the sum of tokens read grows by a factor of 1.5 or less.
+   - **Refuted:** the success rate drops by more than D, or the token sum grows by a factor of 3 or more.
+   - **Cannot be judged:** in between.
+   - The same factors of the Rust arm are reported with it for comparison.
+4. **Repeats (ADR-0103 decision 2):** if in the comparison at 10,000 of the first qwen run the success rates of the two arms differ by less than D, the two arms at 10,000 are repeated up to 3 times at the same commit and condition.
+   - Whether to repeat is decided by that one number only. 1,000 is not repeated.
+5. **No adjustment after the fact:** the tasks, prompts and tools are not changed and run again after seeing the results. If something to fix shows up, it is written down as an item for the next edition.
 
-## 실행 전에 알려진 사실 (오라클, 측정 커밋의 컴파일러)
+## Facts known before the run (oracles, the compiler of the measurement commit)
 
-스크립트 오라클(팔마다 가장 싼 정확한 전략)은 각 팔의 비용 하한이다.
+The scripted oracles (the cheapest correct strategy of each arm) are a lower bound of each arm's cost.
 
-| 크기 10,000 | BMB | Rust | 비율 |
+| Size 10,000 | BMB | Rust | Ratio |
 | --- | --- | --- | --- |
-| 지역 과제 24개 | 24,001 | 75,139 | 0.319 |
-| 전체 27개 | 93,574 | 120,288 | 0.778 |
+| 24 local tasks | 24,001 | 75,139 | 0.319 |
+| all 27 | 93,574 | 120,288 | 0.778 |
 
-- 2026-10-25 판(`../2026-10-25.md`)에서 BMB 전체 합은 57,218이었다. 그 뒤 `duplicates` 응답이 2.5배로 커졌다(n26·n27이 각각 12,059 → 30,110).
-- 그래서 이 커밋에서는 오라클도 전체 27과제로는 G4의 1/3을 넘는다. 원인은 `duplicates`가 질문과 무관하게 프로그램 전체의 묶음을 낸다는 데 있다.
-- 실행 전에 고치지 않는다. 판정 2의 조건이 성립하면 그 수정이 첫 질의 표면 수정 대상이다.
-- BMB 질의 CPU: 오라클 BMB 팔 10,000, 27과제의 도구 호출 60번이 벽시계 24초다(호출당 약 0.4초).
-- 같은 실행의 정답 계산과 맵 캐시 생성은 약 110초이고, 실행 시작 때 한 번 한다.
+- In the edition of 2026-10-25 (`../2026-10-25.md`) the BMB total was 57,218. Since then the `duplicates` response has grown 2.5 times (n26 and n27 each 12,059 → 30,110).
+- So at this commit the oracle too is over the 1/3 of G4 on all 27 tasks. The cause is that `duplicates` gives the groups of the whole program whatever the question.
+- It is not fixed before the run. If the condition of verdict 2 holds, that fix is the first target of the query surface fix.
+- CPU of the BMB queries: the 60 tool calls of the oracle's BMB arm at 10,000 over the 27 tasks take 24 seconds of wall-clock time (about 0.4 seconds per call).
+- Computing the answers and building the map cache of the same run take about 110 seconds, once at the start of the run.

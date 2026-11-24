@@ -1,4 +1,4 @@
-#[summary("벤치: 최대 부분 배열 합(카데인)")]
+#[summary("bench: maximum subarray sum (Kadane)")]
 mod kadane {
     spec fn len_ok(a: &[i64]) -> bool { 1 <= a.len() && a.len() <= 1000000 }
 
@@ -55,7 +55,7 @@ mod kadane {
     }
 }
 
-#[summary("진입점")]
+#[summary("entry point")]
 mod app {
     spec fn total_ok(t: i64, r: i64) -> bool { -1000 * r <= t && t <= 1000000000 * r }
 

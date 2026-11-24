@@ -1,4 +1,4 @@
-// Twin of utf8_speed.bmb (backlog T4-02): the same text, checked 20 times by
+// Twin of utf8_speed.bmb: the same text, checked 20 times by
 // Rust's `std::str::from_utf8` (valid_up_to on error). `rustc -C opt-level=2`.
 fn text(n: usize) -> Vec<u8> {
     let mut v = Vec::with_capacity(n + 4);

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Upstream sources of BVB and the selection record (backlog 2A-08, ADR-0034 §2).
+"""Upstream sources of BVB and the selection record (ADR-0034 §2).
 
   sources.py fetch DIR     clone the pinned upstream commits into DIR (network)
   sources.py select DIR    recompute the selection from upstream: candidate counts,
@@ -259,14 +259,14 @@ def check(root):
 def table():
     """The selection record as Markdown."""
     tasks = bvb_tasks()
-    lines = ["| 원본 | 결정 |", "| --- | --- |"]
+    lines = ["| Source | Decision |", "| --- | --- |"]
     for k in sorted(VERUS_BENCH):
         d = VERUS_BENCH[k]
-        lines.append(f"| Verus-Bench `{k}` | " + (f"`{d}`" if d in tasks else f"제외: {d}"
+        lines.append(f"| Verus-Bench `{k}` | " + (f"`{d}`" if d in tasks else f"excluded: {d}"
                      + (f" (= `{DUP_OF[k]}`)" if k in DUP_OF else "")) + " |")
     for k, d in VERICODING:
         note = f" ({UNSAT_WITNESS[k]})" if k in UNSAT_WITNESS else (f" (= `{DUP_OF[k]}`)" if k in DUP_OF else "")
-        lines.append(f"| Vericoding `{k}` | " + (f"`{d}`" if d in tasks else f"제외: {d}{note}") + " |")
+        lines.append(f"| Vericoding `{k}` | " + (f"`{d}`" if d in tasks else f"excluded: {d}{note}") + " |")
     return "\n".join(lines) + "\n"
 
 

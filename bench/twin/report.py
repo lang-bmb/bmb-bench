@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tables of the port twin's result rows (backlog 3P-05).
+"""Tables of the port twin's result rows.
 
     report.py FILE.jsonl..          a Markdown table per axis
     report.py diff FILE.jsonl..     the two arms compared per axis (ADR-0112)
@@ -99,7 +99,7 @@ def ratio_cell(runs, group, value):
         return "—"
     med, iv = repeat.median_interval(ratios)
     gm = math.exp(sum(math.log(x) for x in ratios) / len(ratios))
-    return f"{med:.2f} ({f'{iv[0]:.2f}~{iv[1]:.2f}' if iv else '—'}), 기하 {gm:.2f}"
+    return f"{med:.2f} ({f'{iv[0]:.2f}~{iv[1]:.2f}' if iv else '—'}), geometric {gm:.2f}"
 
 
 def diff(files):
@@ -118,8 +118,8 @@ def diff(files):
             for name in (AXES[fam], f"{AXES[fam]}/{fam}"):
                 if name not in names:
                     names.append(name)
-    out = [f"{agent}, docs `{docs}`, {len(runs)}회: BMB − Rust (ADR-0112)", "",
-           "| group | BMB 성공(실행별) | Rust 성공(실행별) | 차이 %p | 95% 구간 %p | p | 판정 | 읽은 토큰 BMB/Rust: 중앙값 (구간) | API 토큰 BMB/Rust |",
+    out = [f"{agent}, docs `{docs}`, {len(runs)} runs: BMB − Rust (ADR-0112)", "",
+           "| group | BMB successes (per run) | Rust successes (per run) | Difference %p | 95% interval %p | p | Verdict | Tokens read BMB/Rust: median (interval) | API tokens BMB/Rust |",
            "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for name in sorted(names):
         def group(r, name=name):
@@ -137,7 +137,7 @@ def diff(files):
                                  sum(k for k, _ in per["bmb"]), sum(n for _, n in per["bmb"]))
         lo, hi = min(lo, nl), max(hi, nh)
         p = repeat.permutation_p(ra, rb) if len(runs) > 1 else None
-        verdict = repeat.diff_verdict(lo, hi, len(ra), len(rb)).replace("B가", "BMB가").replace("A가", "Rust가")
+        verdict = repeat.diff_verdict(lo, hi, len(ra), len(rb)).replace("B higher", "BMB higher").replace("A higher", "Rust higher")
         out.append(f"| {name} | {', '.join(f'{k}/{n}' for k, n in per['bmb'])} | "
                    f"{', '.join(f'{k}/{n}' for k, n in per['rust'])} | {d * 100:+.1f} | {lo * 100:+.1f}~{hi * 100:+.1f} | "
                    f"{'—' if p is None else f'{p:.3f}'} | {verdict} | {ratio_cell(runs, group, lambda r: r['tokens'])} | "

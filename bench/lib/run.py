@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Speed and size of the proved libraries against Rust (backlog T4-01, T4-02).
+"""Speed and size of the proved libraries against Rust.
 
 Each bench is a program pair: `NAME_speed.bmb` (with `std::NAME`, which the
 compiler adds, `lib/std/NAME.bmb`), built by
@@ -41,7 +41,7 @@ from run import RUSTC, environment, sh  # noqa: E402
 BENCHES = ["utf8", "sha256"]
 # The compared programs of each bench; "rust" is the standard-library twin.
 VARIANTS = {"utf8": ["bmb", "rust"], "sha256": ["bmb", "rust", "sha2"]}
-LABELS = {"rust": None, "sha2": "`sha2` 크레이트"}
+LABELS = {"rust": None, "sha2": "the `sha2` crate"}
 SHA2_CRATE = os.path.join(HERE, "sha2_crate")
 
 
@@ -109,23 +109,23 @@ def main():
             **{f"bmb_vs_{v}": round(med["bmb"] / med[v], 3) for v in VARIANTS[b] if v != "bmb"},
         })
     lines = [
-        f"# 라이브러리 속도·크기 ({env['date']})",
+        f"# Library speed and size ({env['date']})",
         "",
-        f"- 환경: {env['cpu']} ({env['cores']} cores), {env['os']}",
-        f"- 도구: {env['rustc']}; {env['clang']}; bmb `build`(clang -O2)",
-        f"- 방법: 변형별 {args.runs}회 교차 실행의 중앙값(벽시계). 출력 일치 확인 후 측정. 크기는 strip한 실행 파일.",
-        "- 비교 대상: utf8은 Rust 표준 라이브러리 `std::str::from_utf8`, sha256은 같은 알고리즘의 안전한 Rust(표준 라이브러리만)와 "
-        f"`sha2` 크레이트 {sha2_version()}(`cargo build --release --locked`, opt-level 2). "
-        f"이 CPU의 SHA-NI: {'있음(크레이트가 하드웨어 명령을 쓴다)' if env.get('sha_ni') else '없음(크레이트의 소프트웨어 구현)'}.",
-        "- 비율 < 1 이면 BMB가 빠르다.",
+        f"- Environment: {env['cpu']} ({env['cores']} cores), {env['os']}",
+        f"- Tools: {env['rustc']}; {env['clang']}; bmb `build` (clang -O2)",
+        f"- Method: the median (wall clock) of {args.runs} interleaved runs per variant. Measured after the outputs were checked to agree. Size is that of the stripped executable.",
+        "- Compared with: for utf8, the Rust standard library's `std::str::from_utf8`; for sha256, safe Rust of the same algorithm (standard library only) and "
+        f"the `sha2` crate {sha2_version()} (`cargo build --release --locked`, opt-level 2). "
+        f"SHA-NI on this CPU: {'present (the crate uses the hardware instructions)' if env.get('sha_ni') else 'absent (the software implementation of the crate)'}.",
+        "- A ratio < 1 means BMB is faster.",
         "",
-        "| 벤치 | 비교 대상 | BMB ms | 대상 ms | BMB/대상 | BMB 바이트 | 대상 바이트 |",
+        "| Bench | Compared with | BMB ms | Other ms | BMB/other | BMB bytes | Other bytes |",
         "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
     ]
     for r in rows:
         m, s = r["ms"], r["bytes"]
         for v in VARIANTS[r["bench"]][1:]:
-            what = LABELS[v] or ("`std::str::from_utf8`" if r["bench"] == "utf8" else "같은 알고리즘의 Rust")
+            what = LABELS[v] or ("`std::str::from_utf8`" if r["bench"] == "utf8" else "Rust of the same algorithm")
             lines.append(f"| {r['bench']} | {what} | {m['bmb']} | {m[v]} | {r[f'bmb_vs_{v}']} | {s['bmb']} | {s[v]} |")
     report = "\n".join(lines) + "\n"
     print(report)

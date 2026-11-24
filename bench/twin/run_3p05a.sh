@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The first measurement on the port twin (backlog 3P-05a, ADR-0144):
+# The first measurement on the port twin (measurement `3p-05a`, ADR-0144):
 # comprehension (c*) and refactoring (r*) tasks, qwen three times and sonnet
 # once, and the Rust arm as written (comments kept) with sonnet once.
 # A run that was cut goes on from its rows: start the script again.

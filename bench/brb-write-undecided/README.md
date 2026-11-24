@@ -1,3 +1,3 @@
-# brb-write-undecided (H-UNDECIDE, 백로그 T0-37)
+# brb-write-undecided (H-UNDECIDE)
 
-`bench/ablate/gen.py`가 `bench/brb-write`에서 만든 판이다(동결). 직접 고치지 않고 생성기로 다시 만든다. brb-write와 `set.json`의 한 가지만 다르다: 서버 플래그 `--undecided-info`(미결정 의무에 범위 탐색의 판정). 프롬프트·씨앗·과제·판정은 그대로다. 비교와 반증 조건은 ADR-0108에 실행 전에 등록돼 있다.
+A variant that `bench/ablate/gen.py` makes from `bench/brb-write` (frozen). It is not edited by hand; the generator makes it again. It differs from brb-write in one thing in `set.json`: the server flag `--undecided-info` (the verdict of a bounded search on an undecided obligation). The prompt, seed, tasks and judging are unchanged. The comparison and the refutation condition were registered in ADR-0108 before the run.

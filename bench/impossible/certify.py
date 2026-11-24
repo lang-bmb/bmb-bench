@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks that every BMB-Impossible task is what it claims (backlog 2A-13).
+"""Checks that every BMB-Impossible task is what it claims.
 
   certify.py [--tasks ID,..]
 

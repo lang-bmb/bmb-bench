@@ -1,4 +1,4 @@
-#[summary("Benchmarks Game spectral-norm(T3-04): 무한 행렬 A의 앞 n×n(n = 100)에 대한 스펙트럼 노름, 거듭제곱법 10회. 단일 스레드")]
+#[summary("Benchmarks Game spectral-norm: the spectral norm of the leading n×n (n = 100) of the infinite matrix A, 10 iterations of the power method. Single-threaded")]
 mod sn {
     spec fn small(i: usize, j: usize) -> bool { i <= 10000 && j <= 10000 }
 

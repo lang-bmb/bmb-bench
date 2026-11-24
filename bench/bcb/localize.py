@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Edit localization (backlog 1B-41, H-MAINT, ADR-0040 §4).
+"""Edit localization (H-MAINT, ADR-0040 §4).
 
   localize.py HISTORY.jsonl --work DIR [--upto K] [--out FILE.jsonl]
 

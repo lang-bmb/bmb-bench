@@ -1,4 +1,4 @@
-#[summary("벤치: 에라토스테네스의 체로 소수 개수를 500번 센다")]
+#[summary("bench: counts the primes with the sieve of Eratosthenes, 500 times")]
 mod sieve {
     spec fn len_ok(a: &[bool]) -> bool { 2 <= a.len() && a.len() <= 1000000 }
 
@@ -55,7 +55,7 @@ mod sieve {
     }
 }
 
-#[summary("진입점")]
+#[summary("entry point")]
 mod app {
     spec fn total_ok(t: i64, r: i64) -> bool { 0 <= t && t <= 1000000 * r }
 

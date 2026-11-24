@@ -1,4 +1,4 @@
-#[summary("Benchmarks Game fannkuch-redux(T3-01): n = 12의 모든 순열에서 팬케이크 뒤집기 수의 최댓값과 체크섬. 단일 스레드")]
+#[summary("Benchmarks Game fannkuch-redux: the maximum number of pancake flips over all permutations of n = 12, and the checksum. Single-threaded")]
 mod fk {
     // Every entry is a position below `n`.
     spec fn below(p: &[usize], n: usize) -> bool { p.len() == 12 && forall|i: usize| i < 12 ==> #[trigger] p[i] < n }

@@ -1,4 +1,4 @@
-"""Judging logic of the M1 harness (backlog 1D-21). No network, no paid API.
+"""Judging logic of the M1 harness. No network, no paid API.
 
 Needs the `bmb` binary (target/debug/bmb, or $BMB) like the harness itself.
 Frozen inputs are only read: workspaces are temporary copies of `seed/`.
@@ -124,7 +124,7 @@ class Signatures(unittest.TestCase):
 
 
 class CommitCount(unittest.TestCase):
-    """Every write's commit by its outcome, one-call surfaces too (backlog T1-40)."""
+    """Every write's commit by its outcome, one-call surfaces too."""
 
     def test_outcome_of_each_write_surface(self):
         ok = '{"committed":true,"changed":["tasks::f"],"removed":[]}\n{"def":"tasks::f","status":"verified"}'
@@ -147,14 +147,14 @@ class CommitCount(unittest.TestCase):
             with open(path, "w") as f:
                 f.write(json.dumps({"summary": True, "task_set": "m1"}) + "\n" + json.dumps(r) + "\n")
             table = harness.summarize([path])
-        self.assertIn("| 커밋(성공 / 거부, 한 호출 쓰기 포함) | 1 / 0 |", table)
-        # Rows of a harness before T1-40 have no such row.
+        self.assertIn("| Commits (accepted / rejected, one-call writes included) | 1 / 0 |", table)
+        # Rows of a harness that counted only `tx_commit` have no such row.
         old = {k: v for k, v in r.items() if k not in ("commits_ok", "commits_rejected")}
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "r.jsonl")
             with open(path, "w") as f:
                 f.write(json.dumps({"summary": True, "task_set": "m1"}) + "\n" + json.dumps(old) + "\n")
-            self.assertNotIn("한 호출 쓰기 포함", harness.summarize([path]))
+            self.assertNotIn("one-call writes included", harness.summarize([path]))
 
 
 class JudgeWrite(unittest.TestCase):
@@ -172,7 +172,7 @@ class JudgeWrite(unittest.TestCase):
         self.assertNotIn("calls", r)  # the call log is opt-in
 
     def test_context_log_lists_every_call(self):
-        # BMB_CONTEXT_LOG=1: every call in order with its result size (backlog 2D-25).
+        # BMB_CONTEXT_LOG=1: every call in order with its result size.
         with mock.patch.dict(os.environ, {"BMB_CONTEXT_LOG": "1"}):
             r = run_with_ops(self.task, self.task["reference"])
         names = [c[0] for c in harness.ops_to_calls(self.task["reference"])]
@@ -208,7 +208,7 @@ class JudgeWrite(unittest.TestCase):
     def test_agent_unit_named_bmb_accept(self):
         # An agent unit named `bmb_accept` must not collide with the hidden
         # acceptance unit: the correct solution is still accepted.
-        extra = [{"op": "unit", "path": "bmb_accept", "summary": "도움"},
+        extra = [{"op": "unit", "path": "bmb_accept", "summary": "helper"},
                  {"op": "put", "unit": "bmb_accept",
                   "code": "spec fn helper(x: i64) -> bool { x > 0 }"}]
         r = run_with_ops(self.task, self.task["reference"] + extra)
@@ -227,7 +227,7 @@ M1B = os.path.join(os.path.dirname(HERE), "m1b")
 
 
 class OtherSet(unittest.TestCase):
-    """Runs a test with `harness.SET` pointing at the `m1b` task set (2A-04)."""
+    """Runs a test with `harness.SET` pointing at the `m1b` task set."""
 
     def setUp(self):
         self.saved = harness.SET
@@ -332,9 +332,9 @@ class SummarizeRejections(unittest.TestCase):
             text = harness.summarize([f.name])
         finally:
             os.unlink(f.name)
-        self.assertIn("| 명세 강도 거부: 반박(반례) | 1 |", text)
-        self.assertIn("| 명세 강도 거부: 미결정(해법기) | 1 |", text)
-        self.assertIn("| w1 | 실패: spec_accepted (undecided) |", text)
+        self.assertIn("| Specification strength rejections: refuted (counterexample) | 1 |", text)
+        self.assertIn("| Specification strength rejections: undecided (solver) | 1 |", text)
+        self.assertIn("| w1 | failure: spec_accepted (undecided) |", text)
 
 
 class SpecRejection(unittest.TestCase):
@@ -353,7 +353,7 @@ def m1b_task(name):
 
 
 class SpecKill(OtherSet):
-    """BSB (backlog 2A-10): hidden mutants of m1b write tasks and the kill rate."""
+    """BSB: hidden mutants of m1b write tasks and the kill rate."""
 
     def test_mutant_files_match_their_manifest(self):
         self.assertTrue(harness.bsb.check_manifest(M1B))
@@ -402,7 +402,7 @@ class SpecKill(OtherSet):
     def test_no_postcondition_kills_nothing(self):
         # The kill check needs the contract: a verified body alone kills nothing.
         t = m1b_task("w03-max3")
-        ops = [{"op": "unit", "path": "tasks", "summary": "과제 구현"},
+        ops = [{"op": "unit", "path": "tasks", "summary": "implement the tasks"},
                {"op": "put", "unit": "tasks", "code":
                 "#[effects(pure)]\nfn max3(a: i64, b: i64, c: i64) -> (r: i64) {\n"
                 "    num::max2(num::max2(a, b), c)\n}"}]
@@ -450,7 +450,7 @@ class Summarize(unittest.TestCase):
 
     def test_mixed_task_sets_are_refused(self):
         with tempfile.TemporaryDirectory() as d:
-            a = self.write(d, "a.jsonl", None)  # before 2A-04: m1
+            a = self.write(d, "a.jsonl", None)  # no `task_set`: m1
             b = self.write(d, "b.jsonl", "m1b")
             with self.assertRaises(SystemExit):
                 harness.summarize([a, b])
@@ -460,10 +460,10 @@ class Summarize(unittest.TestCase):
             a = self.write(d, "a.jsonl", "m1b")
             b = self.write(d, "b.jsonl", "m1b")
             out = harness.summarize([a, b])
-            self.assertIn("| 과제 집합 | m1b | m1b |", out)
-            self.assertIn("| 작성 1회 성공률 | 1/1 | 1/1 |", out)
-            # No BSB fields (m1, or results from before 2A-10): no rate.
-            self.assertIn("| 명세 변이체 판별률 | — | — |", out)
+            self.assertIn("| Task set | m1b | m1b |", out)
+            self.assertIn("| Write first-attempt success rate | 1/1 | 1/1 |", out)
+            # No BSB fields (m1, or results from before the BSB mutants): no rate.
+            self.assertIn("| Specification mutant kill rate | — | — |", out)
 
     def test_kill_rate_row(self):
         with tempfile.TemporaryDirectory() as d:
@@ -473,12 +473,11 @@ class Summarize(unittest.TestCase):
             recs[0].update(bsb_mutants=5, bsb_killed=5)
             with open(p, "w") as f:
                 f.write("".join(json.dumps(r) + "\n" for r in [recs[0], extra, recs[1]]))
-            self.assertIn("| 명세 변이체 판별률 | 6/8 (75.0%) |", harness.summarize([p]))
+            self.assertIn("| Specification mutant kill rate | 6/8 (75.0%) |", harness.summarize([p]))
 
 
 class Resume(unittest.TestCase):
-    """An interrupted run continues to the file one uninterrupted run writes
-    (backlog INF-16)."""
+    """An interrupted run continues to the file one uninterrupted run writes."""
 
     def run_harness(self, out):
         subprocess.run([sys.executable, os.path.join(HERE, "harness.py"), "run", "--agent", "oracle", "--tasks",

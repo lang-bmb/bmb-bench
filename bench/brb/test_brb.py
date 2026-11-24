@@ -69,7 +69,7 @@ class TaskSet(unittest.TestCase):
         self.assertEqual(harness.read_bytes(os.path.join(HERE, "MANIFEST")).decode(), harness.manifest_text())
 
     def test_write_variant_changes_only_the_bmb_prompt_and_tools(self):
-        # backlog T0-13: `--variant bench/brb-write`.
+        # The one-call write surface: `--variant bench/brb-write`.
         variant = os.path.join(harness.ROOT, "bench", "brb-write")
         saved = (harness.VARIANT, harness.m1.set_config)
         try:
@@ -167,7 +167,7 @@ class Verdict(unittest.TestCase):
             b2 = self._results(d, "b2.jsonl", "bmb", [(True, 30, False), (False, 30), (True, 30), (False, 30)])
             self.assertIn("BMB 1/3 = 0.333, Rust 2/4 = 0.500 → 지지", harness.summarize([b2, r]))
             # An undelivered session whose gate passed on some other unit is not a
-            # "passed" task either (backlog T0-32).
+            # "passed" task either.
             with open(b) as f:
                 rows = [json.loads(line) for line in f]
             rows[2]["delivered"] = False
@@ -315,7 +315,7 @@ class ModelAdapter(unittest.TestCase):
 
 
 class ParallelRust(unittest.TestCase):
-    """Rust sessions that run at once each link their own crate (backlog T0-22)."""
+    """Rust sessions that run at once each link their own crate."""
 
     def test_integration_tests_link_their_own_crate(self):
         import concurrent.futures

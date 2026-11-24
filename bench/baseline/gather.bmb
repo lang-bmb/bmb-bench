@@ -1,4 +1,4 @@
-#[summary("벤치: 순열 모으기(간접 인덱스 src[perm[i]])")]
+#[summary("bench: gather through a permutation (indirect index src[perm[i]])")]
 mod gather {
     spec fn below(a: &[usize], m: usize, n: usize) -> bool {
         forall|k: usize| k < n ==> #[trigger] a[k] < m
@@ -42,7 +42,7 @@ mod gather {
     }
 }
 
-#[summary("진입점")]
+#[summary("entry point")]
 mod app {
     #[effects(io)]
     #[uses(gather::same_len, gather::all_below)]

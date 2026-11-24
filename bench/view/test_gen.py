@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The compact view sets (`gen.py`) are the write sets plus `--compact`, and the
 scripted reference and weak agents still pass and fail through the compact
-view (backlog 2D-23, ADR-0068)."""
+view (ADR-0068)."""
 import json
 import os
 import shutil

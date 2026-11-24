@@ -1,6 +1,6 @@
-// spectral-norm reference (backlog T3-04): the Benchmarks Game algorithm,
+// spectral-norm reference: the Benchmarks Game algorithm,
 // written from the published description (the official Rust submissions are
-// not reachable from this environment, backlog T3-01). Single-threaded:
+// not reachable from this environment). Single-threaded:
 // A(i, j) = 1 / ((i + j)(i + j + 1) / 2 + i + 1), ten rounds of
 // v = AtA u, u = AtA v, then sqrt(u.v / v.v).
 //

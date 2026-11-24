@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repeated runs of one set and the target rule (ADR-0077, backlog T0-12).
+"""Repeated runs of one set and the target rule (ADR-0077).
 
   repeat.py summary [--target 0.6] FILES...    Markdown: per set and task kind
   repeat.py diff --a FILES... --b FILES...     Markdown: B minus A (ADR-0112)
@@ -80,10 +80,10 @@ def interval(rates, k, n):
 def verdict(lo, hi, target):
     """ADR-0077 §3: met, missed, or undetermined."""
     if lo >= target:
-        return "충족"
+        return "met"
     if hi < target:
-        return "미충족"
-    return "미정"
+        return "missed"
+    return "undetermined"
 
 
 def group(files):
@@ -131,10 +131,10 @@ def summary(files, target):
     ranges = []
     per_set = []
     for name, runs in sorted(sets.items()):
-        out += [f"## {name}: 반복 {len(runs)}회", "",
-                "| 과제 종류 | 실행별 성공 | 평균 | 95% 구간 | 범위 | 늘 성공 / 늘 실패 / 흔들림 | 목표 " +
+        out += [f"## {name}: {len(runs)} repeated runs", "",
+                "| Task kind | Successes per run | Mean | 95% interval | Range | Always succeeded / always failed / unstable | Target " +
                 f"{target:.0%} |", "| --- | --- | --- | --- | --- | --- | --- |"]
-        for kind, label in (("write", "작성"), ("navigate", "탐색")):
+        for kind, label in (("write", "write"), ("navigate", "navigate")):
             st = kind_stats(runs, kind)
             if not st:
                 continue
@@ -145,11 +145,11 @@ def summary(files, target):
                        f"{st['lo']:.1%}~{st['hi']:.1%} | {st['range'] * 100:.1f}%p | "
                        f"{st['always']} / {st['never']} / {len(st['unstable'])} | {verdict(st['lo'], st['hi'], target)} |")
         unstable = sorted({t for kind in ("write", "navigate") if (st := kind_stats(runs, kind)) for t in st["unstable"]})
-        out += ["", f"흔들린 과제: {', '.join(unstable) if unstable else '없음'}", ""]
+        out += ["", f"Unstable tasks: {', '.join(unstable) if unstable else 'none'}", ""]
     if ranges:
-        out.append(f"단일 실행 비교의 최소 차이(ADR-0077 §4): {math.ceil(max(ranges) * 100 - 1e-9)}%p")
+        out.append(f"Minimum difference for comparing single runs (ADR-0077 §4): {math.ceil(max(ranges) * 100 - 1e-9)}%p")
         out.append("")
-        out.append("집합별 최소 차이(ADR-0086 §2): " + ", ".join(f"{n} {points(r)}%p" for n, r in per_set))
+        out.append("Minimum difference per set (ADR-0086 §2): " + ", ".join(f"{n} {points(r)}%p" for n, r in per_set))
     return "\n".join(out) + "\n"
 
 
@@ -194,9 +194,9 @@ def permutation_p(ra, rb):
 def diff_verdict(lo, hi, na, nb):
     """ADR-0112 §1-§2: a direction only when the interval excludes 0."""
     if lo <= 0 <= hi:
-        return "변동 안"
-    side = "B가 높음" if lo > 0 else "A가 높음"
-    return side if min(na, nb) >= 4 else f"{side}(잠정: 팔당 4회 미만)"
+        return "inside variation"
+    side = "B higher" if lo > 0 else "A higher"
+    return side if min(na, nb) >= 4 else f"{side} (provisional: fewer than 4 runs per arm)"
 
 
 def session_tokens(r):
@@ -254,18 +254,18 @@ def diff(files_a, files_b):
                       sum(k for k, _ in sb["per_run"]), sum(n for _, n in sb["per_run"]))
     lo, hi = min(lo, nl), max(hi, nh)
     p = permutation_p(ra, rb)
-    out = [f"## 차이: B({name_b}, {len(rb)}회) − A({name_a}, {len(ra)}회), 작성 과제 {sa['tasks']}개 (ADR-0112)", "",
-           "| 팔 | 실행별 성공 | 평균 |", "| --- | --- | --- |",
+    out = [f"## Difference: B ({name_b}, {len(rb)} runs) − A ({name_a}, {len(ra)} runs), {sa['tasks']} write tasks (ADR-0112)", "",
+           "| Arm | Successes per run | Mean |", "| --- | --- | --- |",
            f"| A | {', '.join(f'{k}/{n}' for k, n in sa['per_run'])} | {sa['mean']:.1%} |",
            f"| B | {', '.join(f'{k}/{n}' for k, n in sb['per_run'])} | {sb['mean']:.1%} |", "",
-           f"성공률 차이: {d * 100:+.1f}%p, 95% 구간 {lo * 100:+.1f}~{hi * 100:+.1f}%p, "
-           f"정확 순열 p = {'—' if p is None else f'{p:.3f}'} → {diff_verdict(lo, hi, len(ra), len(rb))}", ""]
+           f"Difference of success rates: {d * 100:+.1f}%p, 95% interval {lo * 100:+.1f}~{hi * 100:+.1f}%p, "
+           f"exact permutation p = {'—' if p is None else f'{p:.3f}'} → {diff_verdict(lo, hi, len(ra), len(rb))}", ""]
     ratios = token_ratios(runs_a, runs_b)
     if ratios:
         med, iv = median_interval(ratios)
         gm = math.exp(sum(math.log(r) for r in ratios) / len(ratios))
-        ivs = f"{iv[0]:.2f}~{iv[1]:.2f}" if iv else "—(과제 수 부족)"
-        out += [f"과제별 토큰 비율 B/A({len(ratios)}과제): 중앙값 {med:.2f}, 95% 구간 {ivs}, 기하 평균 {gm:.2f}", ""]
+        ivs = f"{iv[0]:.2f}~{iv[1]:.2f}" if iv else "— (too few tasks)"
+        out += [f"Token ratio per task B/A ({len(ratios)} tasks): median {med:.2f}, 95% interval {ivs}, geometric mean {gm:.2f}", ""]
     return "\n".join(out) + "\n"
 
 

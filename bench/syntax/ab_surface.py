@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The surface before and after ADR-0095 on the same frozen tasks (backlog 2R-05).
+"""The surface before and after ADR-0095 on the same frozen tasks (the syntax A/B measurement).
 
 ADR-0095 changed the writing surface (input aliases, shadowing, `x as T`,
 inline contract clauses, the default proof context); the frozen tasks and

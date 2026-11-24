@@ -1,4 +1,4 @@
-#[summary("벤치: 길이가 증명된 슬라이스 덧셈(벡터화 가능성)")]
+#[summary("bench: addition of slices with proved lengths (can it be vectorized)")]
 mod vadd {
     spec fn same3(a: &[i64], b: &[i64], c: &[i64]) -> bool { a.len() == c.len() && b.len() == c.len() }
 
@@ -18,7 +18,7 @@ mod vadd {
     }
 }
 
-#[summary("진입점")]
+#[summary("entry point")]
 mod app {
     #[effects(io)]
     #[uses(vadd::same3)]

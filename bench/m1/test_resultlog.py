@@ -1,4 +1,4 @@
-"""Results files written as sessions finish, and resumed (backlog INF-16)."""
+"""Results files written as sessions finish, and resumed."""
 import json
 import os
 import stat

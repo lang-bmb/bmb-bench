@@ -1,4 +1,4 @@
-#[summary("Benchmarks Game n-body(T3-04): 목성형 행성 넷과 태양의 궤도를 n = 1000단계 시뮬레이션하고 앞뒤 에너지를 출력. 단일 스레드")]
+#[summary("Benchmarks Game n-body: simulates the orbits of four Jovian planets and the sun for n = 1000 steps and prints the energy before and after. Single-threaded")]
 mod nb {
     struct Body {
         x: f64,

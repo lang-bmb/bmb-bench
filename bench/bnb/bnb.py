@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BNB: BMB Navigation Bench (ADR-0034 G4, backlog 3A-05).
+"""BNB: BMB Navigation Bench (ADR-0034 G4).
 
 The same navigation questions over the same code structure, answered in two
 arms with the same agent interface and budget rules (bench/m1/harness.py:
@@ -14,7 +14,7 @@ at most MAX_TOOL_CALLS tool calls, the `answer` tool counts as one):
   bnb.py run --sizes 100 1000 [--work DIR] [--agent oracle] [--arms bmb rust]
              [--check-truth] [--cargo-check] [--out F.jsonl] [--expect all-pass]
   bnb.py table F.jsonl..                Markdown tables (per size, per arm, per task)
-  bnb.py --set DIR manifest|run ..      a variant of the bmb arm (backlog 2D-39a):
+  bnb.py --set DIR manifest|run ..      a variant of the bmb arm (bounded results):
                                         DIR holds `set.json` (`mcp_flags`), its own
                                         `prompt-bmb.md` and a MANIFEST over those and
                                         this directory's MANIFEST; tasks are these
@@ -655,7 +655,7 @@ def make_agent(kind, arm, task):
 
 def run_task(task, arm, agent_kind, root, want, sessions=None):
     tools = BmbTools(root) if arm == "bmb" else RustTools(root)
-    trace = []  # every call in full, for the session record (INF-17)
+    trace = []  # every call in full, for the session record
     agent = make_agent(agent_kind, arm, task)
     if hasattr(agent, "set_tools"):
         agent.set_tools(tools.tools + [harness.ANSWER_TOOL])
@@ -848,9 +848,9 @@ def cmd_run(a):
 
 def run_one(a, tasks):
     """One arm at one size, rows written as sessions finish and an interrupted
-    run resumed from `--out` (backlog INF-16, bench/m1/resultlog.py), with
+    run resumed from `--out` (bench/m1/resultlog.py), with
     `--sessions` records and `--jobs` sessions at a time. The measurement path
-    of real models (3A-06)."""
+    of real models (the runs under `results/3a06`)."""
     arm, n = a.arms[0], a.sizes[0]
     commit = harness.run_commit()
     from model_api import is_model_kind  # noqa: E402
@@ -899,7 +899,7 @@ def cmd_table(a):
     sizes = sorted({r["size"] for r in runs})
     arms = [x for x in ("bmb", "rust") if any(r["arm"] == x for r in runs)]
     builds = {r["size"]: r for r in rows_ if r.get("kind") == "build"}
-    print("| N | BMB 원문 바이트 | Rust 원문 바이트 | cargo check | 정답 차이 |")
+    print("| N | BMB source bytes | Rust source bytes | cargo check | Ground truth differences |")
     print("| --- | --- | --- | --- | --- |")
     for n in sizes:
         b = builds.get(n, {})
@@ -907,7 +907,7 @@ def cmd_table(a):
         td = str(len(b["truth_diffs"])) if "truth_diffs" in b else "—"
         print(f"| {n} | {b.get('bmb_bytes', '—')} | {b.get('rust_bytes', '—')} | {cc} | {td} |")
     print()
-    print("| N | 팔 | 성공 | 정밀도 평균 | 재현율 평균 | 응답 토큰 합 | 과제당 토큰 중앙값 | 과제당 토큰 최대 | 도구 호출 합 | 호출 최대 | 한도 도달 |")
+    print("| N | Arm | Succeeded | Mean precision | Mean recall | Response tokens (sum) | Median tokens per task | Max tokens per task | Tool calls (sum) | Max calls | Reached the limit |")
     print("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
     for n in sizes:
         for arm in arms:
@@ -921,8 +921,8 @@ def cmd_table(a):
                   f"{max(r['tool_calls'] for r in xs)} | {sum(r['limit_hit'] for r in xs)} |")
     if len(arms) == 2:
         print()
-        head = " | ".join(f"N={n} bmb | N={n} rust | N={n} 비" for n in sizes)
-        print(f"| 과제 | 정답 크기(N={sizes[-1]}) | {head} |")
+        head = " | ".join(f"N={n} bmb | N={n} rust | N={n} ratio" for n in sizes)
+        print(f"| Task | Answer size (N={sizes[-1]}) | {head} |")
         print("| --- | --- | " + " | ".join("---" for _ in range(3 * len(sizes))) + " |")
         ids = []
         for r in runs:
@@ -962,7 +962,7 @@ def main():
     rn.add_argument("--cargo-check", action="store_true")
     rn.add_argument("--out")
     rn.add_argument("--expect", choices=["all-pass"])
-    rn.add_argument("--sessions", help="directory for session records (backlog INF-17)")
+    rn.add_argument("--sessions", help="directory for session records")
     rn.add_argument("--jobs", type=int, default=1, help="sessions at a time (one arm, one size)")
     tb = sub.add_parser("table")
     tb.add_argument("files", nargs="+")

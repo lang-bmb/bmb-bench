@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""H-EDIT / H-GRAIN task sets (backlog T1-06, 2D-24, ADR-0073): m1b, BVB and BRB
+"""H-EDIT / H-GRAIN task sets (ADR-0073): m1b, BVB and BRB
 through three write surfaces.
 
   python3 bench/edit/gen.py            writes the sets below
@@ -134,10 +134,10 @@ def write_set_json(out, surface="write"):
 
 
 def readme(out, name, source, surface="write"):
-    refs = "백로그 T1-06·2D-24" if surface == "write" else "백로그 T1-06, ADR-0073"
+    refs = "one-call write surface" if surface == "write" else "ADR-0073"
     with open(os.path.join(out, "README.md"), "w") as f:
-        f.write(f"# {name} (H-EDIT·H-GRAIN, {refs})\n\n`bench/edit/gen.py`가 `bench/{source}`에서 만든 판이다(동결). "
-                f"직접 고치지 않고 생성기로 다시 만든다. {source}와 쓰기 표면만 다르다(생성기 머리 주석).\n")
+        f.write(f"# {name} (H-EDIT, H-GRAIN, {refs})\n\nA variant that `bench/edit/gen.py` makes from `bench/{source}` (frozen). "
+                f"It is not edited by hand; the generator makes it again. It differs from {source} only in the write surface (the generator's header comment).\n")
 
 
 def example_tree(text):

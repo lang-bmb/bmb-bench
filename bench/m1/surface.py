@@ -1,4 +1,4 @@
-"""Scripted agents' writes through a set's edit surface (backlog T1-06, ADR-0073).
+"""Scripted agents' writes through a set's edit surface (ADR-0073).
 
 A task's `reference` and `weak_reference` are transaction ops. A set whose
 `set.json` names a `script` surface plays them through that surface instead

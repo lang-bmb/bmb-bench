@@ -1,83 +1,83 @@
-# BVB: BMB-Verus Bench (ADR-0034 §2, 백로그 2A-08·2A-09)
+# BVB: BMB-Verus Bench (ADR-0034 §2)
 
-공개 Verus 과제(Verus-Bench, Vericoding) 가운데 M1 언어(ADR-0016)로 옮길 수 있는 45개를 BMB 과제로 이식하고, 같은 과제를 원본 Verus 툴체인에서도 같은 규칙으로 풀게 해 같은 모델의 1회 성공률을 직접 비교한다. 출처·라이선스·선정 기록은 `SOURCES.md`.
+Of the public Verus tasks (Verus-Bench, Vericoding), the 45 that can be carried into the M1 language (ADR-0016) are ported as BMB tasks, and the same tasks are solved under the same rules in the original Verus toolchain, so that the first-attempt success rates of the same model are compared directly. Sources, licenses and the selection record are in `SOURCES.md`.
 
-| 파일 | 내용 |
+| File | Contents |
 | --- | --- |
-| `prompt.md` | 에이전트 시스템 프롬프트(동결). `bench/m1/prompt.md`와 바이트 단위로 같다 |
-| `seed/` | 시작 작업 공간(동결). 단위 `given` 하나: 원본이 명세에 쓰는 재귀·트리거용 명세 함수(규칙 G1) 11개 |
-| `tasks/` | 과제 45개(동결): Verus-Bench 30(`vb-*`), Vericoding 15(`vc-*`). 모두 작성 과제 |
-| `MANIFEST` | 동결 파일의 SHA-256. 다르면 두 하네스 모두 실행을 거부한다 |
-| `port/`, `port.py` | 과제 원천(사람이 읽는 형식). `port.py build`가 `tasks/`를 만들고 `port.py check`가 어긋남을 잡는다 |
-| `sources.py`, `licenses/` | 원본 고정 커밋, 선정 기록(모든 원본 과제의 결정과 사유), 출처 확인 |
-| `verus/` | 원본 Verus 비교군 하네스(2A-09): 설치, 프롬프트, 판정, 비교 표 |
+| `prompt.md` | the agent's system prompt (frozen). Byte for byte the same as `bench/m1/prompt.md` |
+| `seed/` | the starting workspace (frozen). One unit `given`: the 11 specification functions that the originals use in their specifications for recursion and triggers (rule G1) |
+| `tasks/` | 45 tasks (frozen): 30 from Verus-Bench (`vb-*`), 15 from Vericoding (`vc-*`). All are write tasks |
+| `MANIFEST` | SHA-256 of the frozen files. On a difference both harnesses refuse to run |
+| `port/`, `port.py` | the task sources (in a form a person reads). `port.py build` makes `tasks/` and `port.py check` catches a mismatch |
+| `sources.py`, `licenses/` | the pinned upstream commits, the selection record (the decision and reason for every upstream task), the source check |
+| `verus/` | the harness of the original-Verus comparison side: installation, prompt, judging, comparison table |
 
 ```
-python3 bench/m1/harness.py --set bench/bvb manifest                       # 동결 확인
-python3 bench/m1/harness.py --set bench/bvb run --agent oracle --jobs 4    # BMB 기준 해법: 전부 성공(게이트)
-python3 bench/m1/harness.py --set bench/bvb run --agent weak --jobs 4      # BMB 약한 대조군: 전부 실패(게이트)
-bench/bvb/verus/install.sh [--dry-run]                                     # 고정 Verus 릴리스 설치
-python3 bench/bvb/verus/harness.py run --agent oracle --jobs 4             # Verus 원본 해법: 전부 성공(CI bvb-verus)
-python3 bench/bvb/verus/harness.py run --agent weak --jobs 4               # Verus 약한 대조군: 전부 실패(CI bvb-verus)
-python3 bench/bvb/verus/harness.py compare BMB.jsonl VERUS.jsonl           # 과제별 BMB·Verus 나란히
-python3 bench/bvb/verus/harness.py strength RESULTS.jsonl                  # 한 실행의 명세 강도와 총 토큰(양쪽 모두)
+python3 bench/m1/harness.py --set bench/bvb manifest                       # check the freeze
+python3 bench/m1/harness.py --set bench/bvb run --agent oracle --jobs 4    # BMB reference solutions: all succeed (gate)
+python3 bench/m1/harness.py --set bench/bvb run --agent weak --jobs 4      # BMB weak controls: all fail (gate)
+bench/bvb/verus/install.sh [--dry-run]                                     # install the pinned Verus release
+python3 bench/bvb/verus/harness.py run --agent oracle --jobs 4             # original Verus solutions: all succeed (CI bvb-verus)
+python3 bench/bvb/verus/harness.py run --agent weak --jobs 4               # Verus weak controls: all fail (CI bvb-verus)
+python3 bench/bvb/verus/harness.py compare BMB.jsonl VERUS.jsonl           # BMB and Verus side by side per task
+python3 bench/bvb/verus/harness.py strength RESULTS.jsonl                  # specification strength and total tokens of one run (either side)
 ```
 
-## 과제 형식
+## Task format
 
-`m1b` 작성 과제와 같은 키(`prompt`, `signature`, `accept`, `reference`, `weak_reference`)에 다음을 더한다. `bench/m1/harness.py`는 `m1`·`m1b`의 판정을 바꾸지 않고 이 키를 읽는다.
+The keys of an `m1b` write task (`prompt`, `signature`, `accept`, `reference`, `weak_reference`) plus the following. `bench/m1/harness.py` reads these keys without changing the judging of `m1` and `m1b`.
 
-| 키 | 뜻 |
+| Key | Meaning |
 | --- | --- |
-| `source` | 원본 벤치마크, 원본 과제(`origin`, `path`), 적용한 이식 규칙 |
-| `accept.specs`의 `ref_*` 보조 술어 | 숨긴 기준 계약이 쓰는 보조 술어. 판정용 정의의 `#[uses]`에 모두 들어간다(전에는 `ref_pre`·`ref_post`만) |
-| `frozen` | 숨긴 계약이 이름으로 부르는 `given` 정의. 판정 때 정의 해시가 씨앗과 같아야 한다(`given_intact`). 바꿔서 명세 검사를 통과시키는 답을 막는다 |
-| `verus` | 원본 Verus 쪽: 같은 설명에 원본 시그니처를 붙인 `prompt`, `signature`, `target`, 원본 명세(`specs`·`pre`·`post`, 보조 함수는 `bvb_ref_*`로 이름만 바꿈), 검증된 해법 `reference`와 그 출처 `reference_origin`, G1 과제의 `given` |
+| `source` | the upstream benchmark, the upstream task (`origin`, `path`), the porting rules applied |
+| `ref_*` helper predicates in `accept.specs` | helper predicates the hidden reference contract uses. All go into `#[uses]` of the judging definitions (before, only `ref_pre` and `ref_post`) |
+| `frozen` | the `given` definitions the hidden contract calls by name. At judging their definition hashes must equal the seed's (`given_intact`). This blocks an answer that changes them to pass the specification check |
+| `verus` | the original Verus side: a `prompt` with the same description and the original signature, `signature`, `target`, the original specification (`specs`, `pre`, `post`; helper functions only renamed to `bvb_ref_*`), a verified solution `reference` with its origin `reference_origin`, and `given` for G1 tasks |
 
-두 언어의 프롬프트는 같은 설명(`description`)을 쓰고 끝의 시그니처만 다르다. BMB 쪽은 "Create unit `tasks`" 한 줄이 앞에 붙는다. G1 과제는 두 쪽 모두 주어진 명세 함수의 코드를 프롬프트에 보여 준다.
+The prompts of the two languages use the same description (`description`) and differ only in the signature at the end. The BMB side has the one line "Create unit `tasks`" in front. For G1 tasks both sides show the code of the given specification functions in the prompt.
 
-## 이식 규칙
+## Porting rules
 
-| 규칙 | 원본(Verus) | BMB |
+| Rule | Original (Verus) | BMB |
 | --- | --- | --- |
-| T1 | `&Vec<T>`, `Vec<T>`(읽기만), `&[T]`; 길이를 바꾸지 않는 `&mut Vec<T>` | `&[T']`; `&mut [T']` |
-| T2 | `i8`·`i16`·`i32` / `u8`·`u16`·`u32` / 원소 `usize` | `i64` / `u64` / `u64`. 원본 타입의 범위가 계산이나 명세에 영향을 주면(넘침, 입력 영역) 그 범위를 숨긴 `requires`와 설명에 넣는다. 영향이 없으면 넣지 않는다(64비트 전체에서 맞아야 하므로 과제가 약해지지 않는다) |
-| T3 | `exists\|x\| P` | `!(forall\|x\| !P)` (M1에 `exists` 없음) |
-| T4 | `Seq` 위의 재귀 명세(`drop_last`/`last`) | 접두 길이 `n`에 대한 재귀 명세 함수 |
-| T5 | `int` 명세 함수 | 같은 식의 `i64` 명세 함수(명세 산술은 무한 정수, ADR-0017 §2) |
-| T6 | 그 자체로 항상 참인 절(`exists\|i\| (범위 ==> ..)`) | 뜻(`true`)대로 뺀다. Verus 쪽 숨긴 계약에서도 뺀다(`vb-misc-findmax`) |
-| T7 | `int`의 `/`·`%`(유클리드) | 음수 피제수에서는 `(n % d + d) % d`와 그것으로 맞춘 몫으로 옮긴다(BMB는 0 쪽 자름) |
-| G1 | 원본 명세가 재귀 명세 함수이거나, 양화사 트리거가 산술식이라 이름 붙은 술어가 필요한 경우 | 그 함수를 원본처럼 과제에 **준다**(BMB `given::f`, Verus 시작 파일). 두 계약을 이름이 다른 재귀 함수로 쓰면 함의 증명에 귀납이 필요해 명세 강도 검사가 의미를 잃기 때문이다. 원본 Verus-Bench·Vericoding 과제도 이 함수를 주었다 |
+| T1 | `&Vec<T>`, `Vec<T>` (read only), `&[T]`; `&mut Vec<T>` that does not change the length | `&[T']`; `&mut [T']` |
+| T2 | `i8`, `i16`, `i32` / `u8`, `u16`, `u32` / element `usize` | `i64` / `u64` / `u64`. When the range of the original type affects the computation or the specification (overflow, input domain), that range goes into the hidden `requires` and the description. When it does not, it is left out (the solution has to be right over all 64 bits, so the task is not weakened) |
+| T3 | `exists\|x\| P` | `!(forall\|x\| !P)` (M1 has no `exists`) |
+| T4 | recursive specification over `Seq` (`drop_last`/`last`) | a recursive specification function over the prefix length `n` |
+| T5 | `int` specification function | an `i64` specification function with the same expression (specification arithmetic is over unbounded integers, ADR-0017 §2) |
+| T6 | a clause that is always true by itself (`exists\|i\| (range ==> ..)`) | left out, as its meaning (`true`). Left out of the hidden contract of the Verus side too (`vb-misc-findmax`) |
+| T7 | `/` and `%` of `int` (Euclidean) | for a negative dividend, carried over as `(n % d + d) % d` and the quotient that matches it (BMB truncates toward 0) |
+| G1 | the original specification is a recursive specification function, or a quantifier's trigger is an arithmetic expression and needs a named predicate | the function is **given** to the task as in the original (BMB `given::f`, the Verus starting file). If the two contracts were written with recursive functions of different names, proving the implication would need induction and the specification strength check would lose its meaning. The original Verus-Bench and Vericoding tasks gave these functions too |
 
-숨긴 계약은 원본 명세의 번역이다. 다만 양화사의 트리거는 배열 원소 항(`a[i]`)에 둔다(Verus 쪽도 같고, 이 때문에 원본 해법 하나의 트리거 표기를 바꿨다: `vb-mbpp-113`, `reference_origin: upstream-triggers`). 원본 해법 둘(`vb-misc-reverse`, `vb-misc-map`)은 고정 Verus 버전의 `&mut` 사후 조건 문법(`final(v)`)으로 옮겼다(`upstream-migrated`). 원본 해법이 없는 Vericoding 과제 5개의 Verus 해법은 BVB에서 썼다(`bvb`).
+The hidden contract is a translation of the original specification. The triggers of quantifiers, though, are put on array element terms (`a[i]`) (the Verus side does the same, and for this the trigger annotation of one original solution was changed: `vb-mbpp-113`, `reference_origin: upstream-triggers`). Two original solutions (`vb-misc-reverse`, `vb-misc-map`) were moved to the `&mut` postcondition syntax of the pinned Verus version (`final(v)`) (`upstream-migrated`). The Verus solutions of the 5 Vericoding tasks without an original solution were written for BVB (`bvb`).
 
-## 판정
+## Judging
 
-- **BMB:** ADR-0021 §2 그대로(작업 공간 전체 증명, 시그니처, 숨긴 계약 함의) + G1 과제의 `given_intact`.
-- **Verus(`verus/harness.py`):** 같은 생각을 Verus로 옮겼다. (1) 마지막 파일이 `verus --no-cheating`으로 검증된다(`assume`·`admit`·`external_body`·`assume_specification` 거부, BMB M1에 탈출구가 없는 것과 맞춘다). (2) 대상 함수의 시그니처가 같다(`pub`, 공백, 결과 이름 무시). (3) 파일 끝에 `fn bvb_check(..) requires 원본 pre ensures 원본 post { target(..) }`를 붙여 다시 검증된다. G1 과제는 주어진 함수가 그대로 있어야 한다.
-- **약한 대조군:** BMB는 과제마다 쓴 약한 명세, Verus는 원본 해법에서 대상 함수의 `ensures`를 지운 것(자동). 둘 다 검증은 되고 명세 검사에서 떨어져야 한다.
-- **세션 규칙(공정성):** 과제당 한 세션, 재시도 없음, 도구 호출 40회, 같은 모델 설정(`bench/m1/anthropic_agent.py`의 effort·`max_tokens`). Verus 에이전트의 도구는 `read_file`·`write_file`·`verify` 셋이고 BMB는 MCP 도구다. 둘 다 파일 시스템·셸이 없다. 결과 파일의 `task_set`은 BMB `bvb`, Verus `bvb-verus`이고 `compare`는 두 파일의 MANIFEST가 같을 때만 표를 만든다.
+- **BMB:** ADR-0021 §2 as it is (the whole workspace proved, the signature, implication of the hidden contract) + `given_intact` for G1 tasks.
+- **Verus (`verus/harness.py`):** the same idea carried to Verus. (1) The last file verifies with `verus --no-cheating` (`assume`, `admit`, `external_body` and `assume_specification` are refused, to match BMB M1 having no escape hatch). (2) The target function's signature is the same (ignoring `pub`, whitespace and the result name). (3) With `fn bvb_check(..) requires original pre ensures original post { target(..) }` appended to the file, it verifies again. For G1 tasks the given functions must be unchanged.
+- **Weak controls:** for BMB a weak specification written per task, for Verus the original solution with the target function's `ensures` removed (automatic). Both must verify and fail the specification check.
+- **Session rules (fairness):** one session per task, no retry, 40 tool calls, the same model settings (effort and `max_tokens` of `bench/m1/anthropic_agent.py`). The Verus agent has three tools, `read_file`, `write_file` and `verify`; BMB has the MCP tools. Neither has a file system or a shell. `task_set` of the result files is `bvb` for BMB and `bvb-verus` for Verus, and `compare` makes a table only when the MANIFESTs of the two files are the same.
 
-## 비교 표의 지표(백로그 2A-12, H-SPEC·H-FAMILIAR)
+## Metrics of the comparison table (H-SPEC, H-FAMILIAR)
 
-`compare`는 1회 성공률 옆에 두 열을 더 낸다. 둘 다 실제 모델 실행 전에 정했다.
+`compare` gives two more columns beside the first-attempt success rate. Both were fixed before the runs with a real model.
 
-- **명세 강도:** 최종 코드가 검증되고 시그니처가 맞는 과제 중, 에이전트의 계약이 숨긴 원본 계약을 함의하는 과제의 비율(`spec_accepted`). 구현 실패는 분모에서 빠지므로 1회 성공률과 따로 명세만 읽는다. 기준 해법은 양쪽 45/45, 약한 대조군은 0/45여야 한다(게이트 `bench bvb oracle`·`weak`, CI `bvb-verus`).
-- **총 모델 토큰:** 입력+출력 합(프롬프트 포함).
+- **Specification strength:** of the tasks whose final code verifies with the right signature, the share whose agent contract implies the hidden original contract (`spec_accepted`). Implementation failures are not in the denominator, so this reads the specification apart from the first-attempt success rate. The reference solutions must give 45/45 on both sides and the weak controls 0/45 (gate `bench bvb oracle` and `weak`, CI `bvb-verus`).
+- **Total model tokens:** the sum of input and output (prompt included).
 
-H-FAMILIAR(ADR-0040 §4)는 BMB 1회 성공률 ≤ Verus면 반증이다. H-SPEC은 BSB가 주 판정이고 BVB 명세 강도는 보조 열이다.
+H-FAMILIAR (ADR-0040 §4) is refuted when the BMB first-attempt success rate ≤ that of Verus. For H-SPEC the BSB is the main verdict and the BVB specification strength an auxiliary column.
 
-## 실제 모델 비교(사용자 머신, 유료)
+## Comparison with a real model (the user's machine, paid)
 
 ```
-bench/bvb/verus/install.sh                       # 고정 Verus 0.2026.10.04.426d8b0 + Rust 1.98.1 (약 500MB)
+bench/bvb/verus/install.sh                       # the pinned Verus 0.2026.10.04.426d8b0 + Rust 1.98.1 (about 500 MB)
 python3 bench/m1/harness.py --set bench/bvb run --agent anthropic:MODEL --out bench/bvb/results/$(date +%F)-MODEL.jsonl
 python3 bench/bvb/verus/harness.py run --agent anthropic:MODEL --out bench/bvb/results/$(date +%F)-MODEL-verus.jsonl
 python3 bench/bvb/verus/harness.py compare bench/bvb/results/DATE-MODEL.jsonl bench/bvb/results/DATE-MODEL-verus.jsonl
 ```
 
-## 알려진 한계
+## Known limits
 
-- **명세 강도 검사는 트리거에 민감하다(두 언어 모두).** 에이전트의 양화사가 자기 술어 적용(`p(a[i])`)에만 트리거를 두면, 뜻이 같아도 숨긴 계약과의 함의를 해법기가 찾지 못할 수 있다. 숨긴 계약은 원소 항 트리거로 이 위험을 줄였지만 없애지는 못한다. 실제 모델 결과에서 `spec_accepted`만 실패한 과제는 이 가능성을 확인한다.
-- **BMB 완전성 문제(발견, 2A-08 중):** `i64` 배열 원소를 인자로 받는 명세 함수는 양화사 안에서 펼쳐지지 않는다. 예: `forall|i| i < a.len() ==> small(#[trigger] a[i])`에서 `forall|i| .. ==> a[i] < 5`를 증명하지 못한다(`u64`는 된다). 원인은 `verify.rs`의 `fresh_elems`가 원소 범위 공리를 부호 없는 원소에만 넣고(1B-30), 명세 함수의 정의 공리는 인자 범위를 가드로 갖기 때문이다(ADR-0017 §4). BVB의 숨긴 계약과 기준 해법은 이 꼴을 피했지만 에이전트는 이 꼴을 자연스럽게 쓴다. 실제 측정 전에 고칠 후보다.
-- 선정 편향은 `SOURCES.md` "선택 편향 공개".
+- **The specification strength check is sensitive to triggers (in both languages).** When an agent's quantifier has its trigger only on an application of its own predicate (`p(a[i])`), the solver may not find the implication to the hidden contract even though the meaning is the same. The hidden contracts reduce this risk with element-term triggers but do not remove it. A task that fails only `spec_accepted` in the results of a real model is checked for this possibility.
+- **A BMB completeness problem (found while porting):** a specification function that takes an `i64` array element as an argument is not unfolded inside a quantifier. Example: from `forall|i| i < a.len() ==> small(#[trigger] a[i])` it does not prove `forall|i| .. ==> a[i] < 5` (it does for `u64`). The cause is that `fresh_elems` in `verify.rs` adds the element range axiom only for unsigned elements, and the definition axiom of a specification function has the argument range as its guard (ADR-0017 §4). The hidden contracts and reference solutions of BVB avoid this form, but an agent writes it naturally. It is a candidate to fix before a real measurement.
+- For the selection bias see "Disclosure of the selection bias" in `SOURCES.md`.

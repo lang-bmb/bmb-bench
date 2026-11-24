@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Data tables of the utility report (backlog T0-26, `dev-docs/reports/utility.md`).
+"""Data tables of the utility report (a living report kept outside this repository).
 
   utility.py tables              the tables, from every official results file
   utility.py --write REPORT      replace the generated block of REPORT
@@ -78,7 +78,7 @@ def total_tokens(r):
 
 
 def outcome_table(rs):
-    lines = ["| 집합 | 팔 | 모델 | 작성 성공 | 총 토큰 | 성공당 토큰 | 세션당 도구 호출(중앙값) |",
+    lines = ["| Set | Arm | Model | Writes succeeded | Total tokens | Tokens per success | Tool calls per session (median) |",
              "| --- | --- | --- | --- | --- | --- | --- |"]
     for s, model, arm, summary, rows in rs:
         write = [r for r in rows if r.get("kind", "write") != "navigate"]
@@ -91,7 +91,7 @@ def outcome_table(rs):
 
 
 def test_code_table(rs):
-    lines = ["| 모델 | 팔 | 성공 | 성공 세션의 테스트 코드 줄 | 성공 세션당 | 자기 검사 호출(중앙값) | 통과 & 숨은 실패 |",
+    lines = ["| Model | Arm | Succeeded | Test code lines of successful sessions | Per successful session | Self-check calls (median) | Passed & hidden failure |",
              "| --- | --- | --- | --- | --- | --- | --- |"]
     for s, model, arm, summary, rows in rs:
         if not s.startswith("brb"):
@@ -108,7 +108,7 @@ def test_code_table(rs):
 
 
 def navigation_table(rs):
-    lines = ["| 집합 | 모델 | 탐색 성공(P·R=1) | 세션당 읽기 호출(중앙값) | 세션당 읽은 바이트(중앙값) | 세션당 총 토큰(중앙값) |",
+    lines = ["| Set | Model | Navigation succeeded (P, R = 1) | Read calls per session (median) | Bytes read per session (median) | Total tokens per session (median) |",
              "| --- | --- | --- | --- | --- | --- |"]
     for s, model, arm, summary, rows in rs:
         nav = [r for r in rows if r.get("kind") == "navigate"]
@@ -121,7 +121,7 @@ def navigation_table(rs):
 
 
 def tool_mix_table(rs):
-    lines = ["| 집합 | 팔 | 모델 | 읽기 도구 | 쓰기 도구 | 검사 도구 | 읽기 비율 |",
+    lines = ["| Set | Arm | Model | Read tools | Write tools | Check tools | Read share |",
              "| --- | --- | --- | --- | --- | --- | --- |"]
     for s, model, arm, summary, rows in rs:
         if not s.startswith("brb"):
@@ -139,9 +139,9 @@ def tool_mix_table(rs):
 
 
 def undecided_table(rs):
-    """H-DECIDE as a metric (ADR-0078 §2, backlog T0-28): the sessions that
+    """H-DECIDE as a metric (ADR-0078 §2): the sessions that
     reached the hidden spec check, and those the judge left undecided."""
-    lines = ["| 집합 | 팔 | 모델 | 명세 검사에 닿은 세션 | 미결정 | 미결정 비율 | 전체 세션 중 미결정 |",
+    lines = ["| Set | Arm | Model | Sessions that reached the spec check | Undecided | Undecided rate | Undecided of all sessions |",
              "| --- | --- | --- | --- | --- | --- | --- |"]
     for s, model, arm, summary, rows in rs:
         checked = [r for r in rows if r.get("spec_accepted") or r.get("spec_rejections")]
@@ -156,7 +156,7 @@ def undecided_table(rs):
 def undecided_sessions(path):
     """{session id: whether a tool result said "solver could not decide"}
     from the session records next to a results file (`X.jsonl` →
-    `X.sessions/`, backlog INF-17); empty when there are none."""
+    `X.sessions/`); empty when there are none."""
     import gzip
     out = {}
     for p in sorted(glob.glob(path[:-len(".jsonl")] + ".sessions/*.json.gz")):
@@ -167,11 +167,11 @@ def undecided_sessions(path):
 
 
 def distribution_table(rs, paths):
-    """Where the writing tokens are (AI-user feedback P4, backlog T0-35):
+    """Where the writing tokens are (from AI-user feedback):
     the median session, the share of the three costliest, the sessions that
     got an undecided response and their share (from the session records),
     and the share of input tokens read from the prompt cache (ADR-0093)."""
-    lines = ["| 집합 | 팔 | 모델 | 작성 세션 | 세션 토큰 중앙값 | 상위 3세션 몫 | 미결정 응답을 받은 세션 | 그 세션의 토큰 몫 | 입력 중 캐시 읽기 |",
+    lines = ["| Set | Arm | Model | Write sessions | Median session tokens | Share of the top 3 sessions | Sessions that got an undecided response | Token share of those sessions | Cache reads in the input |",
              "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for (s, model, arm, summary, rows), path in zip(rs, paths):
         write = [r for r in rows if r.get("kind", "write") != "navigate"]
@@ -186,7 +186,7 @@ def distribution_table(rs, paths):
             n_und = ratio(len(hit), len(write))
             share = f"{sum(total_tokens(r) for r in hit) / tot:.1%}" if tot else "—"
         else:
-            n_und, share = "기록 없음", "—"
+            n_und, share = "no record", "—"
         inp = sum((r.get("model_usage") or {}).get("input_tokens", 0) for r in write)
         read = sum((r.get("model_usage") or {}).get("cache_read_input_tokens", 0) for r in write)
         cache = f"{read / inp:.1%}" if inp and any("cache_read_input_tokens" in (r.get("model_usage") or {})
@@ -199,15 +199,15 @@ def distribution_table(rs, paths):
 def tables():
     full = runs(with_paths=True)
     rs = [x[:5] for x in full]
-    out = ["### A. 결과와 비용(정식 측정 전부)", ""] + outcome_table(rs)
-    out += ["", "### B. 테스트 코드와 숨은 결함(BRB, G5·G8·H-ORACLE)", ""] + test_code_table(rs)
-    out += ["", "### C. 탐색(m1·m1b 탐색 과제, G4)", ""] + navigation_table(rs)
-    out += ["", "### D. 도구 사용의 구성(BRB 세션 합계)", ""] + tool_mix_table(rs)
-    out += ["", "### E. 판정기 미결정률(숨은 명세 검사, H-DECIDE 지표, T0-28)", ""] + undecided_table(rs)
-    out += ["", "### F. 작성 토큰의 분포(성공당 평균이 가리는 꼬리, T0-35)", ""] + distribution_table(
+    out = ["### A. Outcome and cost (every official measurement)", ""] + outcome_table(rs)
+    out += ["", "### B. Test code and hidden defects (BRB, G5, G8, H-ORACLE)", ""] + test_code_table(rs)
+    out += ["", "### C. Navigation (navigation tasks of m1 and m1b, G4)", ""] + navigation_table(rs)
+    out += ["", "### D. Composition of tool use (sums over BRB sessions)", ""] + tool_mix_table(rs)
+    out += ["", "### E. Judge undecided rate (hidden spec check, the H-DECIDE metric)", ""] + undecided_table(rs)
+    out += ["", "### F. Distribution of write tokens (the tail that the mean per success hides)", ""] + distribution_table(
         rs, [x[5] for x in full])
     files = sorted({f"`bench/{s}/results/`" for s, *_ in rs})
-    out += ["", f"원자료: {', '.join(files)}의 결과 파일 {len(rs)}개(요약 행이 있는 것)."]
+    out += ["", f"Raw data: {len(rs)} result files (those with a summary row) of {', '.join(files)}."]
     return "\n".join(out) + "\n"
 
 

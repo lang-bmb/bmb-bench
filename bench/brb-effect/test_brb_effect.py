@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BRB-EFFECT task set, judge and harness logic (backlog T1-43). No network,
+"""BRB-EFFECT task set, judge and harness logic. No network,
 no model. Needs `bmb` ($BMB or target/debug/bmb), clang and cargo (offline).
 
 The frozen tasks are only read; sessions run on temporary workspaces. The

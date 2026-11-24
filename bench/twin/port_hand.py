@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Refactoring tasks whose reference solutions are written by hand (backlog
-3P-03): the families no rule of `port_change.py` can solve on both sides.
+"""Refactoring tasks whose reference solutions are written by hand:
+the families no rule of `port_change.py` can solve on both sides.
 
     inline    a function goes; its body takes the place of every call
     extract   a part of a function becomes a new function that it calls
@@ -229,8 +229,7 @@ def move_sha(twin, ch):
 
 
 # `move_sha` is written but not a task: after its BMB solution every
-# definition is proved and `bmb build` still refuses the program (backlog
-# 4D-37).
+# definition is proved and `bmb build` still refuses the program.
 TASKS = [inline_type_def, inline_sha, extract_reserved_name, extract_rationale_line]
 
 

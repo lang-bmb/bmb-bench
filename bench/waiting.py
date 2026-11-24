@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""What waits for the measurement machine, and how much it asks for
-(backlog INF-39).
+"""What waits for the measurement machine, and how much it asks for.
 
     waiting.py table [--price MODEL=IN,OUT]... [--cap USD]
     waiting.py --write FILE [same options]
 
-`bench/waiting.json` lists the waiting runs in the order of docs/ROADMAP.md
-"우선순위" 1. A run's tokens are estimated from committed result files of
+`bench/waiting.json` lists the waiting runs in the order of the priorities of
+lang-bmb's docs/ROADMAP.md. A run's tokens are estimated from committed result files of
 the same kind (`like`): the mean of the files a glob matches, summed over
 the globs when the run covers several sets (`sum`). Nothing is estimated
 without such a file. Prices (USD per million input and output tokens) and
@@ -66,20 +65,20 @@ def n(x):
 
 def table(rows, prices, cap):
     lines = [
-        "| 순서 | 태스크 | 실행 | 모델 | 횟수 | 세션/회 | 입력 토큰/회 | 출력 토큰/회 | 입력 합 | 출력 합 | 추정의 근거 |",
+        "| Order | Task | Run | Model | Times | Sessions/run | Input tokens/run | Output tokens/run | Input sum | Output sum | Basis of the estimate |",
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for i, r in enumerate(rows, 1):
         if r["cpu"]:
-            cells = ["—"] * 5 + ["모델 없음"]
+            cells = ["—"] * 5 + ["no model"]
         elif r["est"] is None:
-            cells = ["?"] * 5 + ["지난 실행 없음"]
+            cells = ["?"] * 5 + ["no earlier run"]
         else:
             s, ti, to, files = r["est"]
-            basis = f"결과 파일 {files}개" + (f"({r['proxy']}의 것)" if r["proxy"] else "")
+            basis = f"{files} result files" + (f" (of {r['proxy']})" if r["proxy"] else "")
             cells = [n(s), n(ti), n(to), n(ti * r["times"]), n(to * r["times"]), basis]
         lines.append(f"| {i} | `{r['task']}` | {r['what']} | {r['model']} | {r['times']} | " + " | ".join(cells) + " |")
-    lines += ["", "| 묶음 | 모델 | 실행 수 | 입력 합 | 출력 합 | 추정 없는 실행 |" + (" 비용(USD) |" if prices else ""),
+    lines += ["", "| Tier | Model | Runs | Input sum | Output sum | Runs without an estimate |" + (" Cost (USD) |" if prices else ""),
               "| --- | --- | --- | --- | --- | --- |" + (" --- |" if prices else "")]
     tiers = []
     for r in rows:
@@ -104,16 +103,16 @@ def table(rows, prices, cap):
                     spend[tier] = spend.get(tier, 0.0) + usd
                     line += f" {usd:,.2f} |"
                 else:
-                    line += " 값 없음 |"
+                    line += " no price |"
             lines.append(line)
     if prices and cap:
-        lines += ["", f"일일 한도 {cap:,.2f} USD로 나눈 날 수(추정이 있는 실행만, 한 실행은 하루 안에 끝나야 유효하다: ADR-0088):", ""]
+        lines += ["", f"Days at the daily cap of {cap:,.2f} USD (runs with an estimate only; a run has to finish within a day to count: ADR-0088):", ""]
         days = 0
         for tier in tiers:
             if tier in spend:
                 d = math.ceil(spend[tier] / cap)
                 days += d
-                lines.append(f"- {tier}: {d}일(누적 {days}일)")
+                lines.append(f"- {tier}: {d} days ({days} cumulative)")
     return "\n".join(lines) + "\n"
 
 

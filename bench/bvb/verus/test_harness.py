@@ -1,4 +1,4 @@
-"""Logic of the original-Verus BVB harness (backlog 2A-09) with a stub verifier.
+"""Logic of the original-Verus BVB harness with a stub verifier.
 
 No Verus, no network, no paid API: the gate runs this. The real verifier path
 (oracle all pass, weak all rejected) runs in the `bvb-verus` CI job, which
@@ -270,10 +270,10 @@ class Compare(unittest.TestCase):
         v = self.write([self.row("a", False), self.row("b", False),
                         {"summary": True, "task_set": "bvb-verus", "manifest": "m", "agent": "x"}])
         table = harness.compare(b, v)
-        self.assertIn("| 1회 성공률 | 1/2 | 0/2 |", table)
-        self.assertIn("| a | 성공 | 실패: spec_accepted |", table)
-        self.assertIn("| 명세 강도(검증·시그니처 통과 중 원본 계약 함의) | 1/2 | 0/2 |", table)
-        self.assertIn("| 총 모델 토큰(입력+출력) | 24 | 24 |", table)
+        self.assertIn("| First-attempt success rate | 1/2 | 0/2 |", table)
+        self.assertIn("| a | success | failure: spec_accepted |", table)
+        self.assertIn("| Specification strength (implies the original contract, of those that verify with the signature) | 1/2 | 0/2 |", table)
+        self.assertIn("| Total model tokens (input + output) | 24 | 24 |", table)
 
     def test_strength_ignores_implementation_failures(self):
         rows = [self.row("a", True), self.row("b", False), {**self.row("c", False), "verified": False},

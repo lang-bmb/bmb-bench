@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates the hidden BSB mutant sets of a task set (backlog 2A-10, ADR-0034 G3).
+"""Generates the hidden BSB mutant sets of a task set (ADR-0034 G3).
 
   bsb_gen.py [--set DIR] [--tasks ID,..] [--jobs N] [--check]
 

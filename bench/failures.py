@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Where each failed session ended, from the result rows (backlog T0-16, T0-10 report).
+"""Where each failed session ended, from the result rows.
 
   failures.py RESULTS.jsonl..     one table per file, then the failed sessions
 
@@ -12,10 +12,10 @@ m1b, BVB, Verus): `no-commit` (BMB: no transaction committed), `unverified`,
 `signature`, `given-changed` (BVB given definitions), `spec-refuted`,
 `spec-undecided`, `spec`; for BRB: `not-delivered (<why>)`, `hidden-cases`,
 `domain`; for navigation: `navigate`. This is attribution to the judge step,
-not to a layer: the layer needs the session record (backlog INF-17), and runs
-without records (T0-10) stop here. A file whose rows carry the hidden spec
+not to a layer: the layer needs the session record, and runs
+without records stop here. A file whose rows carry the hidden spec
 check (BVB) also gets the judge's undecided rate (H-DECIDE as a metric,
-backlog T0-28). Standard library only.
+ADR-0078 §2). Standard library only.
 """
 import collections
 import json
@@ -51,7 +51,7 @@ def verdict(r):
         if r.get("failed"):
             return "hidden-cases"
         return "domain"
-    # A harness from T1-40 on counts every write's commit by its outcome
+    # A harness that counts one-call writes counts every write's commit by its outcome
     # (one-call surfaces too); before it, `commits` counts `tx_commit` calls.
     if r.get("commits_ok", r.get("commits")) == 0:
         return "no-commit"
@@ -70,7 +70,7 @@ def verdict(r):
 
 
 def undecided(rs):
-    """H-DECIDE as a metric (ADR-0078 §2, backlog T0-28): of the sessions
+    """H-DECIDE as a metric (ADR-0078 §2): of the sessions
     whose final state reached the hidden spec check (proved, signature right:
     the row's spec is accepted or has rejections), those the judge could not
     decide (a rejection with reason `undecided`). (undecided, checked)."""
@@ -83,8 +83,8 @@ def table(path):
     head, rs = rows(path)
     failed = [r for r in rs if not r.get("success")]
     name = head.get("task_set", os.path.basename(path)) + (f" ({head['arm']})" if head.get("arm") else "")
-    out = [f"## {name}: 실패 {len(failed)}/{len(rs)}", "", "| 끝남 \\ 판정 | " +
-           " | ".join(vs := sorted({verdict(r) for r in failed})) + " | 합 |",
+    out = [f"## {name}: {len(failed)}/{len(rs)} failed", "", "| Ending \\ verdict | " +
+           " | ".join(vs := sorted({verdict(r) for r in failed})) + " | Sum |",
            "| --- | " + " | ".join("---" for _ in vs) + " | --- |"]
     grid = collections.Counter((ending(r), verdict(r)) for r in failed)
     for e in sorted({ending(r) for r in failed}):
@@ -92,8 +92,8 @@ def table(path):
         out.append(f"| {e} | " + " | ".join(cells) + f" | {sum(grid[(e, v)] for v in vs)} |")
     und, checked = undecided(rs)
     if checked:
-        out += ["", f"판정기 미결정(숨은 명세 검사에 닿은 세션 중): {und}/{checked}, 전체 세션 중 {und}/{len(rs)}"]
-    out += ["", "| 과제 | 끝남 | 판정 | 도구 호출 | 출력 토큰 |", "| --- | --- | --- | --- | --- |"]
+        out += ["", f"Judge undecided (of the sessions that reached the hidden spec check): {und}/{checked}, of all sessions {und}/{len(rs)}"]
+    out += ["", "| Task | Ending | Verdict | Tool calls | Output tokens |", "| --- | --- | --- | --- | --- |"]
     for r in failed:
         out.append(f"| {r['id']} | {ending(r)} | {verdict(r)} | {r.get('tool_calls', '')} | "
                    f"{(r.get('model_usage') or {}).get('output_tokens', '')} |")

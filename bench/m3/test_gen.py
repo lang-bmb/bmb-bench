@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate test for gen.py (backlog 3A-01): N=100 is deterministic, local
+"""Gate test for gen.py: N=100 is deterministic, local
 (growing N keeps existing units byte for byte), in normal form, and every
 executable definition is proved. Uses $BMB or target/debug/bmb."""
 

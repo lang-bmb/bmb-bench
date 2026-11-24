@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""H-REPAIR's ablation set (ADR-0078, backlog T1-45): m1b-write with the
+"""H-REPAIR's ablation set (ADR-0078): m1b-write with the
 repair information taken out of every tool result the model sees.
 
   python3 bench/repair/gen.py            writes bench/m1b-write-norepair
@@ -37,9 +37,9 @@ SOURCE = "m1b-write"
 NAME = "m1b-write-norepair"
 FILTER = "no-repair"
 
-README = f"""# {NAME} (H-REPAIR 절제 판, 백로그 T1-45)
+README = f"""# {NAME} (H-REPAIR ablation variant)
 
-`bench/repair/gen.py`가 `bench/{SOURCE}`에서 만든 판이다(동결). 직접 고치지 않고 생성기로 다시 만든다. {SOURCE}와 다른 것은 `set.json`의 `"tool_filter": "{FILTER}"` 하나다: m1 하네스가 모델에게 가는 모든 도구 결과에서 진단 메시지 끝의 반례(`; counterexample: ..`, `; unconfirmed counterexample: ..`), 모든 `fix`(수정 제안과 힌트), 모든 `counterexample` 필드를 지운다. 프롬프트·씨앗·과제·변이체·판정·한도는 {SOURCE}와 바이트 단위로 같다. 판정 규칙은 `bench/repair/README.md`.
+A variant that `bench/repair/gen.py` makes from `bench/{SOURCE}` (frozen). It is not edited by hand; the generator makes it again. The one difference from {SOURCE} is `"tool_filter": "{FILTER}"` in `set.json`: the m1 harness removes, from every tool result that goes to the model, the counterexample at the end of a diagnostic message (`; counterexample: ..`, `; unconfirmed counterexample: ..`), every `fix` (suggested fixes and hints) and every `counterexample` field. The prompt, seed, tasks, mutants, judging and limits are byte for byte those of {SOURCE}. The verdict rule is in `bench/repair/README.md`.
 """
 
 

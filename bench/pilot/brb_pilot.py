@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Pilot runs of BRB, BMB+proof against Rust+tests, through the Claude Code CLI
-(H-ORACLE, G5, G8; backlog T0-07).
+(H-ORACLE, G5, G8).
 
   brb_pilot.py --arm bmb|rust --model MODEL [--tasks ID,..] [--jobs N] [--proptest on|off]
                [--variant bench/brb-write] --out FILE
@@ -18,7 +18,7 @@ apart. `bench/brb/harness.py summarize` reads the result files.
 
 `--variant DIR` (BMB arm only) takes the BMB prompt and `set.json` (`bmb mcp`
 flags, tools the model is not shown) from a set `bench/edit/gen.py` built
-(`bench/brb-write`: the one-call `write`, backlog 2D-24). The tasks, judge and
+(`bench/brb-write`: the one-call `write`). The tasks, judge and
 Rust arm are BRB's, so the rows keep BRB's MANIFEST digest and compare with the
 Rust arm; `task_set` and `variant_manifest` say which surface ran.
 """

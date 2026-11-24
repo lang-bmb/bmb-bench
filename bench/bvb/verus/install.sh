@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs the pinned original Verus release for the BVB comparison (backlog 2A-09).
+# Installs the pinned original Verus release for the BVB comparison.
 #
 #   install.sh [--dry-run]
 #

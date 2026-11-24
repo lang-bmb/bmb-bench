@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Original-Verus side of BVB (backlog 2A-09, ADR-0034 §2).
+"""Original-Verus side of BVB (ADR-0034 §2).
 
   harness.py run --agent AGENT [--tasks ID,..] [--out FILE] [--expect all-pass|weak-fail] [--jobs N]
   harness.py compare BMB.jsonl VERUS.jsonl     paired table: one row per task, BMB and Verus side by side
@@ -245,7 +245,7 @@ def judge(task, code, verifier):
 
 # ---------- sessions ----------
 
-# The repair history the model is sent (ADR-0110, backlog T0-36): `full`
+# The repair history the model is sent (ADR-0110): `full`
 # (the default) or `stateless` (`--history`, the same rule as the BMB arm's
 # `set.json`; the state is the one file the agent writes).
 HISTORY = "full"
@@ -274,9 +274,9 @@ def run_task(task, agent_kind, verifier, agent=None, sessions=None):
     if hasattr(agent, "set_tools"):
         agent.set_tools(TOOLS)
     m = {"tool_calls": 0, "writes": 0, "verify_calls": 0, "limit_hit": False}
-    # Every call's tool and result size, in order, with BMB_CONTEXT_LOG=1 (backlog 2D-25).
+    # Every call's tool and result size, in order, with BMB_CONTEXT_LOG=1.
     calls_log = []
-    calls = []  # every call in full, for the session record (INF-17)
+    calls = []  # every call in full, for the session record
     last = []
     while True:
         step = agent.next_calls(last)
@@ -366,7 +366,7 @@ def run(args, verifier):
 def spec_strength(recs):
     """(accepted, eligible): among tasks whose final code verifies with the
     required signature, those whose spec implies the hidden original contract
-    (backlog 2A-12, H-SPEC). Implementation failures do not count against the
+    (H-SPEC). Implementation failures do not count against the
     spec, so this reads the spec apart from the 1-shot success rate."""
     eligible = [r for r in recs if r.get("verified") and r.get("signature_ok")]
     return sum(1 for r in eligible if r.get("spec_accepted")), len(eligible)
@@ -400,26 +400,26 @@ def compare(bmb_path, verus_path):
         if r is None:
             return "—"
         if r["success"]:
-            return "성공"
-        return "실패: " + ", ".join(k for k in ("verified", "signature_ok", "spec_accepted", "given_intact")
+            return "success"
+        return "failure: " + ", ".join(k for k in ("verified", "signature_ok", "spec_accepted", "given_intact")
                                    if not r.get(k, True))
 
     ids = sorted(set(b) | set(v))
     both = [i for i in ids if i in b and i in v]
-    rows = ["| 지표 | BMB | Verus |", "| --- | --- | --- |",
-            f"| 에이전트 | {bh.get('agent')} | {vh.get('agent')} |",
-            f"| 커밋 | {str(bh.get('commit'))[:12]} | {str(vh.get('commit'))[:12]} |",
-            f"| Verus 버전 | — | {vh.get('verus_version')} |",
-            f"| 1회 성공률 | {sum(b[i]['success'] for i in both)}/{len(both)} | {sum(v[i]['success'] for i in both)}/{len(both)} |",
-            f"| 도구 호출(합) | {sum(b[i]['tool_calls'] for i in both)} | {sum(v[i]['tool_calls'] for i in both)} |",
-            "| 모델 입력 토큰(합) | "
+    rows = ["| Metric | BMB | Verus |", "| --- | --- | --- |",
+            f"| Agent | {bh.get('agent')} | {vh.get('agent')} |",
+            f"| Commit | {str(bh.get('commit'))[:12]} | {str(vh.get('commit'))[:12]} |",
+            f"| Verus version | — | {vh.get('verus_version')} |",
+            f"| First-attempt success rate | {sum(b[i]['success'] for i in both)}/{len(both)} | {sum(v[i]['success'] for i in both)}/{len(both)} |",
+            f"| Tool calls (sum) | {sum(b[i]['tool_calls'] for i in both)} | {sum(v[i]['tool_calls'] for i in both)} |",
+            "| Model input tokens (sum) | "
             + " | ".join(str(sum((x[i].get('model_usage') or {}).get('input_tokens', 0) for i in both)) for x in (b, v)) + " |",
-            "| 모델 출력 토큰(합) | "
+            "| Model output tokens (sum) | "
             + " | ".join(str(sum((x[i].get('model_usage') or {}).get('output_tokens', 0) for i in both)) for x in (b, v)) + " |",
-            "| 총 모델 토큰(입력+출력) | " + " | ".join(str(total_tokens([x[i] for i in both])) for x in (b, v)) + " |",
-            "| 명세 강도(검증·시그니처 통과 중 원본 계약 함의) | "
+            "| Total model tokens (input + output) | " + " | ".join(str(total_tokens([x[i] for i in both])) for x in (b, v)) + " |",
+            "| Specification strength (implies the original contract, of those that verify with the signature) | "
             + " | ".join("{}/{}".format(*spec_strength([x[i] for i in both])) for x in (b, v)) + " |",
-            "", "| 과제 | BMB | Verus |", "| --- | --- | --- |"]
+            "", "| Task | BMB | Verus |", "| --- | --- | --- |"]
     rows += [f"| {i} | {cell(b.get(i))} | {cell(v.get(i))} |" for i in ids]
     return "\n".join(rows) + "\n"
 
@@ -433,7 +433,7 @@ def main():
     rn.add_argument("--out")
     rn.add_argument("--expect", choices=["all-pass", "weak-fail"])
     rn.add_argument("--jobs", type=int, default=1)
-    rn.add_argument("--sessions", help="directory for session records (backlog INF-17)")
+    rn.add_argument("--sessions", help="directory for session records")
     rn.add_argument("--history", choices=["full", "stateless"], default="full",
                     help="the repair history the model is sent (ADR-0110)")
     cp = sub.add_parser("compare")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Integer conversion surface, offline (backlog 2R-04c, syntax-eval-1 §5
+"""Integer conversion surface, offline (the first syntax evaluation, syntax-eval-1, §5
 rank 3, J1).
 
   python3 bench/syntax/conv2c.py            # tables (markdown)
@@ -34,7 +34,7 @@ sys.path.insert(0, HERE)
 from measure import lex  # noqa: E402
 
 # Each program converts where M1 code needed a loop or could not mix types
-# (dev-docs/measurements/m1.md §6, ADR-0028 Context).
+# (the M1 measurement report, §6; ADR-0028 Context).
 CORPUS = {
     # tests/run/search.bmb `show_size` without its counting loop.
     "print_size": r'''
@@ -296,16 +296,16 @@ def main():
     if args.json:
         print(json.dumps(r, ensure_ascii=False))
         return
-    print("| 프로그램 | 변환 | try_from | as |")
+    print("| Program | Conversions | try_from | as |")
     print("| --- | ---: | ---: | ---: |")
     for row in r["rows"]:
         print(f"| {row['program']} | {row['sites']} | {row['try_from']} | {row['as']} |")
     t = r["total"]
     pct = 100 * (t["as"] - t["try_from"]) / t["try_from"]
-    print(f"| 합 | {t['sites']} | {t['try_from']:,} | {t['as']:,}({pct:+.1f}%) |")
+    print(f"| Sum | {t['sites']} | {t['try_from']:,} | {t['as']:,} ({pct:+.1f}%) |")
     per = (t["try_from"] - t["as"]) / t["sites"]
-    print(f"\n변환 한 곳당 {per:.1f}토큰. 의무가 붙는 변환 {r['kinds']['obligation']}, 없는 변환 {r['kinds']['free']}. "
-          f"왕복(try_from -> as -> try_from) {'같음' if r['round_trip'] else '다름'}.")
+    print(f"\n{per:.1f} tokens per conversion site. {r['kinds']['obligation']} conversions carry an obligation, {r['kinds']['free']} carry none. "
+          f"Round trip (try_from -> as -> try_from): {'same' if r['round_trip'] else 'different'}.")
     if not r["round_trip"]:
         sys.exit("conv2c: the two forms do not convert into each other")
 

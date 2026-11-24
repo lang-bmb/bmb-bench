@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MCP stdio server for the Verus side of BVB in pilot runs (backlog T3-03).
+"""MCP stdio server for the Verus side of BVB in pilot runs.
 
   verus_mcp.py STATE_DIR
 

@@ -1,131 +1,131 @@
-# BRB: BMB+증명 대 Rust+테스트 (ADR-0034 G5, 백로그 2H-03)
+# BRB: BMB + proof against Rust + tests (ADR-0034 G5)
 
-전제 E2·E3(DESIGN.md §2)를 직접 재는 비교 벤치다. 같은 과제를 같은 모델·같은 예산으로 (a) BMB(증명, MCP 도구)와 (b) Rust(에이전트가 쓴 테스트, `cargo test`, proptest)로 풀게 하고, 세션이 끝난 뒤의 **구현**을 숨은 적대적 판정기로 행동 기준에서 잰다. 지표는 숨은 결함률, 총 모델 토큰(쓰기+검증), 도구 호출, 벽시계다.
+A comparison bench that measures premises E2 and E3 (DESIGN.md §2) directly. The same tasks are solved by the same model with the same budget in (a) BMB (proof, MCP tools) and (b) Rust (tests written by the agent, `cargo test`, proptest), and the **implementation** left when the session ends is measured by its behaviour with a hidden adversarial judge. The metrics are the hidden defect rate, total model tokens (writing + checking), tool calls and wall-clock time.
 
-이 디렉터리는 하네스와 과제(동결)와 CI 검사까지다. 실제 모델 실행은 ADR-0066의 모델 환경으로 한다(`openai:qwen3.8-27b` 기본, `anthropic:claude-sonnet-5-5` 교차 비교). 아직 정식 측정 결과는 없다(파일럿만, `bench/pilot/`). MANIFEST는 2026-10-30에 에이전트 종류 분기(`make_model_agent`)와 `+dirty` 판정(같은 실행의 앞 집합 결과 파일을 세지 않음)만 바꾸어 다시 동결했다. 과제·프롬프트·판정은 그대로다. 같은 날 한 번 더 다시 동결했다(백로그 INF-16): 결과 행을 세션이 끝날 때마다 쓰고 중단된 실행을 이어 도는 것만 바뀌었고 과제·프롬프트·판정·한도는 그대로다. 첫 정식 측정(T0-10 qwen, T0-11 sonnet)은 그 앞 판(`8d569693`)에서 돌았고, 두 판의 MANIFEST 차이는 `harness.py` 한 줄뿐이다. 2026-11-02에 한 번 더 다시 동결했다(백로그 T0-13): `run --variant DIR`(BMB 팔만, `bench/brb-write` 같은 쓰기 표면 판의 프롬프트와 `set.json`을 쓰고 행의 `task_set`·`variant_manifest`에 적는다)이 더해졌고, 그것을 주지 않으면 실행은 그대로다. BRB의 MANIFEST를 담는 판(`brb-encap`, `brb-encap-b`, `brb-effect`, `brb-write`·`brb-diff`·`brb-ast`)의 MANIFEST도 함께 다시 썼다(모두 첫 실행 전).
+This directory holds the harness, the tasks (frozen) and the CI checks. Runs with a real model use the model environment of ADR-0066 (`openai:qwen3.8-27b` by default, `anthropic:claude-sonnet-5-5` for the cross-check). When this was written there were only pilot results (`bench/pilot/`); the official results are under `results/`. The MANIFEST was frozen again on 2026-10-30 with only the branch on the agent kind (`make_model_agent`) and the `+dirty` verdict (result files of earlier sets of the same run do not count) changed. The tasks, prompts and judging are unchanged. It was frozen again once more the same day: the only change is that a result row is written as each session ends and an interrupted run is resumed; the tasks, prompts, judging and limits are unchanged. The first official measurements (qwen, then sonnet) ran on the edition before that (`8d569693`), and the two editions' MANIFESTs differ in one line of `harness.py`. It was frozen again on 2026-11-02: `run --variant DIR` was added (BMB arm only; it uses the prompt and `set.json` of a write-surface variant such as `bench/brb-write` and records them in the row's `task_set` and `variant_manifest`), and without it a run is unchanged. The MANIFESTs of the variants that hold BRB's MANIFEST (`brb-encap`, `brb-encap-b`, `brb-effect`, `brb-write`, `brb-diff`, `brb-ast`) were written again with it (all before their first run).
 
-| 파일 | 내용 |
+| File | Contents |
 | --- | --- |
-| `tasks/tNN_*.py` | 과제 24개(동결). 자연어 문제·정의역·시그니처, 숨은 판정 자료(모델, 케이스 생성기, Rust 변이체), 기준 해법과 약한 대조군(BMB·Rust 각각) |
-| `prompt-bmb.md` | BMB 비교군 시스템 프롬프트(동결). `bench/m1/prompt.md`의 언어 규칙과 도구 설명 그대로, "How to work"만 BRB용 |
-| `prompt-rust.md` | Rust 비교군 시스템 프롬프트(동결) |
-| `rust-template/` | Rust 비교군의 시작 크레이트 `solution`(동결). `proptest =1.12.0` 개발 의존성과 `Cargo.lock` |
-| `rust_tools.py` | Rust 비교군 도구 서버(동결): `list_files`, `read_file`, `write_file`(`src/`·`tests/`의 `.rs`만), `cargo_build`, `cargo_test` |
-| `judge.py` | 숨은 판정기(동결) |
-| `cases.py` | 케이스 생성 도구(동결). 과제 id로 시드한 결정론적 난수 |
-| `harness.py` | 세션 실행·판정·요약(동결) |
-| `MANIFEST` | 위 파일들의 SHA-256. 다르면 하네스가 실행을 거부한다 |
-| `test_brb.py` | 하네스 단위 테스트(게이트) |
+| `tasks/tNN_*.py` | 24 tasks (frozen). The problem in natural language, the domain and the signature; the hidden judging material (model, case generators, Rust mutants); the reference solution and the weak control (for BMB and for Rust) |
+| `prompt-bmb.md` | system prompt of the BMB arm (frozen). The language rules and tool descriptions of `bench/m1/prompt.md` as they are; only "How to work" is BRB's |
+| `prompt-rust.md` | system prompt of the Rust arm (frozen) |
+| `rust-template/` | the starting crate `solution` of the Rust arm (frozen). The dev-dependency `proptest =1.12.0` and `Cargo.lock` |
+| `rust_tools.py` | tool server of the Rust arm (frozen): `list_files`, `read_file`, `write_file` (only `.rs` under `src/` and `tests/`), `cargo_build`, `cargo_test` |
+| `judge.py` | the hidden judge (frozen) |
+| `cases.py` | case generation tools (frozen). Deterministic random numbers seeded with the task id |
+| `harness.py` | runs the sessions, judges and summarizes (frozen) |
+| `MANIFEST` | SHA-256 of the files above. On a difference the harness refuses to run |
+| `test_brb.py` | unit tests of the harness (gate) |
 
 ```
-python3 bench/brb/harness.py manifest                                   # 동결 확인
-python3 bench/brb/harness.py run --arm bmb  --agent oracle --jobs 4     # 기준 해법: 결함 0 (CI)
-python3 bench/brb/harness.py run --arm rust --agent oracle --jobs 4     # 기준 해법: 결함 0 (CI는 --proptest off)
-python3 bench/brb/harness.py run --arm bmb  --agent weak --jobs 4       # 약한 대조군: 자기 검사는 통과, 숨은 판정이 결함 검출 (CI)
-python3 bench/brb/harness.py adequacy --jobs 4                          # 숨은 케이스가 Rust 변이체 96개를 모두 죽인다 (CI)
-python3 bench/brb/harness.py summarize BMB.jsonl RUST.jsonl             # 표와 G5 판정 줄
+python3 bench/brb/harness.py manifest                                   # check the freeze
+python3 bench/brb/harness.py run --arm bmb  --agent oracle --jobs 4     # reference solutions: 0 defects (CI)
+python3 bench/brb/harness.py run --arm rust --agent oracle --jobs 4     # reference solutions: 0 defects (CI uses --proptest off)
+python3 bench/brb/harness.py run --arm bmb  --agent weak --jobs 4       # weak controls: the self-check passes, the hidden judge finds the defect (CI)
+python3 bench/brb/harness.py adequacy --jobs 4                          # the hidden cases kill all 96 Rust mutants (CI)
+python3 bench/brb/harness.py summarize BMB.jsonl RUST.jsonl             # the table and the G5 verdict line
 ```
 
-## 과제
+## Tasks
 
-M1 BMB 부분집합(ADR-0016: 정수, 슬라이스, `while`)과 Rust 양쪽에서 풀 수 있는 함수 과제 24개. 각 과제는 두 비교군에 **같은 문장**(문제와 입력 정의역)을 주고, 시그니처 한 줄만 언어별로 다르다(`judge.task_prompt`, 테스트 `test_both_arms_get_the_same_statement`). 시그니처는 매개변수 타입이 양쪽에서 같다(`i64`, `u64`, `usize`, `&[i64]`, `&mut [i64]`; BMB는 `-> (r: T)`, Rust는 `pub fn .. -> T`).
+24 function tasks that can be solved both in the M1 subset of BMB (ADR-0016: integers, slices, `while`) and in Rust. Each task gives both arms **the same statement** (the problem and the input domain), and only the one signature line differs per language (`judge.task_prompt`, test `test_both_arms_get_the_same_statement`). The parameter types of the signatures are the same on both sides (`i64`, `u64`, `usize`, `&[i64]`, `&mut [i64]`; BMB has `-> (r: T)`, Rust `pub fn .. -> T`).
 
-| 묶음 | 과제 | 흔한 결함 |
+| Group | Tasks | Common defects |
 | --- | --- | --- |
-| 넘침·표현 범위 | t02 midpoint, t03 sat_sum, t09 div_floor, t10 mod_floor, t16 gcd, t17 isqrt, t18 count_digits, t24 pow_mod | `a + b`, `abs(MIN)`, `MIN % -1`, `mid * mid`, `b * b`, 부동소수 `sqrt` |
-| 경계·동률·하나 차이 | t01 clamp, t04 count_in_range, t05 first_max_index, t06 last_min_index, t07 strictly_increasing, t08 lower_bound, t12 second_max, t19 range_sum, t20 majority, t21 longest_run | `<` 대 `<=`, 첫/마지막, 빈 슬라이스, `max_by_key`가 마지막을 고름, 검증 없는 Boyer–Moore |
-| 제자리 변환 | t11 max_subarray, t13 rotate_right, t14 dedup_sorted, t15 move_zeros, t22 merge_sorted, t23 sort | `k > len`, 꼬리 정리 누락, 순서 보존, 남은 쪽 복사 누락 |
+| overflow, range of representation | t02 midpoint, t03 sat_sum, t09 div_floor, t10 mod_floor, t16 gcd, t17 isqrt, t18 count_digits, t24 pow_mod | `a + b`, `abs(MIN)`, `MIN % -1`, `mid * mid`, `b * b`, floating-point `sqrt` |
+| boundaries, ties, off by one | t01 clamp, t04 count_in_range, t05 first_max_index, t06 last_min_index, t07 strictly_increasing, t08 lower_bound, t12 second_max, t19 range_sum, t20 majority, t21 longest_run | `<` against `<=`, first/last, the empty slice, `max_by_key` picks the last, Boyer–Moore without verification |
+| in-place transformation | t11 max_subarray, t13 rotate_right, t14 dedup_sorted, t15 move_zeros, t22 merge_sorted, t23 sort | `k > len`, tail not cleaned up, order not kept, the rest of one side not copied |
 
-정의역이 있는 과제 13개는 BMB용 정의역 술어(`BMB_DOMAIN`)도 갖는다(아래 판정 2단계).
+The 13 tasks with a domain also have a domain predicate for BMB (`BMB_DOMAIN`; step 2 of the judging below).
 
-## 숨은 판정 (`judge.py`)
+## The hidden judge (`judge.py`)
 
-에이전트는 판정 자료를 보지 못한다(과제 프롬프트에는 문장·정의역·시그니처만 들어간다). 두 비교군을 같은 방식으로 판정한다.
+The agent does not see the judging material (the task prompt holds only the statement, the domain and the signature). Both arms are judged the same way.
 
-- **기대값은 Python 모델에서** 나온다(`model`). 기준 구현에서 뽑지 않으므로 기준 구현의 오류가 판정에 섞이지 않는다. 기준 해법(BMB·Rust)이 모든 케이스에서 모델과 일치하는지를 CI가 확인한다.
-- **케이스**: 과제당 267~810개, 합계 9,651개. 경계값(`i64::MIN`, `MIN+1`, `-1`, `0`, `MAX` 등)의 조합, 넘침 근처 값, 길이 0·1·2와 난수 길이, 중복이 많은 원소 분포와 전 범위 분포, `k^2-1` 같은 과제별 함정. 정의역 밖 케이스는 생성 단계에서 버린다(테스트가 확인).
-- **판정기 적정성**: 과제마다 그럴듯한 오답 Rust 구현(변이체) 4개, 합계 96개. 숨은 케이스가 모두 죽여야 한다(`adequacy`, CI).
-- **결함**: 출력이 다르거나, 패닉·트랩·충돌·시간 초과. 프로세스가 죽거나 멈추면 그 케이스를 실패로 적고 다음 케이스부터 다시 돈다(`run_cases`, 프로세스당 20초, 재시작 25회 한도).
-- **미제출**: 구현이 빌드되지 않으면 모든 케이스가 실패다.
+- **Expected values come from a Python model** (`model`). They are not taken from the reference implementation, so an error in the reference implementation does not get into the verdict. CI checks that the reference solutions (BMB and Rust) agree with the model on every case.
+- **Cases**: 267 to 810 per task, 9,651 in all. Combinations of boundary values (`i64::MIN`, `MIN+1`, `-1`, `0`, `MAX` and so on), values near overflow, lengths 0, 1, 2 and random lengths, element distributions with many duplicates and over the full range, traps specific to a task such as `k^2-1`. Cases outside the domain are dropped at generation (a test checks this).
+- **Adequacy of the judge**: 4 plausible wrong Rust implementations (mutants) per task, 96 in all. The hidden cases must kill all of them (`adequacy`, CI).
+- **Defect**: a different output, or a panic, trap, crash or timeout. When the process dies or hangs, that case is recorded as failed and the run starts again from the next case (`run_cases`, 20 seconds per process, at most 25 restarts).
+- **Not delivered**: when the implementation does not build, every case fails.
 
-비교군별 절차:
+The procedure per arm:
 
-| 단계 | BMB | Rust |
+| Step | BMB | Rust |
 | --- | --- | --- |
-| 1. 제출 | 대상 `tasks::NAME`이 요구 시그니처(이름은 무관, 타입만)를 갖고, 작업 공간 전체가 증명된다(`bmb emit-llvm` 종료 코드 0 = `bmb build` 조건) | 판정 크레이트가 에이전트 크레이트에 경로 의존해 빌드된다(에이전트의 테스트·개발 의존성은 쓰지 않음) |
-| 2. 정의역 | 숨긴 단위가 `requires dom(..)`에서 대상을 부르는 함수를 증명한다. 즉 에이전트의 `requires`가 문장에 적힌 정의역에서 따라 나와야 한다. 실패하면 출력이 맞아도 결함(정의역 위반)이다 | 해당 없음(Rust에는 전제가 없다. 정의역의 입력에서 패닉하면 결함) |
-| 3. 실행 | 생성한 LLVM 래퍼 + C 드라이버로 대상을 호출. 증명된 프로그램이라 런타임 검사가 없다 | 생성한 `main`이 `catch_unwind`로 호출. 디버그 빌드(`overflow-checks = true`)라 넘침은 패닉 |
+| 1. Delivery | the target `tasks::NAME` has the required signature (types only, names do not matter), and the whole workspace is proved (`bmb emit-llvm` exit code 0 = the condition of `bmb build`) | the judging crate builds with a path dependency on the agent's crate (the agent's tests and dev-dependencies are not used) |
+| 2. Domain | a hidden unit proves a function that calls the target under `requires dom(..)`. That is, the agent's `requires` must follow from the domain written in the statement. If this fails it is a defect (domain violation) even when the outputs are right | not applicable (Rust has no precondition. A panic on an input in the domain is a defect) |
+| 3. Execution | the target is called through a generated LLVM wrapper + a C driver. The program is proved, so there are no runtime checks | a generated `main` calls it under `catch_unwind`. A debug build (`overflow-checks = true`), so an overflow is a panic |
 
-## 비교군과 공정성 규칙
+## The arms and the fairness rules
 
-ADR-0021(동결, 1회, 재시도 없음, 편향 명시)과 ADR-0034 §2(같은 모델·같은 토큰 상한, Rust 쪽 도구도 같은 수준)를 따른다.
+They follow ADR-0021 (frozen, one attempt, no retry, biases stated) and ADR-0034 §2 (the same model and the same token limit, tools of the same level on the Rust side).
 
-1. **같은 모델·같은 설정.** 두 비교군 모두 `bench/m1/anthropic_agent.py`의 같은 어댑터(같은 `EFFORT`, 요청당 `MAX_TOKENS`)로 돈다. 도구는 MCP 모양(`name`, `description`, `inputSchema`)이라 어댑터가 구분하지 않는다.
-2. **같은 예산.** 세션당 도구 호출 40회(ADR-0021 §3), 세션당 모델 출력 토큰 64,000(`SESSION_OUTPUT_TOKENS`, 모델 차례마다 확인). 이 한도는 보이는 출력(텍스트와 도구 호출, ceil(bytes/4))만 센다. 추론 토큰은 따로 기록하고 세지 않는다(ADR-0076, 그 전의 실행은 추론을 포함해 셌다). 한도에 닿으면 그 시점의 구현을 판정한다. 출력 한도에서 끊긴 응답은 같은 차례에서 한 번 이어 쓴다(ADR-0076).
-3. **둘 다 검사기를 받는다.** BMB: `verify`(진단·반례), Rust: 컴파일러 오류(`cargo_build`)와 테스트 실행(`cargo_test`, proptest 허용, ADR-0034 결정 5). 둘 다 셸·네트워크는 없다(Rust의 cargo는 늘 `--offline`, 의존성은 세션 전에 한 번 받아 미리 빌드한다).
-4. **같은 판정.** 위 숨은 판정기. BMB만 정의역 검사를 더 받는 것은 BMB에서 "증명된 함수"의 계약이 호출 조건이기 때문이다(아래 편향 공개).
-5. **1회.** 과제당 세션 하나, 실패해도 다시 돌리지 않는다. 같은 커밋·같은 MANIFEST로 두 비교군을 돌린다(`summarize`는 MANIFEST가 다른 결과를 거부한다).
+1. **The same model and settings.** Both arms run through the same adapter of `bench/m1/anthropic_agent.py` (the same `EFFORT`, `MAX_TOKENS` per request). The tools have the MCP shape (`name`, `description`, `inputSchema`), so the adapter does not tell them apart.
+2. **The same budget.** 40 tool calls per session (ADR-0021 §3), 64,000 model output tokens per session (`SESSION_OUTPUT_TOKENS`, checked at every model turn). This limit counts only the visible output (text and tool calls, ceil(bytes/4)). Reasoning tokens are recorded apart and not counted (ADR-0076; runs before it counted the reasoning too). When the limit is reached, the implementation at that moment is judged. A response cut at the output limit is continued once in the same turn (ADR-0076).
+3. **Both get a checker.** BMB: `verify` (diagnostics, counterexamples); Rust: compiler errors (`cargo_build`) and test runs (`cargo_test`, proptest allowed, ADR-0034 decision 5). Neither has a shell or the network (cargo on the Rust side always runs `--offline`; the dependencies are fetched once before the sessions and built ahead).
+4. **The same judging.** The hidden judge above. Only BMB gets the domain check as well, because in BMB the contract of a "proved function" is the condition of calling it (see the disclosure of biases below).
+5. **One attempt.** One session per task, not run again on failure. Both arms run at the same commit with the same MANIFEST (`summarize` refuses results with different MANIFESTs).
 
-## 지표와 G5 판정
+## Metrics and the G5 verdict
 
-`summarize`는 결과 파일 하나를 한 열로 하는 표를 낸다: 성공(숨은 케이스 전부 통과), 결함률(결함 과제 / 과제), 미제출, 정의역 위반, 실패 케이스 비율, 총 모델 토큰(입력+출력)과 입력·출력 각각, 도구 호출, 검사 도구 호출, 한도 도달, 세션 벽시계, 도구 시간. 그다음 과제별 표.
+`summarize` gives a table with one column per result file: success (all hidden cases pass), defect rate (tasks with a defect / tasks), not delivered, domain violations, share of failed cases, total model tokens (input + output) and input and output each, tool calls, checker calls, limit reached, session wall-clock time, tool time. Then a table per task. The harness is frozen and prints its row labels and verdict lines in Korean; the lines below give their form in English.
 
-BMB 결과 하나와 Rust 결과 하나를 주면 G5 판정 줄을 붙인다(ADR-0034 잠정 기준, M2):
-
-```
-G5 (잠정 기준: 결함률 비 ≤ 1/2, 총 토큰 비 ≤ 2): 결함률 비 X, 총 토큰 비 Y → 통과 | 미달 | 판정 불가(..)
-```
-
-결함률 비 = BMB 결함률 / Rust 결함률, 총 토큰 비 = BMB 총 토큰 / Rust 총 토큰. Rust 결함이 0이면 비를 정의할 수 없어 "판정 불가"다(그때는 표의 결함률을 그대로 보고한다).
-
-**H-ORACLE(ADR-0040 §4, 백로그 2H-04, 실제 모델 실행 전에 정함).** 세션이 끝나면 하네스가 그 비교군의 검사기를 최종 상태에서 한 번 더 돌린다(BMB `verify`, Rust `cargo test`. 에이전트 호출로 세지 않는다, `final_check_ok`). 자기 검사를 통과한 과제 중 숨은 판정이 결함을 찾은 비율이 지표다. 표에 "자기 검사 통과"와 "자기 검사 통과 & 숨은 실패 / 자기 검사 통과" 행이 있고, 두 비교군을 함께 주면 판정 줄을 붙인다.
+Given one BMB result and one Rust result it adds the G5 verdict line (the provisional criterion of ADR-0034, M2):
 
 ```
-H-ORACLE (통과 & 숨은 실패 비율, 반증: BMB ≥ Rust): BMB a/p = x, Rust b/q = y → 지지 | 반증 | 판정 불가(..)
+G5 (provisional criterion: defect rate ratio ≤ 1/2, total token ratio ≤ 2): defect rate ratio X, total token ratio Y → pass | not met | cannot be judged (..)
 ```
 
-BMB 비율이 Rust 비율 이상이면 반증이다(같아도 반증). 한쪽 비교군에서 자기 검사를 통과한 과제가 없거나, Rust의 통과 & 숨은 실패가 0이면 이길 대상이 없어 판정 불가다. 에이전트가 테스트를 쓰지 않아도 `cargo test`는 통과하므로, 테스트가 없는 과제도 "자기 검사 통과"에 들어간다(테스트 없음도 테스트 비용을 아끼는 선택이다).
+Defect rate ratio = BMB defect rate / Rust defect rate, total token ratio = BMB total tokens / Rust total tokens. When Rust has 0 defects the ratio is not defined and the line reads "cannot be judged" (the defect rates of the table are then reported as they are).
 
-**G8 테스트 코드(ADR-0041, 백로그 2H-06, 실제 모델 실행 전에 정함).** 숨은 판정을 통과한 과제만 모아 테스트 코드 줄을 비교한다. BMB는 컴파일러가 산출한 남은 테스트 면적(최종 작업 공간의 `bmb query tests` 요약의 `test_lines`: 테스트가 여전히 필요한 정의의 정규형 줄 수), Rust는 에이전트가 쓴 테스트 코드 줄(`tests/`의 파일 전부와 `src/`의 `#[cfg(test)]` 항목, 빈 줄과 `//` 주석만인 줄 제외)이다. 결과 행의 `test_code`에 담기고, 표에 전체와 통과 과제의 합, 판정 줄이 붙는다.
+**H-ORACLE (ADR-0040 §4, fixed before the runs with a real model).** When the session ends, the harness runs the arm's checker once more on the final state (BMB `verify`, Rust `cargo test`; not counted as an agent call, `final_check_ok`). The metric is the share of tasks that passed the self-check in which the hidden judge found a defect. The table has the rows "self-check passed" and "self-check passed & hidden failure / self-check passed", and with both arms a verdict line is added.
 
 ```
-G8 (테스트 코드 줄, 숨은 판정 통과 과제): BMB a줄/n과제, Rust b줄/m과제 → 비 x(잠정 M3 기준 ≤ 1/10: 충족 | 미달) | 판정 불가(..)
+H-ORACLE (share of passed & hidden failure, refuted when BMB ≥ Rust): BMB a/p = x, Rust b/q = y → supported | refuted | cannot be judged (..)
 ```
 
-M2 목표는 "측정 시작"이라 이 줄은 보고만 한다. Rust 테스트가 0줄이면 판정 불가다. 두 쪽의 단위가 다르다(BMB는 테스트가 필요한 코드의 크기, Rust는 실제로 쓴 테스트의 크기). BMB에서 0이면 "테스트를 쓸 필요가 없다"는 뜻이고, 0이 아니면 그만큼의 코드에 테스트가 필요하다는 상한 근사다.
+It is refuted when the BMB share is at least the Rust share (also when they are equal). When no task of one arm passed the self-check, or Rust has 0 passed & hidden failure, there is nothing to beat and it cannot be judged. `cargo test` passes even when the agent wrote no test, so a task without tests is among the "self-check passed" too (having no tests is also a choice that saves test cost).
 
-결과의 각 행은 에이전트가 쓸 수 있던 최종 파일(`final_sources`: BMB `src/*.bmb`, Rust `src/`·`tests/`의 `.rs`)도 담는다. 테스트 코드량(G8, 2H-06)처럼 나중에 정한 지표를 새 유료 실행 없이 이 결과에서 계산하기 위해서다.
+**G8 test code (ADR-0041, fixed before the runs with a real model).** The lines of test code are compared over the tasks that passed the hidden judge only. For BMB it is the remaining test area the compiler computes (`test_lines` of the summary of `bmb query tests` on the final workspace: canonical-form lines of the definitions that still need tests), for Rust the lines of test code the agent wrote (every file under `tests/` and the `#[cfg(test)]` items in `src/`, without blank lines and lines that are only a `//` comment). It is stored in `test_code` of the result row, and the table gets the totals over all tasks and over the passed tasks, and a verdict line.
 
-## 실제 모델 실행 (사용자 머신, 유료)
+```
+G8 (test code lines, tasks that passed the hidden judge): BMB a lines/n tasks, Rust b lines/m tasks → ratio x (provisional M3 criterion ≤ 1/10: met | not met) | cannot be judged (..)
+```
+
+The M2 goal is "start measuring", so this line is only reported. With 0 lines of Rust tests it cannot be judged. The units of the two sides differ (for BMB the size of the code that needs tests, for Rust the size of the tests actually written). 0 for BMB means "no test needs to be written"; a non-zero value is an upper approximation that that much code needs tests.
+
+Each row of the results also holds the final files the agent could write (`final_sources`: BMB `src/*.bmb`, Rust `.rs` under `src/` and `tests/`). This is so that a metric defined later, as the amount of test code (G8) was, is computed from these results without a new paid run.
+
+## Runs with a real model (the user's machine, paid)
 
 ```
 python3 bench/brb/harness.py manifest
 python3 bench/brb/harness.py run --arm bmb  --agent anthropic:claude-opus-5-5 --out bench/brb/results/$(date +%F)-claude-opus-5-5-bmb.jsonl
 python3 bench/brb/harness.py run --arm rust --agent anthropic:claude-opus-5-5 --out bench/brb/results/$(date +%F)-claude-opus-5-5-rust.jsonl
-python3 bench/brb/harness.py summarize bench/brb/results/<날짜>-claude-opus-5-5-bmb.jsonl bench/brb/results/<날짜>-claude-opus-5-5-rust.jsonl
+python3 bench/brb/harness.py summarize bench/brb/results/<date>-claude-opus-5-5-bmb.jsonl bench/brb/results/<date>-claude-opus-5-5-rust.jsonl
 ```
 
-- Rust 비교군은 기본으로 proptest를 켠다(`--proptest on`). 처음 한 번 crates.io에서 `Cargo.lock`의 크레이트를 받는다(네트워크 필요). 그 뒤 세션은 오프라인이다.
-- 실제 모델은 `--jobs 1`(기본). 두 비교군을 같은 커밋에서 연달아 돌리고, `+dirty` 커밋의 결과는 보고에 쓰지 않는다.
-- Rust 비교군에서는 에이전트가 쓴 코드(테스트)가 세션 중에 실행되고, 판정 단계에서는 두 비교군의 구현이 실행된다. 격리된 환경(컨테이너·VM)에서 돌린다.
-- 원자료는 `bench/brb/results/`에, 요약은 `dev-docs/measurements/`에 커밋한다(ADR-0021 §5). 모델 2개(주 모델, 작은 모델, ADR-0034 결정 3)는 따로 표를 만든다.
+- The Rust arm has proptest on by default (`--proptest on`). The first time, it fetches the crates of `Cargo.lock` from crates.io (needs the network). After that the sessions are offline.
+- A real model runs with `--jobs 1` (the default). The two arms run one after the other at the same commit, and results of a `+dirty` commit are not used in a report.
+- In the Rust arm, code the agent wrote (tests) runs during the session, and at judging the implementations of both arms run. Run it in an isolated environment (container, VM).
+- The raw data is committed under `bench/brb/results/` and the summary as a measurement report (ADR-0021 §5). The 2 models (the main model and a small model, ADR-0034 decision 3) get separate tables.
 
 ## CI (`scripts/check.sh`)
 
-| 작업 | 확인 |
+| Job | Checks |
 | --- | --- |
-| `bench brb oracle` | 두 비교군의 기준 해법이 숨은 판정과 최종 자기 검사를 모두 통과(24/24, 결함 0), BMB 기준 해법은 정의역 검사도 통과. 요약 표, G5 줄("판정 불가(Rust 결함 0)"), H-ORACLE 줄("판정 불가(Rust 통과 & 숨은 실패 0)"), 테스트 코드 줄 0·0과 G8 줄("판정 불가(Rust 테스트 0줄)") |
-| `bench brb weak` | 두 비교군의 약한 대조군이 자기 검사(BMB `verify`, Rust 자기 테스트)를 세션 중과 최종 상태에서 모두 통과하는데 숨은 판정이 24과제 모두에서 결함을 찾는다 |
-| `bench brb adequacy` | Rust 변이체 96개가 모두 죽는다 |
-| `bench brb tests` | `test_brb.py`: 과제 집합 불변식(결정론, 정의역, 크기, 같은 문장), G5·H-ORACLE·G8 계산과 요약 표, Rust 테스트 줄 세기, 충돌·멈춤 복구, Rust 도구 샌드박스, 검사기 판정, 실제 모델 어댑터(가짜 클라이언트)로 Rust 세션과 출력 토큰 상한. proptest 세션 테스트는 proptest 크레이트가 오프라인으로 있을 때만 돈다(없으면 건너뜀) |
+| `bench brb oracle` | the reference solutions of both arms pass the hidden judge and the final self-check (24/24, 0 defects), and the BMB reference solutions pass the domain check too. The summary table, the G5 line ("cannot be judged", Rust has 0 defects), the H-ORACLE line ("cannot be judged", Rust has 0 passed & hidden failure), test code lines 0 and 0 and the G8 line ("cannot be judged", 0 lines of Rust tests) |
+| `bench brb weak` | the weak controls of both arms pass the self-check (BMB `verify`, Rust's own tests) during the session and on the final state, and the hidden judge finds a defect in all 24 tasks |
+| `bench brb adequacy` | all 96 Rust mutants are killed |
+| `bench brb tests` | `test_brb.py`: invariants of the task set (determinism, domains, sizes, the same statement), the computation of G5, H-ORACLE and G8 and the summary table, counting Rust test lines, recovery from a crash or hang, the sandbox of the Rust tools, the checker's verdict, a Rust session and the output token limit through the real-model adapter (with a fake client). The proptest session test runs only when the proptest crates are available offline (skipped otherwise) |
 
-CI는 Rust 비교군을 `--proptest off`로 돌린다. 대본 에이전트는 proptest를 쓰지 않고, 게이트는 네트워크에 기대지 않는다.
+CI runs the Rust arm with `--proptest off`. The scripted agents do not use proptest, and the gate does not depend on the network.
 
-## 편향과 한계 (공개)
+## Biases and limits (disclosed)
 
-- **과제 선택.** 과제는 우리가 썼고, M1 BMB에서 풀리고 증명되는 것만 골랐다: 정수와 슬라이스, 작은 알고리즘 함수. 구조체·컬렉션·문자열·입출력이 없다. 넘침·경계 결함이 드러나기 쉬운 과제가 많고(넘침 8개, 경계 10개), 이는 정수 넘침을 증명 의무로 강제하는 BMB에 유리할 수 있다. 공개 과제를 이식하지 않았으므로 빠진 과제의 비율은 해당 없음이다. 과제 묶음별 결과를 따로 보고한다.
-- **정의역 검사는 BMB에만 있다.** BMB 에이전트의 `requires`가 문장의 정의역과 의미가 같아도 증명기가 함의를 못 찾으면 결함으로 센다(증명기 불완전성). 이런 경우가 나오면 과제별 표의 "정의역 위반"으로 따로 보인다.
-- **BMB에는 실행 도구가 없다.** BMB 에이전트는 테스트를 돌릴 수 없고 증명만 한다(설계상 비교 대상). `build`로 실행 파일은 만들 수 있지만 실행 도구는 없다.
-- **입력 토큰.** BMB 시스템 프롬프트(언어 규칙 포함)가 Rust 프롬프트보다 길다. 총 토큰은 모델이 보고한 입력+출력 그대로 센다(프롬프트 비용 포함).
-- **판정 범위.** 숨은 케이스는 짧은 슬라이스(대개 길이 20 이하)다. 긴 입력에서만 나는 결함(시간 초과 등)은 재지 않는다. 시간은 벽시계만 기록하고 성능은 판정하지 않는다.
-- **Rust 판정 빌드.** 디버그 빌드(넘침 검사 켬)로 판정한다. 릴리스 빌드에서 감싸 넘기는 코드도 결함으로 센다(정의역의 입력에서 수학적으로 틀린 값이므로).
+- **Choice of tasks.** We wrote the tasks, and picked only what can be solved and proved in M1 BMB: integers and slices, small algorithmic functions. No structs, collections, strings or input/output. Many tasks make overflow and boundary defects easy to show (8 overflow, 10 boundary), which may favour BMB, where integer overflow is forced as a proof obligation. No public tasks were ported, so a rate of dropped tasks does not apply. Results are reported per task group as well.
+- **Only BMB has the domain check.** When the `requires` of the BMB agent means the same as the domain of the statement but the prover does not find the implication, it counts as a defect (incompleteness of the prover). Such a case shows apart as "domain violation" in the table per task.
+- **BMB has no tool that runs code.** The BMB agent cannot run tests and only proves (this is the comparison by design). `build` can make an executable, but there is no tool to run it.
+- **Input tokens.** The BMB system prompt (with the language rules) is longer than the Rust prompt. Total tokens are counted as the model reports input + output (the cost of the prompt included).
+- **Scope of the judging.** The hidden cases are short slices (mostly of length 20 or less). Defects that show only on long inputs (timeouts and the like) are not measured. Time is only recorded as wall-clock time; performance is not judged.
+- **The Rust judging build.** Judged with a debug build (overflow checks on). Code that wraps around in a release build counts as a defect too (the value is mathematically wrong for an input in the domain).

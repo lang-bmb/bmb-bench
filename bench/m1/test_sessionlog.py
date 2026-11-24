@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Session records (backlog INF-17): what a record holds, and that the result
+"""Session records: what a record holds, and that the result
 rows are the same with or without it."""
 import json
 import os

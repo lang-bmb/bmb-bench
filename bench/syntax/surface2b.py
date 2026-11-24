@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""2B surface alternatives, offline (backlog 2R-04d, syntax-eval-1 §5 rank 4).
+"""Surface alternatives for data types and methods, offline (syntax-eval-1 §5 rank 4).
 
   python3 bench/syntax/surface2b.py            # tables (markdown)
   python3 bench/syntax/surface2b.py --json
@@ -415,15 +415,15 @@ def main():
         print(json.dumps(r))
         return
     t = r["total"]
-    print("| 프로그램 | canon | prelude | self | method |")
+    print("| Program | canon | prelude | self | method |")
     print("| --- | ---: | ---: | ---: | ---: |")
     for row in r["rows"]:
         print(f"| {row['program']} | {row['canon']} | {row['prelude']} | {row['self']} | {row['method']} |")
-    print(f"| 합 | {t['canon']} | {t['prelude']} ({100 * (t['prelude'] / t['canon'] - 1):+.1f}%) | "
+    print(f"| Sum | {t['canon']} | {t['prelude']} ({100 * (t['prelude'] / t['canon'] - 1):+.1f}%) | "
           f"{t['self']} ({100 * (t['self'] / t['canon'] - 1):+.1f}%) | {t['method']} ({100 * (t['method'] / t['canon'] - 1):+.1f}%) |")
     print()
-    print(f"메서드 호출 수신자: {r['receivers']}")
-    print(f"prelude 이름과 겹치는 기존 정의: {r['prelude_clashes'] or '없음'}")
+    print(f"Method call receivers: {r['receivers']}")
+    print(f"Existing definitions that clash with a prelude name: {r['prelude_clashes'] or 'none'}")
 
 
 if __name__ == "__main__":

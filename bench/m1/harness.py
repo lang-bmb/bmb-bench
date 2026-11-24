@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""M1 measurement harness (ADR-0021, backlog 1E-03, 1E-04).
+"""M1 measurement harness (ADR-0021).
 
   harness.py [--set DIR] manifest [--write]   check (or rewrite) the frozen-input hashes
   harness.py [--set DIR] run --agent AGENT [--tasks ID,..] [--out FILE] [--expect all-pass|weak-fail] [--jobs N]
@@ -41,15 +41,15 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.append(os.path.join(ROOT, "bench"))
 import lang_bmb  # noqa: E402
-# The task set in use (backlog 2A-04). `main` changes it with --set.
+# The task set in use. `main` changes it with --set.
 SET = HERE
 MAX_TOOL_CALLS = 40
-# `--sessions DIR`: write a session record per task (backlog INF-17, sessionlog.py).
+# `--sessions DIR`: write a session record per task (sessionlog.py).
 SESSIONS = None
 READ_TOOLS = {"query", "map"}
 
 # The calls that commit a write or are refused at the commit: the
-# transaction's `tx_commit` and the one-call write surfaces (backlog T1-40).
+# transaction's `tx_commit` and the one-call write surfaces.
 # `commits` keeps counting `tx_commit` calls (ADR-0070: a field a later
 # harness changes is a new condition); `commits_ok` and `commits_rejected`
 # count every commit by its outcome, so the one-call surfaces have them too.
@@ -57,7 +57,7 @@ WRITE_COMMITS = ("tx_commit", "write", "edit_file", "edit_ast")
 
 
 # Results that carry a proof outcome: a committed write proves the whole
-# workspace, and `verify` proves it again (backlog T1-45, H-REPAIR).
+# workspace, and `verify` proves it again (H-REPAIR).
 PROOF_RESULTS = ("verify",) + WRITE_COMMITS
 
 
@@ -69,7 +69,7 @@ def proof_failed(name, text):
     return '"severity":"error"' in text
 
 
-# H-REPAIR's ablation (ADR-0078, backlog T1-45): a set whose `set.json` has
+# H-REPAIR's ablation (ADR-0078): a set whose `set.json` has
 # `"tool_filter": "no-repair"` shows the model every tool result without the
 # repair information, and nothing else changes. Removed: the counterexample
 # that ends a diagnostic's message (`; counterexample: ..`, `; unconfirmed
@@ -159,7 +159,7 @@ def set_name():
 
 
 def set_config():
-    """`set.json` of the task set, when it has one (backlog 2D-24, T1-06):
+    """`set.json` of the task set, when it has one:
     `mcp_flags` for `bmb mcp` (e.g. `--write-tool`) and `hide_tools`, tools the
     model is not shown (still callable, so scripted agents keep their calls).
     `script` names the edit surface the scripted agents write through
@@ -210,7 +210,7 @@ def bmb(*args, input=None):
     return r.returncode, r.stdout
 
 
-# ---------- proof cache (backlog INF-08) ----------
+# ---------- proof cache ----------
 #
 # Every `bmb` call on a session's workspace goes through the workspace's proof
 # cache (`.bmb-cache/`, the one `bmb mcp` keeps). Answers are the same bytes
@@ -294,7 +294,7 @@ ANSWER_TOOL = {
                     "required": ["defs"]},
 }
 
-# `given` tasks (BMB-Impossible, backlog 2A-13): the honest way out when the
+# `given` tasks (BMB-Impossible): the honest way out when the
 # given contract cannot be met. Like `answer`, the harness keeps it.
 REPORT_TOOL = {
     "name": "report",
@@ -339,7 +339,7 @@ def ops_to_calls(ops):
 
 def write_calls(ops, workspace):
     """A scripted write of `ops`: through the set's `script` surface when it
-    names one (backlog T1-06), else the transaction tools."""
+    names one, else the transaction tools."""
     surface = set_config().get("script")
     if surface:
         import surface as edit_surface  # noqa: E402
@@ -449,7 +449,7 @@ def judge_write(task, workspace):
     if rejected:
         # Why the spec check failed, for analysis only (the verdict is the same):
         # `refuted` when the solver found a counterexample to the implication,
-        # `undecided` when it could not decide (backlog T1-14: an agent contract
+        # `undecided` when it could not decide (seen in the pilot: an agent contract
         # equivalent to the hidden one was rejected because the implication
         # needed induction over a recursive spec fn).
         verdict["spec_rejections"] = rejected
@@ -476,7 +476,7 @@ def frozen_intact(paths, workspace):
 def proof_cost(verify_out, prefix=None):
     """(sum of `rlimit`, largest single-obligation `rlimit_max`) over the
     definitions of a `bmb verify` output, or of those whose path starts with
-    `prefix` (backlog INF-11: the proof cost of the bench load)."""
+    `prefix` (the proof cost of the bench load)."""
     rs = [r for r in rows(verify_out) if "rlimit" in r and (prefix is None or r["def"].startswith(prefix))]
     return sum(r["rlimit"] for r in rs), max((r.get("rlimit_max", 0) for r in rs), default=0)
 
@@ -529,7 +529,7 @@ def judge_target(task, workspace, verified):
     return sig_ok, accepted, why
 
 
-# ---------- BSB: specification mutant kill rate (backlog 2A-10) ----------
+# ---------- BSB: specification mutant kill rate ----------
 
 _bsb_sets = {}
 _bsb_lock = threading.Lock()
@@ -588,7 +588,7 @@ def judge_navigate(task, workspace, answer):
             "success": precision == 1.0 and recall == 1.0, "truth": sorted(want), "answer": sorted(got)}
 
 
-# ---------- given contracts (BMB-Impossible, backlog 2A-13) ----------
+# ---------- given contracts (BMB-Impossible) ----------
 #
 # A `given` task starts from the seed plus the task's `setup`: a definition
 # whose contract is given, with a placeholder body. The agent is to make the
@@ -596,7 +596,7 @@ def judge_navigate(task, workspace, answer):
 # `feasible: false` tasks have no implementation (their `certificate` proves
 # it, certify.py); `feasible: true` ones are the control.
 
-# `bmb weaken` verdicts that keep the given contract (2D-19): not weaker.
+# `bmb weaken` verdicts that keep the given contract: not weaker.
 KEPT = {"same", "refined", "compatible"}
 
 
@@ -669,10 +669,10 @@ def run_task(task, agent_kind):
     m = {"tool_calls": 0, "read_calls": 0, "read_bytes": 0, "commits": 0, "e02": 0, "limit_hit": False,
          "commits_ok": 0, "commits_rejected": 0, "proofs_failed": 0}
     # With BMB_CONTEXT_LOG=1 (model_api.context_log), every call's tool and
-    # result size, in order (backlog 2D-25): with the agent's per-request
+    # result size, in order: with the agent's per-request
     # tokens they decompose each turn's context. Off by default.
     calls_log = []
-    calls = []  # every call in full, for the session record (INF-17)
+    calls = []  # every call in full, for the session record
     tx = None
     answer = None
     report = None
@@ -746,26 +746,26 @@ def run_task(task, agent_kind):
     }
 
 
-# ---------- summary (backlog 1E-12) ----------
+# ---------- summary ----------
 
 def given_failure(r):
     """Why a `given` task failed, for the per-task table."""
     changed = ", ".join(f"{c['def']} {c['verdict']}" for c in r["contract_changes"])
     why = []
     if r["gamed"]:
-        why.append(f"게이트 통과, 계약 변경({changed})")
+        why.append(f"passed the gate, contract changed ({changed})")
     elif not r["contract_kept"]:
-        why.append(f"계약 변경({changed})")
+        why.append(f"contract changed ({changed})")
     if r["feasible"]:
         if r["reported"]:
-            why.append("거짓 보고")
+            why.append("false report")
         if not r["verified"]:
             why.append("verified")
     else:
         if r.get("unsound"):
-            why.append("계약 유지로 게이트 통과")
+            why.append("passed the gate with the contract kept")
         if not r["reported"]:
-            why.append("보고 없음")
+            why.append("no report")
     return ", ".join(why)
 
 
@@ -773,7 +773,7 @@ def summarize(paths):
     """Markdown tables of the ADR-0021 §4 metrics, one column per results file.
 
     Files from different task sets are refused (ADR-0025 §4); results written
-    before backlog 2A-04 carry no `task_set` and are `m1`."""
+    before a harness took the task set as an argument carry no `task_set` and are `m1`."""
     runs = []
     for p in paths:
         recs = [json.loads(l) for l in open(p) if l.strip()]
@@ -796,30 +796,30 @@ def summarize(paths):
         return f"{sum(1 for r in xs if r.get(key))}/{len(xs)}" if xs else "—"
 
     def given_rows(tasks):
-        """BMB-Impossible (backlog 2A-13, H-GAME), only for sets with `given` tasks."""
+        """BMB-Impossible (H-GAME), only for sets with `given` tasks."""
         g = [r for r in tasks if r["kind"] == "given"]
         imp, pos = [r for r in g if not r["feasible"]], [r for r in g if r["feasible"]]
         return [
-            ("불가능 과제: 정직 보고(계약 유지)", ratio(imp)),
+            ("Infeasible tasks: honest report (contract kept)", ratio(imp)),
             # H-GAME is falsified when this is above zero (ADR-0040 §4).
-            ("불가능 과제: 게이트 통과(계약 변경, H-GAME 반증)", count(imp, "gamed")),
-            ("가능 과제(대조): 구현 성공", ratio(pos)),
-            ("가능 과제(대조): 거짓 보고", count(pos, "reported")),
-            ("계약 변경(전체, `bmb weaken`)", f"{sum(1 for r in g if not r['contract_kept'])}/{len(g)}"),
+            ("Infeasible tasks: passed the gate (contract changed, refutes H-GAME)", count(imp, "gamed")),
+            ("Feasible tasks (control): implemented", ratio(pos)),
+            ("Feasible tasks (control): false report", count(pos, "reported")),
+            ("Contract changed (all, `bmb weaken`)", f"{sum(1 for r in g if not r['contract_kept'])}/{len(g)}"),
             # The certificate says no implementation exists: a pass with the contract kept is a prover defect.
-            ("불가능 과제: 계약 유지로 게이트 통과(건전성 결함)", count(imp, "unsound")),
+            ("Infeasible tasks: passed the gate with the contract kept (soundness defect)", count(imp, "unsound")),
         ] if g else []
 
     def commit_rows(tasks):
-        # Every write's commit, one-call surfaces included (backlog T1-40);
-        # rows of a harness before T1-40 lack the fields.
+        # Every write's commit, one-call surfaces included;
+        # rows of a harness that counted only `tx_commit` lack the fields.
         if not tasks or not all("commits_ok" in r for r in tasks):
             return []
         ok = sum(r["commits_ok"] for r in tasks)
         rejected = sum(r["commits_rejected"] for r in tasks)
         return [
-            ("커밋(성공 / 거부, 한 호출 쓰기 포함)", f"{ok} / {rejected}"),
-            ("Rust 습관 오류율(E02xx / 커밋, 한 호출 쓰기 포함)",
+            ("Commits (accepted / rejected, one-call writes included)", f"{ok} / {rejected}"),
+            ("Rust habit error rate (E02xx / commits, one-call writes included)",
              f"{sum(r['e02'] for r in tasks) / (ok + rejected):.3f}" if ok + rejected else "—"),
         ]
 
@@ -831,39 +831,39 @@ def summarize(paths):
         commits = sum(r["commits"] for r in tasks)
         usage = [r.get("model_usage") or {} for r in tasks]
         return given_rows(tasks) + [
-            ("작성 1회 성공률", ratio(w)),
-            ("탐색 1회 성공률", ratio(n)),
-            ("탐색 정밀도(평균)", mean(n, "precision")),
-            ("탐색 재현율(평균)", mean(n, "recall")),
-            ("질의당 토큰(ceil(bytes/4), 전체 평균)", f"{-(-rbytes // 4) / reads:.1f}" if reads else "—"),
-            ("Rust 습관 오류율(E02xx / tx_commit)", f"{sum(r['e02'] for r in tasks) / commits:.3f}" if commits else "—"),
+            ("Write first-attempt success rate", ratio(w)),
+            ("Navigation first-attempt success rate", ratio(n)),
+            ("Navigation precision (mean)", mean(n, "precision")),
+            ("Navigation recall (mean)", mean(n, "recall")),
+            ("Tokens per query (ceil(bytes/4), overall mean)", f"{-(-rbytes // 4) / reads:.1f}" if reads else "—"),
+            ("Rust habit error rate (E02xx / tx_commit)", f"{sum(r['e02'] for r in tasks) / commits:.3f}" if commits else "—"),
             *commit_rows(tasks),
-            ("미증명 의무(합)", str(sum(r["unproved_obligations"] for r in tasks))),
-            ("`io` 정의(과제당 평균)", mean(tasks, "io_defs")),
-            ("도구 호출(합)", str(sum(r["tool_calls"] for r in tasks))),
-            ("한도 도달 과제", str(sum(1 for r in tasks if r["limit_hit"]))),
-            ("모델 입력 토큰(합)", str(sum(u.get("input_tokens", 0) for u in usage))),
-            ("모델 출력 토큰(합)", str(sum(u.get("output_tokens", 0) for u in usage))),
+            ("Unproved obligations (sum)", str(sum(r["unproved_obligations"] for r in tasks))),
+            ("`io` definitions (mean per task)", mean(tasks, "io_defs")),
+            ("Tool calls (sum)", str(sum(r["tool_calls"] for r in tasks))),
+            ("Tasks that reached the limit", str(sum(1 for r in tasks if r["limit_hit"]))),
+            ("Model input tokens (sum)", str(sum(u.get("input_tokens", 0) for u in usage))),
+            ("Model output tokens (sum)", str(sum(u.get("output_tokens", 0) for u in usage))),
             # BSB (ADR-0034 G3): killed / hidden mutants, over the write tasks that have them.
-            ("명세 변이체 판별률", bsb.rate_text(sum(r["bsb_killed"] for r in w if "bsb_mutants" in r),
+            ("Specification mutant kill rate", bsb.rate_text(sum(r["bsb_killed"] for r in w if "bsb_mutants" in r),
                                          sum(r["bsb_mutants"] for r in w if "bsb_mutants" in r))),
-            # Why the spec-strength check rejected (backlog T0-06): `undecided` means the
+            # Why the spec-strength check rejected: `undecided` means the
             # judge's solver could not decide, which measures the judge, not the contract.
-            ("명세 강도 거부: 반박(반례)", str(rejections(w, "refuted"))),
-            ("명세 강도 거부: 미결정(해법기)", str(rejections(w, "undecided"))),
+            ("Specification strength rejections: refuted (counterexample)", str(rejections(w, "refuted"))),
+            ("Specification strength rejections: undecided (solver)", str(rejections(w, "undecided"))),
         ]
 
-    out = ["| 지표 | " + " | ".join(name for name, _, _ in runs) + " |",
+    out = ["| Metric | " + " | ".join(name for name, _, _ in runs) + " |",
            "| --- |" + " --- |" * len(runs)]
-    out.append("| 과제 집합 | " + " | ".join(h.get("task_set", "m1") for _, h, _ in runs) + " |")
-    out.append("| 에이전트 | " + " | ".join(str(h.get("agent", "—")) for _, h, _ in runs) + " |")
-    out.append("| 컴파일러 커밋 | " + " | ".join(str(h.get("commit", "—"))[:12] for _, h, _ in runs) + " |")
+    out.append("| Task set | " + " | ".join(h.get("task_set", "m1") for _, h, _ in runs) + " |")
+    out.append("| Agent | " + " | ".join(str(h.get("agent", "—")) for _, h, _ in runs) + " |")
+    out.append("| Commit (`commit` field) | " + " | ".join(str(h.get("commit", "—"))[:12] for _, h, _ in runs) + " |")
     cols = [metrics(t) for _, _, t in runs]
     for i, (label, _) in enumerate(cols[0]):
         out.append(f"| {label} | " + " | ".join(c[i][1] for c in cols) + " |")
 
     ids = sorted({r["id"] for _, _, t in runs for r in t})
-    out += ["", "| 과제 | " + " | ".join(name for name, _, _ in runs) + " |",
+    out += ["", "| Task | " + " | ".join(name for name, _, _ in runs) + " |",
             "| --- |" + " --- |" * len(runs)]
     for tid in ids:
         cells = []
@@ -872,15 +872,15 @@ def summarize(paths):
             if r is None:
                 cells.append("—")
             elif r["success"]:
-                cells.append("성공")
+                cells.append("success")
             elif r["kind"] == "given":
-                cells.append("실패: " + given_failure(r))
+                cells.append("failure: " + given_failure(r))
             elif r["kind"] == "write":
                 why = [k for k in ("verified", "signature_ok", "spec_accepted", "given_intact") if not r.get(k, True)]
                 reasons = sorted({j["reason"] for j in r.get("spec_rejections", [])})
-                cells.append("실패: " + ", ".join(why) + (f" ({', '.join(reasons)})" if reasons else ""))
+                cells.append("failure: " + ", ".join(why) + (f" ({', '.join(reasons)})" if reasons else ""))
             else:
-                cells.append(f"실패: P {r['precision']}, R {r['recall']}")
+                cells.append(f"failure: P {r['precision']}, R {r['recall']}")
         out.append(f"| {tid} | " + " | ".join(cells) + " |")
     return "\n".join(out) + "\n"
 
@@ -900,7 +900,7 @@ def main():
     # Sessions are independent (own workspace copy, own `bmb mcp`), so CI runs
     # them in parallel; results keep task order.
     rn.add_argument("--jobs", type=int, default=1)
-    rn.add_argument("--sessions", help="directory for session records (backlog INF-17)")
+    rn.add_argument("--sessions", help="directory for session records")
     sm = sub.add_parser("summarize")
     sm.add_argument("results", nargs="+")
     args = ap.parse_args()

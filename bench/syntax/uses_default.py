@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""`#[uses]` default context = r2c, compared at scale (backlog 2R-04a).
+"""`#[uses]` default context = r2c, compared at scale.
 
-Deterministic, offline. 2R-02 (syntax-eval-1.md §2.2) found that the rule
+Deterministic, offline. The token measurement (syntax-eval-1.md §2.2) found that the rule
 r2c (the closure of the spec fns a definition's own clauses, invariants and
 asserts name, together with those its callees' requires and ensures name)
 proves three small corpora. This repeats the comparison where the question
-of 2R-02 §5 rank 1 lies: a large generated workspace (bench/m3/gen.py) and
+of that evaluation (§5 rank 1) lies: a large generated workspace (bench/m3/gen.py) and
 solver seeds 0..4. For each corpus and each rule (none, r1c, r2c, actual)
 every `#[uses(..)]` is replaced by the rule's set, and
 

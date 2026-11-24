@@ -1,18 +1,18 @@
-# 2R-05: ADR-0095 앞뒤 문법 A/B (qwen3.8-27b)
+# 2r05: syntax A/B before and after ADR-0095 (qwen3.8-27b)
 
-같은 작업 트리(`2624533f`)의 동결 하네스(`bench/m1/harness.py --set bench/m1b`, ADR-0066)를 두 컴파일러로 돌렸다.
+The frozen harness of one working tree (`2624533f`; `bench/m1/harness.py --set bench/m1b`, ADR-0066) was run with two compilers. `2r05` is the label of this measurement.
 
-- 앞: ADR-0095 직전 커밋 `99138a9d`의 `bmb`.
-- 뒤: `2624533f`의 `bmb`.
-- 결과 행의 `commit`은 작업 트리의 커밋이라 두 파일 모두 `2624533f`다.
+- Before: the `bmb` of commit `99138a9d`, right before ADR-0095.
+- After: the `bmb` of `2624533f`.
+- `commit` of the result rows is the commit of the working tree, so it is `2624533f` in both files.
 
-| 파일 | 내용 |
+| File | Contents |
 | --- | --- |
-| `qwen-r1-before.jsonl`, `qwen-r1-after.jsonl` | 1회차, 과제 37개(작성 25, 탐색 12). 세션 기록 없음. 뒤 실행은 컨테이너 재시작과 2시간 한도로 두 번 이어 돌았다(`resumes`) |
-| `qwen-r{2,3}-{before,after}.jsonl`, `.sessions/` | 2·3회차(`repeat` 2·3), 작성 과제 25개, 세션 기록. 시간 한도로 끊긴 실행은 이어 돌았다 |
+| `qwen-r1-before.jsonl`, `qwen-r1-after.jsonl` | run 1, 37 tasks (25 write, 12 navigation). No session records. The after run was resumed twice, after a container restart and a 2-hour limit (`resumes`) |
+| `qwen-r{2,3}-{before,after}.jsonl`, `.sessions/` | runs 2 and 3 (`repeat` 2 and 3), the 25 write tasks, with session records. Runs cut by the time limit were resumed |
 
-1회차 작성 1회 성공률은 앞 20/25, 뒤 24/25다. 차이 +16%p가 최소 차이 D(30%p) 안이므로, ADR-0103 결정 2에 따라 같은 커밋·조건에서 3회까지 반복한다.
+The write first-attempt success rate of run 1 is 20/25 before and 24/25 after. The difference of +16%p is inside the minimum difference D (30%p), so by ADR-0103 decision 2 it is repeated up to 3 runs at the same commit and condition.
 
-- 반복은 작성 과제 25개만 돈다. 탐색 과제는 1회차에서 두 쪽 모두 12/12(천장)였다.
-- 순서는 앞→뒤→앞→뒤로 번갈아 하고, 세션 기록을 남긴다.
-- 판정과 해석: `dev-docs/measurements/2r05.md`. 작성 성공률은 앞 0.813 [0.711, 0.885], 뒤 0.920 [0.821, 1.000]으로 구간이 겹쳐 실행 간 변동 안이다(방향은 세 회차 모두 뒤가 높음). 거부된 커밋은 60에서 26으로 줄었다.
+- Only the 25 write tasks are repeated. The navigation tasks were 12/12 on both sides in run 1 (the ceiling).
+- The order alternates before→after→before→after, and session records are kept.
+- Verdict and interpretation: the write success rate is 0.813 [0.711, 0.885] before and 0.920 [0.821, 1.000] after; the intervals overlap, so it is inside run-to-run variation (the direction is after higher in all three runs). Rejected commits fell from 60 to 26.

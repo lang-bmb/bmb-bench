@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate of the port-twin harness (backlog 3P-01): the item splitter, the Rust
+"""Gate of the port-twin harness: the item splitter, the Rust
 tools' sandbox, and `pair.py check` on the fixture (twins agree on the
 corpus, every oracle succeeds, every weak control fails its check)."""
 import json
@@ -106,7 +106,7 @@ class Gate(unittest.TestCase):
 
 
 class Port(unittest.TestCase):
-    """The comprehension tasks on the port twin (backlog 3P-02)."""
+    """The comprehension tasks on the port twin."""
 
     def test_rust_index_names_methods_by_their_type(self):
         import index

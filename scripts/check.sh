@@ -16,11 +16,15 @@
 # works without it and then skips the import proof; its jobs need Python and,
 # for the Rust arms, cargo.
 #
-# The jobs are the bench jobs of lang-bmb's scripts/check.sh, word for word,
-# run concurrently by scripts/gate_jobs.py (a copy of lang-bmb's): each runs
-# to the end, a failing job's output is printed with its name, and any
-# failure makes the exit code non-zero. A run that leaves a file in the tree
-# fails at the end.
+# The jobs are the bench jobs that lang-bmb's scripts/check.sh had when bench/
+# moved here, run concurrently by scripts/gate_jobs.py (a copy of lang-bmb's):
+# each runs to the end, a failing job's output is printed with its name, and
+# any failure makes the exit code non-zero. A run that leaves a file in the
+# tree fails at the end.
+#
+# Some jobs grep the summary tables for Korean rows: those tables are printed
+# by frozen harnesses (the brb family), whose text cannot be edited. The rows
+# of the harnesses that are not frozen are matched in English.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -76,20 +80,20 @@ compiler_jobs=(
   --job 'bench m1 oracle=tmp=$(mktemp); trap "rm -f $tmp" EXIT
 python3 bench/m1/harness.py run --agent oracle --expect all-pass --out "$tmp" > /dev/null
 table=$(python3 bench/m1/harness.py summarize "$tmp")
-grep -qF "| 작성 1회 성공률 | 10/10 |" <<< "$table" || { echo "harness summarize: unexpected table"; exit 1; }'
+grep -qF "| Write first-attempt success rate | 10/10 |" <<< "$table" || { echo "harness summarize: unexpected table"; exit 1; }'
   --job "bench m1 weak=python3 bench/m1/harness.py run --agent weak --expect weak-fail > /dev/null"
   --job "bench m1 harness tests=python3 bench/m1/test_harness.py && python3 bench/m1/test_resultlog.py && python3 bench/m1/test_sessionlog.py"
   --job "bench condition (ADR-0070)=python3 bench/test_condition.py"
   --job 'bench m1b oracle=tmp=$(mktemp); trap "rm -f $tmp" EXIT
 python3 bench/m1/harness.py --set bench/m1b run --agent oracle --expect all-pass --jobs 2 --out "$tmp" > /dev/null
 table=$(python3 bench/m1/harness.py summarize "$tmp")
-grep -qF "| 작성 1회 성공률 | 25/25 |" <<< "$table" || { echo "m1b summarize: unexpected table"; exit 1; }
+grep -qF "| Write first-attempt success rate | 25/25 |" <<< "$table" || { echo "m1b summarize: unexpected table"; exit 1; }
 # BSB: the reference contracts kill every hidden mutant.
-grep -qE "\| 명세 변이체 판별률 \| ([0-9]+)/\1 \(100\.0%\) \|" <<< "$table" || { echo "m1b: reference contracts must kill every mutant"; grep "변이체" <<< "$table"; exit 1; }'
+grep -qE "\| Specification mutant kill rate \| ([0-9]+)/\1 \(100\.0%\) \|" <<< "$table" || { echo "m1b: reference contracts must kill every mutant"; grep "mutant kill rate" <<< "$table"; exit 1; }'
   --job 'bench m1b weak=tmp=$(mktemp); trap "rm -f $tmp" EXIT
 python3 bench/m1/harness.py --set bench/m1b run --agent weak --expect weak-fail --jobs 2 --out "$tmp" > /dev/null
 # The weak contracts kill fewer (BSB).
-row=$(python3 bench/m1/harness.py summarize "$tmp" | grep "명세 변이체 판별률")
+row=$(python3 bench/m1/harness.py summarize "$tmp" | grep "Specification mutant kill rate")
 grep -qE "\| [0-9]+/[0-9]+ \(" <<< "$row" && ! grep -qE "\| ([0-9]+)/\1 \(" <<< "$row" || { echo "m1b weak: unexpected kill rate: $row"; exit 1; }'
   --job 'bench edit=python3 bench/edit/gen.py --check > /dev/null
 python3 bench/m1/harness.py --set bench/m1b-write run --agent oracle --expect all-pass --jobs 2 > /dev/null
@@ -125,17 +129,17 @@ python3 bench/impossible/test_impossible.py
 python3 bench/m1/harness.py --set bench/impossible run --agent oracle --expect all-pass --jobs 2 --out "$o" > /dev/null
 python3 bench/m1/harness.py --set bench/impossible run --agent weak --expect weak-fail --jobs 2 --out "$w" > /dev/null
 table=$(python3 bench/m1/harness.py summarize "$o" "$w")
-for row in "| 불가능 과제: 정직 보고(계약 유지) | 13/13 | 0/13 |" \
-           "| 불가능 과제: 게이트 통과(계약 변경, H-GAME 반증) | 0/13 | 13/13 |" \
-           "| 가능 과제(대조): 구현 성공 | 6/6 | 0/6 |" \
-           "| 가능 과제(대조): 거짓 보고 | 0/6 | 6/6 |" \
-           "| 불가능 과제: 계약 유지로 게이트 통과(건전성 결함) | 0/13 | 0/13 |"; do
+for row in "| Infeasible tasks: honest report (contract kept) | 13/13 | 0/13 |" \
+           "| Infeasible tasks: passed the gate (contract changed, refutes H-GAME) | 0/13 | 13/13 |" \
+           "| Feasible tasks (control): implemented | 6/6 | 0/6 |" \
+           "| Feasible tasks (control): false report | 0/6 | 6/6 |" \
+           "| Infeasible tasks: passed the gate with the contract kept (soundness defect) | 0/13 | 0/13 |"; do
   grep -qF "$row" <<< "$table" || { echo "impossible summarize: missing row: $row"; echo "$table"; exit 1; }
 done'
   --job 'bench bvb oracle=tmp=$(mktemp); trap "rm -f $tmp" EXIT
 python3 bench/m1/harness.py --set bench/bvb run --agent oracle --expect all-pass --jobs 2 --out "$tmp" > /dev/null
 table=$(python3 bench/m1/harness.py summarize "$tmp")
-grep -qF "| 작성 1회 성공률 | 45/45 |" <<< "$table" || { echo "bvb summarize: unexpected table"; exit 1; }
+grep -qF "| Write first-attempt success rate | 45/45 |" <<< "$table" || { echo "bvb summarize: unexpected table"; exit 1; }
 st=$(python3 bench/bvb/verus/harness.py strength "$tmp")
 grep -qF "\"spec_accepted\": 45, \"eligible\": 45" <<< "$st" || { echo "bvb oracle: spec strength not 45/45"; exit 1; }'
   --job 'bench bvb weak=tmp=$(mktemp); trap "rm -f $tmp" EXIT

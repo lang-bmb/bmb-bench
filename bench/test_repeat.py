@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for repeat.py (ADR-0077, backlog T0-12). No model, no network."""
+"""Tests for repeat.py (ADR-0077). No model, no network."""
 import json
 import os
 import sys
@@ -37,10 +37,10 @@ class Interval(unittest.TestCase):
         self.assertGreater(hi, 0.8)
 
     def test_verdict(self):
-        self.assertEqual(repeat.verdict(0.61, 0.8, 0.6), "충족")
-        self.assertEqual(repeat.verdict(0.6, 0.8, 0.6), "충족")
-        self.assertEqual(repeat.verdict(0.3, 0.59, 0.6), "미충족")
-        self.assertEqual(repeat.verdict(0.5, 0.7, 0.6), "미정")
+        self.assertEqual(repeat.verdict(0.61, 0.8, 0.6), "met")
+        self.assertEqual(repeat.verdict(0.6, 0.8, 0.6), "met")
+        self.assertEqual(repeat.verdict(0.3, 0.59, 0.6), "missed")
+        self.assertEqual(repeat.verdict(0.5, 0.7, 0.6), "undetermined")
 
 
 class Summary(unittest.TestCase):
@@ -49,13 +49,13 @@ class Summary(unittest.TestCase):
             runs = [[True, True, False, False], [True, False, False, False], [True, True, True, False]]
             files = [run_file(d, k + 1, s) for k, s in enumerate(runs)]
             text = repeat.summary(files, 0.6)
-        self.assertIn("## m1b: 반복 3회", text)
-        self.assertIn("| 작성 | 2/4, 1/4, 3/4 | 50.0% |", text)
+        self.assertIn("## m1b: 3 repeated runs", text)
+        self.assertIn("| write | 2/4, 1/4, 3/4 | 50.0% |", text)
         # t0 always, t3 never, t1 and t2 unstable.
         self.assertIn("| 1 / 1 / 2 |", text)
-        self.assertIn("흔들린 과제: t1, t2", text)
-        self.assertIn("최소 차이(ADR-0077 §4): 50%p", text)
-        self.assertIn("집합별 최소 차이(ADR-0086 §2): m1b 50%p", text)
+        self.assertIn("Unstable tasks: t1, t2", text)
+        self.assertIn("single runs (ADR-0077 §4): 50%p", text)
+        self.assertIn("Minimum difference per set (ADR-0086 §2): m1b 50%p", text)
 
     def test_brb_rows_are_writes_of_their_arm(self):
         with tempfile.TemporaryDirectory() as d:
@@ -71,9 +71,9 @@ class Summary(unittest.TestCase):
             files.append(run_file(d, 1, [True, False, False, False], task_set="bvb"))
             files.append(run_file(d, 2, [True, True, True, False], task_set="bvb"))
             text = repeat.summary(files, 0.6)
-        self.assertIn("## brb-write-bmb: 반복 2회", text)
-        self.assertIn("| 작성 | 2/2, 1/2 | 75.0% |", text)
-        self.assertIn("집합별 최소 차이(ADR-0086 §2): brb-write-bmb 50%p, bvb 50%p", text)
+        self.assertIn("## brb-write-bmb: 2 repeated runs", text)
+        self.assertIn("| write | 2/2, 1/2 | 75.0% |", text)
+        self.assertIn("Minimum difference per set (ADR-0086 §2): brb-write-bmb 50%p, bvb 50%p", text)
 
     def test_mixed_runs_are_refused(self):
         with tempfile.TemporaryDirectory() as d:
@@ -93,7 +93,7 @@ class Summary(unittest.TestCase):
 class Diff(unittest.TestCase):
     """ADR-0112: the difference of two arms on the same tasks."""
 
-    A, B = [20, 20, 21], [24, 23, 22]  # 2R-05 (qwen, 25 write tasks), before and after
+    A, B = [20, 20, 21], [24, 23, 22]  # the syntax A/B measurement (qwen, 25 write tasks), before and after
 
     def test_welch_and_the_sampling_floor(self):
         ra, rb = [k / 25 for k in self.A], [k / 25 for k in self.B]
@@ -121,10 +121,10 @@ class Diff(unittest.TestCase):
         self.assertEqual(repeat.permutation_p([0.5, 0.5], [0.5, 0.5]), 1.0)
 
     def test_verdict(self):
-        self.assertEqual(repeat.diff_verdict(-0.01, 0.2, 5, 5), "변동 안")
-        self.assertEqual(repeat.diff_verdict(0.01, 0.2, 4, 4), "B가 높음")
-        self.assertEqual(repeat.diff_verdict(-0.2, -0.01, 4, 5), "A가 높음")
-        self.assertEqual(repeat.diff_verdict(0.01, 0.2, 3, 4), "B가 높음(잠정: 팔당 4회 미만)")
+        self.assertEqual(repeat.diff_verdict(-0.01, 0.2, 5, 5), "inside variation")
+        self.assertEqual(repeat.diff_verdict(0.01, 0.2, 4, 4), "B higher")
+        self.assertEqual(repeat.diff_verdict(-0.2, -0.01, 4, 5), "A higher")
+        self.assertEqual(repeat.diff_verdict(0.01, 0.2, 3, 4), "B higher (provisional: fewer than 4 runs per arm)")
 
     def test_median_interval(self):
         med, iv = repeat.median_interval([1.0, 2.0, 4.0])
@@ -150,13 +150,13 @@ class Diff(unittest.TestCase):
                 return files
             a, b = side("before", [2, 2, 3, 2], 1000), side("after", [9, 8, 9, 9], 500)
             text = repeat.diff(a, b)
-            self.assertIn("B(m1b, 4회) − A(m1b, 4회), 작성 과제 10개", text)
+            self.assertIn("B (m1b, 4 runs) − A (m1b, 4 runs), 10 write tasks", text)
             self.assertIn("| A | 2/10, 2/10, 3/10, 2/10 | 22.5% |", text)
-            self.assertIn("성공률 차이: +65.0%p", text)
-            self.assertIn("→ B가 높음\n", text)
-            self.assertIn("과제별 토큰 비율 B/A(10과제): 중앙값 0.50, 95% 구간 0.50~0.50, 기하 평균 0.50", text)
+            self.assertIn("Difference of success rates: +65.0%p", text)
+            self.assertIn("→ B higher\n", text)
+            self.assertIn("Token ratio per task B/A (10 tasks): median 0.50, 95% interval 0.50~0.50, geometric mean 0.50", text)
             same = repeat.diff(a, a[:])  # the same runs on both sides
-            self.assertIn("→ 변동 안", same)
+            self.assertIn("→ inside variation", same)
             with self.assertRaises(SystemExit):  # two sets on one side
                 repeat.diff(a + [run_file(d, 1, [True], task_set="bvb")], b)
 

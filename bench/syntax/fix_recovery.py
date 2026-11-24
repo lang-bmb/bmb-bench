@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writing-surface fixes: meaning kept and habits recovered (backlog 2R-04e).
+"""Writing-surface fixes: meaning kept and habits recovered.
 
 Deterministic, offline. The checker answers a Rust habit with a diagnostic
 whose fix carries a replacement (E02xx, E0601, E0237), and `bmb fix --write`

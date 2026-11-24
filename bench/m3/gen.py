@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Large M1 workspace generator (backlog 3A-01).
+"""Large M1 workspace generator.
 
 Writes OUT/src/<unit>.bmb for a workspace of exactly N definitions in the M1
 language (ADR-0016 and compiler/README.md surface rules). Every definition is
@@ -16,7 +16,7 @@ this.
 
 Bodies are rendered from a plan: `Unit` (names, kinds, constants) and
 `choose` (callees and result forms, drawn once per unit). The Rust twin
-(bench/bnb/twin.py, backlog 3A-05) renders the same plan.
+(bench/bnb/twin.py) renders the same plan.
 
 Usage: gen.py OUT --defs N [--defs-per-unit 20 | --units U] [--seed 1]
                [--depth 4] [--fanout 2] [--window 3] [--contract-share 0.5]
@@ -313,6 +313,9 @@ def render_unit(units, u, args):
     }}
 """
     body = "\n".join(defs[k] for k in sorted(defs))
+    # The Korean summary is part of the generated workspace (its bytes are what
+    # the recorded measurements and the frozen BNB and BCB sets were made on):
+    # it is data and stays as it is. bench/bnb/twin.py writes the same text.
     return f'#[summary("생성 단위 {u}: 상한 산술, 배열 훑기, 변경 경로")]\nmod m{u} {{\n{body}}}\n'
 
 

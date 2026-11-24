@@ -1,8 +1,8 @@
-"""Session records (backlog INF-17, ADR-0070).
+"""Session records (ADR-0070).
 
 With `--sessions DIR` a measurement harness writes one gzip'd JSON file per
-session, `DIR/<task id>.json.gz`, so a failure can be attributed after the run
-(AUTONOMY §3.2): every tool call with its arguments and the full result text
+session, `DIR/<task id>.json.gz`, so a failure can be attributed after the run:
+every tool call with its arguments and the full result text
 the model got, each model request's stop reason, tokens and visible text (not
 the reasoning, which is large and not sent back), and the final workspace as
 the files that differ from the seed. Nothing here is shown to the model, and

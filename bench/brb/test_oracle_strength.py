@@ -58,16 +58,16 @@ class Verdict(unittest.TestCase):
 
     def test_registered_rule(self):
         up = [(f"t{i}", 0.75 + 0.01 * (i % 3), 0.25) for i in range(12)]
-        self.assertEqual(o.verdict(up, self.pairs(0.6, 0.5))[0], "성립")
-        self.assertEqual(o.verdict(up, self.pairs(0.4, 0.5))[0], "판정 불가")  # the other model disagrees
-        self.assertEqual(o.verdict(up)[0], "판정 불가")  # no other model
+        self.assertEqual(o.verdict(up, self.pairs(0.6, 0.5))[0], "holds")
+        self.assertEqual(o.verdict(up, self.pairs(0.4, 0.5))[0], "cannot be judged")  # the other model disagrees
+        self.assertEqual(o.verdict(up)[0], "cannot be judged")  # no other model
         down = [(t, u, b) for t, b, u in up]
-        self.assertEqual(o.verdict(down, self.pairs(0.5, 0.5))[0], "반증")
+        self.assertEqual(o.verdict(down, self.pairs(0.5, 0.5))[0], "refuted")
         # the comparison arm kills nearly all: nothing to tell apart
-        self.assertEqual(o.verdict(self.pairs(1.0, 0.95), self.pairs(1.0, 0.9))[0], "변별 불가")
+        self.assertEqual(o.verdict(self.pairs(1.0, 0.95), self.pairs(1.0, 0.9))[0], "cannot discriminate")
         mixed = [("a", 1.0, 0.0), ("b", 0.0, 1.0), ("c", 0.5, 0.5)]
-        self.assertEqual(o.verdict(mixed, mixed)[0], "판정 불가")
-        self.assertEqual(o.verdict([], [])[0], "판정 불가")
+        self.assertEqual(o.verdict(mixed, mixed)[0], "cannot be judged")
+        self.assertEqual(o.verdict([], [])[0], "cannot be judged")
 
 
 if __name__ == "__main__":

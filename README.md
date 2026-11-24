@@ -10,7 +10,7 @@ This repository is where those measurements can be read, checked and run again.
 
 | Path | What it holds |
 | --- | --- |
-| `bench/<set>/` | one directory per benchmark or task set: runner, judge, reference and weak solutions, tasks and prompts. [`bench/README.md`](bench/README.md) lists them (in Korean) |
+| `bench/<set>/` | one directory per benchmark or task set: runner, judge, reference and weak solutions, tasks and prompts. [`bench/README.md`](bench/README.md) lists them |
 | `bench/<set>/MANIFEST` | the frozen files of a set with their SHA-256. A frozen file is never edited; a changed set is a new set |
 | `bench/<set>/results/` | result rows, one JSON object per session (`*.jsonl`), as the harness wrote them, and for some runs the session records (`*.sessions/<task>.json.gz`: every tool call and model request) |
 | `bench/conditions/` | reports that two commits' harnesses are the same instrument (`bench/condition.py`) |
@@ -19,9 +19,15 @@ This repository is where those measurements can be read, checked and run again.
 | `scripts/` | the check of this repository and the import from `lang-bmb` |
 
 `bench/` was moved here from `lang-bmb` at commit `6bbf72cb` (its ADR-0147) and keeps the directory name and
-the layout it had there: the harnesses refer to each other by those paths, and 70 of them are frozen. Much of
-the text in it is Korean: the task statements and prompts of some frozen sets (changing them would change the
-set), and harness comments and per-set READMEs that have not been translated yet.
+the layout it had there: the harnesses refer to each other by those paths, and 70 of them are frozen. Some of
+the text in it is Korean and stays so, because it is frozen or is data: the task statements and prompts of
+some frozen sets (changing them would change the set), the comments and the printed table labels of frozen
+harnesses, the tests and check jobs that match those labels, text that generators write into frozen sets, and
+the subjects of the replayed commits in `bench/twin`. Everything else is English.
+
+Some result directories and scripts carry the label a measurement was planned under (`bench/twin/results/3p-17/`,
+`bench/bnb/results/3a06/`, `bench/twin/run_3p05a.sh`, the `task` field of `bench/waiting.json`). Such a label
+only names the measurement; the README beside the rows says what was measured.
 
 ## Reading the data
 
@@ -33,14 +39,17 @@ set), and harness comments and per-set READMEs that have not been translated yet
   transformation, and `scripts/import_bench.py --check` proves that `bench/` is `lang-bmb`'s tree with it
   applied.
 - Results are first attempts, without retries, on frozen tasks and prompts.
-- **The `commit` field of a row.** Rows written before the move name a commit of `lang-bmb`, which then held
-  the compiler, the harness and the sets together. From this repository on, `commit` is a commit of
-  `bmb-bench` (the harness and the sets), and the compiler's commit is the new field `lang_bmb_commit`, taken
-  from the checkout `LANG_BMB` names. The frozen harnesses could not be edited to say so: the `brb` family
-  gets `lang_bmb_commit` in its header and summary rows through the shared `condition_fields`, but
-  `bench/review/harness.py` and `bench/bcb/bcb.py` write only `commit`, and tables that the frozen harnesses
-  print still label that field "컴파일러 커밋" (compiler commit). For their rows the compiler's commit has
-  to be recorded with the run.
+- **The `commit` and `lang_bmb_commit` fields of a row.** Rows written before the move (every row imported
+  with `bench/`) have `commit` only, and it names a commit of `lang-bmb`, which then held the compiler, the
+  harness and the sets together: for those rows `commit` is the compiler's commit too. From this repository
+  on, `commit` is a commit of `bmb-bench` (the harness and the sets), and the compiler's commit is the new
+  field `lang_bmb_commit`, taken from the checkout `LANG_BMB` names. The frozen harnesses could not be edited
+  to say so: the `brb` family gets `lang_bmb_commit` in its header and summary rows through the shared
+  `condition_fields`, but `bench/review/harness.py` and `bench/bcb/bcb.py` write only `commit`, and the tables
+  that the frozen harnesses print still label the `commit` field with the Korean for "compiler commit". Read
+  that label as the `commit` field described here; for rows of those two harnesses written after the move,
+  the compiler's commit has to be recorded with the run. The summary table of `bench/m1/harness.py`, which is
+  not frozen, labels it "Commit (`commit` field)".
 
 ## Running it
 
@@ -58,7 +67,7 @@ scripts/check.sh /path/to/lang-bmb     # everything; or LANG_BMB=/path/to/lang-b
 2. `bench/` equals the transformed import of the commit `bench/SOURCE` names (`scripts/import_bench.py --check`);
 3. the full check builds the compiler in the `lang-bmb` checkout (untracked `target/` there; nothing tracked
    is touched), prepares the proof cache of the compiler's BMB port that `bench/twin` starts from, and runs
-   the bench jobs of `lang-bmb`'s own gate, word for word: the reference solution of every task must pass
+   the bench jobs that `lang-bmb`'s own gate had at the move: the reference solution of every task must pass
    and the weak one must fail, with no model. This takes about a quarter of an hour on four cores;
 4. the run must not leave or change a file in the tree.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The utility report's tables (backlog T0-26): what they count, and that the
+"""The utility report's tables: what they count, and that the
 gate finds a stale block."""
 import json
 import os
@@ -51,7 +51,7 @@ class Tables(unittest.TestCase):
         self.assertIn("| m | rust | 1/2 | 10 | 10.0 | 2 | 1/2 |", t)  # test lines of successful sessions only
         self.assertIn("| m1b | m | 1/1 | 1 | 900 | 55 |", t)
         self.assertIn("| brb | rust | m | 2 | 4 | 2 | 25% |", t)
-        self.assertIn("결과 파일 2개", t)  # the file without a summary row is not a finished run
+        self.assertIn("2 result files", t)  # the file without a summary row is not a finished run
 
     def test_a_stale_block_fails_the_check(self):
         report = os.path.join(self.root, "r.md")
@@ -66,7 +66,7 @@ class Tables(unittest.TestCase):
 
 
 class Distribution(unittest.TestCase):
-    """Table F (backlog T0-35): median, top-3 share, the sessions with an
+    """Table F: median, top-3 share, the sessions with an
     undecided response from the session records, and the cache-read share."""
 
     def test_shares_from_rows_and_session_records(self):

@@ -1,6 +1,6 @@
-// n-body reference (backlog T3-04): the Benchmarks Game algorithm, written
+// n-body reference: the Benchmarks Game algorithm, written
 // from the published description (the official Rust submissions are not
-// reachable from this environment, backlog T3-01). Single-threaded, plain
+// reachable from this environment). Single-threaded, plain
 // `f64` arithmetic in the order of the C and Rust #1 programs: pairwise
 // velocity updates with mag = dt / (d2 * sqrt(d2)), then positions.
 //

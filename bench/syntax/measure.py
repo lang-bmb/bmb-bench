@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Token cost of M1 surface constructs (backlog 2R-02, input to 2R-04).
+"""Token cost of M1 surface constructs (input to the surface alternatives measured beside it).
 
 Deterministic, offline. No model runs. Two corpora:
 
@@ -133,7 +133,7 @@ def classify(toks, cats, items, unit):
                     break
                 j += 1
             sig = toks[i:j]
-            # A trait method's declaration has no body (backlog 2R-04a).
+            # A trait method's declaration has no body.
             if toks[j] == ";" or ";" in toks[j : toks.index("{", j) if "{" in toks[j:] else len(toks)]:
                 semi = toks.index(";", j)
                 add("sig", semi - i + 1)
@@ -182,7 +182,7 @@ def classify_body(body, add, it):
         t = body[i]
         if t in ("while", "for"):
             # header up to `invariant`/`decreases`/`{` at depth 0 (`for`:
-            # backlog 2R-04f, read here since 2R-04a)
+            # the range `for`, read here since trait declarations are)
             j = i + 1
             depth = 0
             while not (depth == 0 and body[j] in ("invariant", "decreases", "{")):
@@ -274,28 +274,28 @@ def tally(sources):
 
 
 GROUPS = [
-    ("실행 코드(식·문장)", ["code", "other"]),
-    ("시그니처(이름·매개변수·반환 타입)", ["sig"]),
-    ("`let`의 타입 표기 `: T`", ["let_type"]),
+    ("executable code (expressions, statements)", ["code", "other"]),
+    ("signature (name, parameters, return type)", ["sig"]),
+    ("type annotation `: T` of `let`", ["let_type"]),
     ("`-> ()`", ["unit_return"]),
-    ("이름 붙은 결과 `(r: …)`의 추가분", ["named_result"]),
+    ("the extra of a named result `(r: …)`", ["named_result"]),
     ("`#[effects(..)]`", ["attr:effects"]),
     ("`#[uses(..)]`", ["attr:uses"]),
     ("`#[summary(..)]`·`mod`", ["attr:summary", "unit"]),
-    ("`requires` 절", ["contract:requires"]),
-    ("`ensures` 절", ["contract:ensures"]),
-    ("함수 `decreases` 절", ["contract:decreases"]),
-    ("루프 `invariant`", ["loop:invariant"]),
-    ("루프 `decreases`", ["loop:decreases"]),
-    ("절 키워드(`requires`·`ensures`·`invariant`·`decreases`)", ["clause_kw"]),
+    ("`requires` clauses", ["contract:requires"]),
+    ("`ensures` clauses", ["contract:ensures"]),
+    ("function `decreases` clauses", ["contract:decreases"]),
+    ("loop `invariant`", ["loop:invariant"]),
+    ("loop `decreases`", ["loop:decreases"]),
+    ("clause keywords (`requires`, `ensures`, `invariant`, `decreases`)", ["clause_kw"]),
     ("`assert(..);`", ["assert"]),
-    ("`spec fn` 정의 전체", ["spec_fn"]),
+    ("whole `spec fn` definitions", ["spec_fn"]),
 ]
 
 
 def table(cats):
     total = sum(cats.values())
-    rows = ["| 구성 | 어휘 토큰 | 비율 |", "| --- | ---: | ---: |"]
+    rows = ["| Construct | Lexical tokens | Share |", "| --- | ---: | ---: |"]
     seen = set()
     for label, keys in GROUPS:
         v = sum(cats.get(k, 0) for k in keys)
@@ -303,8 +303,8 @@ def table(cats):
         rows.append(f"| {label} | {v} | {100 * v / total:.1f}% |")
     rest = sum(v for k, v in cats.items() if k not in seen)
     if rest:
-        rows.append(f"| 기타 | {rest} | {100 * rest / total:.1f}% |")
-    rows.append(f"| **합계** | **{total}** | 100% |")
+        rows.append(f"| other | {rest} | {100 * rest / total:.1f}% |")
+    rows.append(f"| **total** | **{total}** | 100% |")
     return "\n".join(rows)
 
 

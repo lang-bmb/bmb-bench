@@ -1,4 +1,4 @@
-#[summary("벤치(T4-01): 16MiB 의사 난수 바이트를 std::sha256::digest로 8번(매번 첫 바이트를 바꿈). 쌍둥이는 sha256_speed.rs(같은 알고리즘의 Rust: compiler/src/sha256.rs와 같은 코드, 표준 라이브러리만)")]
+#[summary("bench: std::sha256::digest over 16 MiB of pseudo-random bytes, 8 times (the first byte changes each time). The twin is sha256_speed.rs (Rust of the same algorithm: the same code as compiler/src/sha256.rs, standard library only)")]
 mod app {
     spec fn size_ok(n: usize) -> bool { 0 < n && n <= 16777216 }
 

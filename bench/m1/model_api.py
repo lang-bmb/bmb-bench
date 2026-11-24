@@ -31,9 +31,8 @@ tell these sessions apart.
 The gateway's spend cap (HTTP 402 `cap_reached`) is not an answer about the
 session: it raises `CapReached`, which no agent catches, so the run stops
 without writing that session's row and resumes from it once the cap resets
-(backlog INF-23, ADR-0088). A refused credential (HTTP 401 or 403: an unknown
-or not yet active service key) is the same kind of stop, `Unauthenticated`
-(backlog INF-28).
+(ADR-0088). A refused credential (HTTP 401 or 403: an unknown
+or not yet active service key) is the same kind of stop, `Unauthenticated`.
 """
 import http.client
 import json
@@ -50,7 +49,7 @@ TIMEOUT = 900
 # A whole streamed request (ADR-0076 sessions reach 65,536 output tokens,
 # about half an hour at the gateway's rate). `TIMEOUT` bounds each read only,
 # so a stream kept open with keep-alive lines and no end stalled a session
-# for hours (T0-13, 2026-11-02); past this it is cut and retried.
+# for hours (a write-surface run, 2026-11-02); past this it is cut and retried.
 REQUEST_DEADLINE = 3600
 RETRIES = 6  # backoff 2..64 s, about two minutes of a gateway outage
 
@@ -60,7 +59,7 @@ class StreamCut(Exception):
 
 
 # A response that reaches its output limit is continued once in the same
-# turn (ADR-0076, backlog T0-27): the cut text stays, any tool call in it is
+# turn (ADR-0076): the cut text stays, any tool call in it is
 # dropped (its arguments may be cut), and this note follows. A second cut in
 # the same turn ends the session as before (`stop: "length"`).
 CONTINUE_NOTE = ("(harness) Your previous reply reached the output limit and was cut off; any tool call "
@@ -77,7 +76,7 @@ def visible_tokens(text, calls):
 
 def context_log():
     """`BMB_CONTEXT_LOG=1`: also record each request's tokens and each tool
-    call's result size (backlog 2D-25), to decompose every turn's context.
+    call's result size, to decompose every turn's context.
     Off by default, so the result rows of a run stay as they were; what the
     model sees is the same either way."""
     return os.environ.get("BMB_CONTEXT_LOG") == "1"
@@ -174,7 +173,7 @@ class CapReached(GatewayStop):
 
 
 class Unauthenticated(GatewayStop):
-    """The gateway does not accept the credential (INF-28)."""
+    """The gateway does not accept the credential."""
 
 
 def post_json(url, body, headers, stats=None, timeout=TIMEOUT, retries=RETRIES, fold=None):
@@ -265,7 +264,7 @@ class OpenAIAgent:
         self.pending = []
         self.usage = {"input_tokens": 0, "output_tokens": 0, "requests": 0, "visible_output_tokens": 0}
         # Per request: stop reason, tokens and visible text, for the session
-        # record (backlog INF-17). Not part of the result row.
+        # record. Not part of the result row.
         self.requests = []
         self.stop = None
         self.continued = False  # this turn was already continued once (ADR-0076)

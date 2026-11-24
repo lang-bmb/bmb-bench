@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BRB-HARD task set and harness (backlog T0-08). No network, no model.
+"""BRB-HARD task set and harness. No network, no model.
 
 The reference and weak runs and the mutant adequacy are the gate's
 `bench brb-hard` jobs; here are the parts they do not show: the frozen set,

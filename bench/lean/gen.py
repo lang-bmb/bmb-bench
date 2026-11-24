@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lean fixed context task sets (backlog 2D-28): m1b-write and BVB-write with
+"""Lean fixed context task sets: m1b-write and BVB-write with
 the tool documentation in one place and a shorter language-rules section.
 
   python3 bench/lean/gen.py            writes bench/m1b-write-lean and bench/bvb-write-lean
@@ -22,8 +22,7 @@ mutants are the source set's, byte for byte):
     function and `let`, contracts as named predicates, opaque predicates and
     `#[uses]`, `#[trigger]`. The rules the compiler reports with a way
     forward, the obligations Verus has too, and the bans on constructs the
-    language has since gained go (ADR-0071,
-    `dev-docs/experiments/context-size/rules.md`).
+    language has since gained go (ADR-0071).
   - The example and "## How to work" stay.
 
 Frozen like the write sets (ADR-0021 §1): regenerate with this script, never
@@ -134,9 +133,9 @@ def build_set(root, source):
     with open(os.path.join(out, "MANIFEST"), "w") as f:
         f.write(harness.manifest_text())
     with open(os.path.join(out, "README.md"), "w") as f:
-        f.write(f"# {source}-lean (고정 문맥, 백로그 2D-28)\n\n`bench/lean/gen.py`가 `bench/{source}`에서 만든 판이다(동결). "
-                f"직접 고치지 않고 생성기로 다시 만든다. {source}와 매 요청에 들어가는 부분(프롬프트, 도구 설명 `--tool-docs`, "
-                "보이는 도구)만 다르다(생성기 머리 주석).\n")
+        f.write(f"# {source}-lean (fixed context)\n\nA variant that `bench/lean/gen.py` makes from `bench/{source}` (frozen). "
+                f"It is not edited by hand; the generator makes it again. It differs from {source} only in what goes into every request (the prompt, the tool descriptions `--tool-docs`, "
+                "the visible tools; see the generator's header comment).\n")
     return out
 
 

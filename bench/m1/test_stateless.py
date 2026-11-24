@@ -1,4 +1,4 @@
-"""The stateless repair condition (ADR-0110, backlog T0-36) over both
+"""The stateless repair condition (ADR-0110) over both
 provider agents, with stub transports (no network): every request is the
 system prompt and one user message (task, state now, one line per attempt,
 the last results); nothing of the earlier turns is sent again."""

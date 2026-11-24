@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Oracle strength by the tasks' mutants (ADR-0119, backlog T0-40).
+"""Oracle strength by the tasks' mutants (ADR-0119).
 
   oracle_strength.py run RESULTS.jsonl --out OUT.jsonl [--only ID ..]
   oracle_strength.py summarize BMB_OUT.jsonl RUST_OUT.jsonl [--aux BMB RUST]
@@ -302,22 +302,22 @@ def verdict(main, aux=None):
     the auxiliary model's difference)."""
     diffs = [b - u for _, b, u in main]
     if not diffs:
-        return "판정 불가", "짝지은 과제가 없다"
+        return "cannot be judged", "there are no paired tasks"
     rust_mean = sum(u for _, _, u in main) / len(main)
     m, lo, hi = interval(diffs)
     p = sign_flip_p(diffs)
     if rust_mean >= 0.9:
-        return "변별 불가", f"기준 모델의 Rust 팔 평균 살해율 {rust_mean:.3f} ≥ 0.9"
+        return "cannot discriminate", f"the mean kill rate of the reference model's Rust arm is {rust_mean:.3f} ≥ 0.9"
     if lo > 0 and p < 0.05:
         if aux is None:
-            return "판정 불가", "보조 모델의 결과가 없다"
+            return "cannot be judged", "there is no result of the auxiliary model"
         am = sum(b - u for _, b, u in aux) / len(aux) if aux else 0.0
         if am > 0:
-            return "성립", f"차이 {m:+.3f} [{lo:+.3f}, {hi:+.3f}], p = {p:.4f}, 보조 모델 차이 {am:+.3f}"
-        return "판정 불가", f"기준 모델은 구간이 0 위이나 보조 모델 차이 {am:+.3f}의 부호가 다르다"
+            return "holds", f"difference {m:+.3f} [{lo:+.3f}, {hi:+.3f}], p = {p:.4f}, auxiliary model's difference {am:+.3f}"
+        return "cannot be judged", f"the reference model's interval is above 0, but the auxiliary model's difference {am:+.3f} has the other sign"
     if hi < 0 and p < 0.05:
-        return "반증", f"차이 {m:+.3f} [{lo:+.3f}, {hi:+.3f}], p = {p:.4f}"
-    return "판정 불가", f"차이 {m:+.3f} [{lo:+.3f}, {hi:+.3f}], p = {p:.4f}"
+        return "refuted", f"difference {m:+.3f} [{lo:+.3f}, {hi:+.3f}], p = {p:.4f}"
+    return "cannot be judged", f"difference {m:+.3f} [{lo:+.3f}, {hi:+.3f}], p = {p:.4f}"
 
 
 def describe(label, bmb, rust):
@@ -325,11 +325,11 @@ def describe(label, bmb, rust):
     for arm, rows in (("BMB", bmb), ("Rust", rust)):
         ex = [r for r in rows if "excluded" in r]
         unb = sum(k is None for r in rows if "killed" in r for k in r["killed"])
-        lines.append(f"- {arm}: 세션 {len(rows)}, 대상 {len(rows) - len(ex)}, 제외 {len(ex)}"
-                     + (f", 빌드되지 않아 뺀 변이체 {unb}" if unb else ""))
-    lines += ["", "| 범위 | 짝지은 과제 | BMB 평균 살해율 | Rust 평균 살해율 | 차이(BMB − Rust) | 95% 구간 | p(순열) |",
+        lines.append(f"- {arm}: {len(rows)} sessions, {len(rows) - len(ex)} in scope, {len(ex)} excluded"
+                     + (f", {unb} mutants left out because they did not build" if unb else ""))
+    lines += ["", "| Scope | Paired tasks | BMB mean kill rate | Rust mean kill rate | Difference (BMB − Rust) | 95% interval | p (permutation) |",
               "| --- | --- | --- | --- | --- | --- | --- |"]
-    for name, only in (("모든 변이체", None), ("출력이 다른 변이체만", "output"), ("패닉·넘침·멈춤만", "trap")):
+    for name, only in (("all mutants", None), ("only mutants with a different output", "output"), ("only panic, overflow, hang", "trap")):
         ps = paired(bmb, rust, only)
         if not ps:
             lines.append(f"| {name} | 0 | — | — | — | — | — |")
@@ -340,20 +340,20 @@ def describe(label, bmb, rust):
                      f"{sum(u for _, _, u in ps) / len(ps):.3f} | {m:+.3f} | {lo:+.3f} ~ {hi:+.3f} | {sign_flip_p(diffs):.4f} |")
     kb, nb = map(sum, zip(*[rate(r) for r in bmb if "killed" in r])) if any("killed" in r for r in bmb) else (0, 0)
     ku, nu = map(sum, zip(*[rate(r) for r in rust if "killed" in r])) if any("killed" in r for r in rust) else (0, 0)
-    lines += ["", f"합친 수(짝짓지 않음): BMB {kb}/{nb}, Rust {ku}/{nu}.", ""]
+    lines += ["", f"Pooled counts (not paired): BMB {kb}/{nb}, Rust {ku}/{nu}.", ""]
     return lines
 
 
 def per_task(bmb, rust):
     b = {r["id"]: r for r in bmb}
     u = {r["id"]: r for r in rust}
-    lines = ["| 과제 | 변이체 | BMB 죽임 | Rust 죽임 | 살아남은 변이체(BMB / Rust) |", "| --- | --- | --- | --- | --- |"]
+    lines = ["| Task | Mutants | Killed by BMB | Killed by Rust | Surviving mutants (BMB / Rust) |", "| --- | --- | --- | --- | --- |"]
 
     def cell(r):
         if r is None:
             return "—", ""
         if "excluded" in r:
-            return "제외", ""
+            return "excluded", ""
         k, n = rate(r)
         return f"{k}/{n}", ",".join(str(i) for i, x in enumerate(r["killed"]) if x is False)
 
@@ -367,13 +367,13 @@ def per_task(bmb, rust):
 def cmd_summarize(a):
     bmb, rust = load_rows(a.bmb), load_rows(a.rust)
     aux = (load_rows(a.aux[0]), load_rows(a.aux[1])) if a.aux else None
-    out = describe("기준 모델", bmb, rust)
+    out = describe("Reference model", bmb, rust)
     if aux:
-        out += describe("보조 모델", *aux)
+        out += describe("Auxiliary model", *aux)
     v, why = verdict(paired(bmb, rust), paired(*aux) if aux else None)
-    out += [f"**판정(ADR-0119 결정 4): {v}.** {why}", "", "### 과제별(기준 모델)", ""] + per_task(bmb, rust)
+    out += [f"**Verdict (ADR-0119 decision 4): {v}.** {why}", "", "### Per task (reference model)", ""] + per_task(bmb, rust)
     if aux:
-        out += ["", "### 과제별(보조 모델)", ""] + per_task(*aux)
+        out += ["", "### Per task (auxiliary model)", ""] + per_task(*aux)
     print("\n".join(out))
     return 0
 

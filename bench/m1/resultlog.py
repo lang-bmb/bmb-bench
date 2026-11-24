@@ -1,4 +1,4 @@
-"""Results files written as sessions finish, and resumed (backlog INF-16).
+"""Results files written as sessions finish, and resumed.
 
 A run with `--out FILE` first writes a header line `{"partial": true, ...}`
 naming the run (agent, task set, manifest, commit, task ids), then one line per
@@ -23,7 +23,7 @@ import threading
 def clear_set(out):
     """Empty a generated set directory for regeneration, keeping its committed
     measurement results (`results/`, written by runs, not by a generator). A
-    generator that removed the whole directory deleted them (backlog T0-32)."""
+    generator that removed the whole directory deleted them once."""
     if not os.path.isdir(out):
         return
     for name in os.listdir(out):

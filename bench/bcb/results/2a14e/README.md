@@ -1,28 +1,28 @@
-# 2A-14e: BCB N=1,000·10,000 측정 (H-AMORT, G7)
+# 2a14e: BCB measurement at N=1,000 and 10,000 (H-AMORT, G7)
 
-백로그 2A-14e. 아래는 첫 `suite` 행보다 먼저 등록한다(2026-11-10).
+`2a14e` is the label of this measurement. What follows is registered before the first `suite` row (2026-11-10).
 
-## 조건
+## Conditions
 
-- **계획:** `bcb.py suite`가 `SUITE`를 순서대로 돌린다. 이력마다 팔(`rust`, `b1`, `b0`, `defects`)을 따로 실행한다.
-  - 중단되면 같은 명령으로 멈춘 곳에서 잇는다.
-  - 결과 머리 줄에는 커밋·MANIFEST·컴파일러 해시가 있다.
-- **컴파일러:** `suite`가 처음 돌 때 `W/bin/bmb`로 복사한 사본만 쓴다.
-- **겹침:**
-  - BMB 팔 모델 세션과는 겹쳐 돌 수 있다(INF-19, `../inf19/`).
-  - 컴파일·게이트·`cargo test`를 도는 판정과는 겹치지 않는다(BCB README). 그런 일은 실행 덩어리 사이에만 한다.
-  - 겹친 구간이 생기면 기록에 밝힌다.
-- **CPU 고정:** 하지 않는다. INF-19가 검증한 조건이 고정 없음이었다.
+- **Plan:** `bcb.py suite` runs `SUITE` in order. For every history the arms (`rust`, `b1`, `b0`, `defects`) run separately.
+  - When interrupted, the same command continues where it stopped.
+  - The result header line has the commit, the MANIFEST and the compiler's hash.
+- **Compiler:** only the copy that `suite` makes at `W/bin/bmb` the first time it runs.
+- **Overlap:**
+  - It may overlap with model sessions of a BMB arm (measured in `../inf19/`).
+  - It does not overlap with judging that runs compilation, the gate or `cargo test` (BCB README). Such work is done only between chunks of the run.
+  - Any stretch that did overlap is stated in the record.
+- **CPU pinning:** none. The condition that `../inf19/` checked was without pinning.
 
-## 판정
+## Verdict
 
-1. **판정 줄은 ADR-0042 §5 그대로다.**
-   - 조건 1: N = 10,000, K = 1,000, 사건 0에서 C_B1 ≥ C_R1이면 반증이다. `body-heavy`와 `contract-heavy`를 따로 본다.
-   - 조건 2: 방화벽 비교다.
-   - 조건 3: 사건 4에서 C_B1 > C_R1이면 반증이다.
-   - 조건 4: 결함 검출률이 B1 < R2이면 반증이다.
-2. **호스트 변동 띠(INF-19).** 조건 1·3의 비율 C_B1/C_R1이 0.9~1.1이면 그 항목은 **판정 불가(호스트 변동)**로 적는다.
-   - 이유: 두 팔이 다른 실행이고, 실행 사이 절대 CPU가 약 9%까지 움직였다.
-   - 띠 밖이면 ADR-0042 §5대로 판정한다.
-   - 띠는 양쪽에 같이 적용한다. 0.9~1.0도 "지지"라고 말하지 않는다.
-3. **G7(ROADMAP)은 위 결과로 읽는다.** 기준은 "테스트 선택·캐시를 쓴 Rust 쌍둥이 이하, 결함 검출 동등 이상"이다.
+1. **The verdict lines are those of ADR-0042 §5.**
+   - Condition 1: refuted if C_B1 ≥ C_R1 at N = 10,000, K = 1,000, 0 events. `body-heavy` and `contract-heavy` are looked at separately.
+   - Condition 2: the firewall comparison.
+   - Condition 3: refuted if C_B1 > C_R1 at 4 events.
+   - Condition 4: refuted if the defect detection rate of B1 < that of R2.
+2. **Band of host variation (`../inf19/`).** When the ratio C_B1/C_R1 of condition 1 or 3 is between 0.9 and 1.1, that item is written as **cannot be judged (host variation)**.
+   - Reason: the two arms are different runs, and the absolute CPU moved by up to about 9% between runs.
+   - Outside the band the verdict is that of ADR-0042 §5.
+   - The band applies to both sides alike. 0.9 to 1.0 is not called "supported" either.
+3. **G7 (ROADMAP) is read from the results above.** The criterion is "at or below the Rust twin with test selection and caching, and defect detection equal or better".

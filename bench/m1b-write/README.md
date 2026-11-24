@@ -1,3 +1,3 @@
-# m1b-write (H-EDIT·H-GRAIN, 백로그 T1-06·2D-24)
+# m1b-write (H-EDIT, H-GRAIN, one-call write surface)
 
-`bench/edit/gen.py`가 `bench/m1b`에서 만든 판이다(동결). 직접 고치지 않고 생성기로 다시 만든다. m1b와 쓰기 표면만 다르다(생성기 머리 주석).
+A variant that `bench/edit/gen.py` makes from `bench/m1b` (frozen). It is not edited by hand; the generator makes it again. It differs from m1b only in the write surface (the generator's header comment).

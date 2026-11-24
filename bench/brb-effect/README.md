@@ -1,58 +1,58 @@
-# BRB-EFFECT: 출력과 상태가 있는 과제 (H-EFFECT, ADR-0078, 백로그 T1-43)
+# BRB-EFFECT: tasks with output and state (H-EFFECT, ADR-0078)
 
-BRB(`../brb`)의 새 판이다. 과제마다 함수가 **줄을 출력하고**(BMB `print_i64`, Rust `println!`) 입력 원소를 따라 **상태를 이어 간다**(잔액, 토큰 수, 진행 중인 구간). 숨은 판정기는 반환값과 함께 출력한 줄을 순서대로 확인한다. 가설 H-EFFECT는 "효과로 드러낸 I/O·상태가 증명되는 순수 핵심과 테스트가 필요한 껍데기를 가르고, 남은 테스트 면적이 작다"이다.
+A new variant of BRB (`../brb`). In every task the function **prints lines** (BMB `print_i64`, Rust `println!`) and **carries state** along the input elements (a balance, a number of tokens, the run in progress). The hidden judge checks the printed lines, in order, together with the return value. The hypothesis H-EFFECT is: "I/O and state exposed as effects separate a pure core that is proved from a shell that needs tests, and the remaining test area is small".
 
-이 디렉터리는 과제(동결)·판정기·하네스·CI 검사까지다. 실제 모델 실행은 아직 없다.
+This directory holds the tasks (frozen), the judge, the harness and the CI checks. When this was written there was no run with a real model yet; the results are under `results/`.
 
-| 파일 | 내용 |
+| File | Contents |
 | --- | --- |
-| `tasks/fNN_*.py` | 과제 4개(동결). BRB 과제 형식에 출력이 더해졌다: `model(*args)`가 `(반환값, 출력 줄)`을 낸다 |
-| `judge.py` | 숨은 판정기(동결). BRB 판정기(`bench/brb/judge.py`, 동결)를 비공개 사본으로 불러 기대값·채점·케이스 실행·정의역 검사의 호출자 효과만 바꾼다 |
-| `harness.py` | 세션 실행·판정·요약(동결). BRB 하네스를 라이브러리로 불러 이 집합의 판정기로 돈다 |
-| `MANIFEST` | 위 파일들과 BRB의 MANIFEST(프롬프트·도구 서버·Rust 템플릿)의 SHA-256 |
-| `test_brb_effect.py` | 하네스 단위 테스트(게이트) |
+| `tasks/fNN_*.py` | 4 tasks (frozen). The BRB task format with output added: `model(*args)` gives `(return value, printed lines)` |
+| `judge.py` | the hidden judge (frozen). It loads the BRB judge (`bench/brb/judge.py`, frozen) as a private copy and changes only the expected values, the scoring, the case execution and the caller's effect in the domain check |
+| `harness.py` | runs the sessions, judges and summarizes (frozen). It loads the BRB harness as a library and runs it with this set's judge |
+| `MANIFEST` | SHA-256 of the files above and of BRB's MANIFEST (prompts, tool server, Rust template) |
+| `test_brb_effect.py` | unit tests of the harness (gate) |
 
 ```
-python3 bench/brb-effect/harness.py manifest                                  # 동결 확인
-python3 bench/brb-effect/harness.py run --arm bmb  --agent oracle --jobs 4    # 기준 해법: 결함 0 (CI)
-python3 bench/brb-effect/harness.py run --arm rust --agent oracle --jobs 4    # (CI는 --proptest off)
-python3 bench/brb-effect/harness.py run --arm bmb  --agent weak --jobs 4      # 약한 대조군: 자기 검사 통과, 숨은 판정이 결함 검출 (CI)
-python3 bench/brb-effect/harness.py adequacy --jobs 4                         # 숨은 케이스가 Rust 변이체 16개를 모두 죽인다 (CI)
-python3 bench/brb-effect/harness.py summarize BMB.jsonl RUST.jsonl            # 표와 H-EFFECT 판정 줄
+python3 bench/brb-effect/harness.py manifest                                  # check the freeze
+python3 bench/brb-effect/harness.py run --arm bmb  --agent oracle --jobs 4    # reference solutions: 0 defects (CI)
+python3 bench/brb-effect/harness.py run --arm rust --agent oracle --jobs 4    # (CI uses --proptest off)
+python3 bench/brb-effect/harness.py run --arm bmb  --agent weak --jobs 4      # weak controls: the self-check passes, the hidden judge finds the defect (CI)
+python3 bench/brb-effect/harness.py adequacy --jobs 4                         # the hidden cases kill all 16 Rust mutants (CI)
+python3 bench/brb-effect/harness.py summarize BMB.jsonl RUST.jsonl            # the table and the H-EFFECT verdict line
 ```
 
-세션 조건은 BRB와 같다: 같은 프롬프트(`bench/brb/prompt-*.md`: BMB 프롬프트는 `#[effects(io)]` 함수만 `print_i64`를 부를 수 있다고 말한다), 같은 도구, 한도(도구 호출 40, 세션 모델 출력 64,000 토큰), 세션 뒤 자기 검사(BMB `verify`, Rust `cargo test`). 과제 문장은 두 팔이 같고 출력 방법(`print_i64` / `println!`)을 한 문장에 함께 적는다. 문장은 분해를 시키지 않는다(순수 핵심을 나누라는 말이 없다).
+The session conditions are BRB's: the same prompts (`bench/brb/prompt-*.md`: the BMB prompt says that only `#[effects(io)]` functions can call `print_i64`), the same tools, limits (40 tool calls, 64,000 model output tokens per session) and the self-check after the session (BMB `verify`, Rust `cargo test`). The task statement is the same for both arms and names the way to print (`print_i64` / `println!`) together in one sentence. The statement does not ask for a decomposition (nothing says to split off a pure core).
 
-## 과제
+## Tasks
 
-| 과제 | 상태 | 흔한 결함 | 기준 해법의 분해(BMB) |
+| Task | State | Common defects | Decomposition of the reference solution (BMB) |
 | --- | --- | --- | --- |
-| f01 ledger | 잔액, 연산 4종(입금·출금·이자·수수료) | 넘침(입금, `(b/100)*a`), 전액 출금 거부, 거부 때 -1 대신 잔액 출력 | 연산마다 순수 함수 4 + 분기 1 + 출력 1: 면적 1/6 |
-| f02 report | 최솟값·최댓값·중점·개수·최장 구간 | 중점 넘침, 0 쪽 반올림, `>=`, 끝에 닿은 구간 누락 | 순수 6 + 출력 1: 1/7 |
-| f03 limiter | 토큰 수, 보충 기준 시각 | `tokens + g` 넘침, 기준 시각을 요청 시각으로(남은 주기 버림), 빈 통으로 시작 | 순수 3 + 출력 1: 1/4 |
-| f04 rle | 진행 중인 값과 길이 | 조각 길이 limit+1, limit 무시, 길이·값 순서, 마지막 조각 누락 | 순수 1 + 출력 1: 1/2 |
+| f01 ledger | a balance, 4 kinds of operation (deposit, withdrawal, interest, fee) | overflow (deposit, `(b/100)*a`), refusing a full withdrawal, printing the balance instead of -1 on a refusal | 4 pure functions, one per operation, + 1 branch + 1 output: area 1/6 |
+| f02 report | minimum, maximum, midpoint, count, longest run | midpoint overflow, rounding toward 0, `>=`, a run that reaches the end left out | 6 pure + 1 output: 1/7 |
+| f03 limiter | number of tokens, reference time of the refill | `tokens + g` overflows, the reference time set to the request time (the rest of the period dropped), starting with an empty bucket | 3 pure + 1 output: 1/4 |
+| f04 rle | the value and length in progress | piece length limit+1, limit ignored, order of length and value, the last piece left out | 1 pure + 1 output: 1/2 |
 
-기준 해법 전체: 테스트가 필요한 정의 4 / 실행 정의 19 = **0.211**, 남은 면적의 줄 96.
+All reference solutions: 4 definitions that need tests / 19 executable definitions = **0.211**, 96 lines of remaining area.
 
-## 숨은 판정 (`judge.py`)
+## The hidden judge (`judge.py`)
 
-BRB와 같다(Python 모델의 기대값, 과제 id로 시드한 결정론적 케이스, 과제당 366~583개 합계 1,842개, 패닉·충돌·시간 초과는 결함, BMB는 증명된 작업 공간만 제출, 정의역 검사). 더한 것:
+The same as BRB (expected values from a Python model, deterministic cases seeded with the task id, 366 to 583 per task and 1,842 in all, a panic, crash or timeout is a defect, BMB delivers only a proved workspace, the domain check). Added:
 
-- **출력 줄.** 케이스의 판정은 반환값과 `&mut` 슬라이스와 출력 줄(정수 한 줄에 하나, 앞뒤 공백 무시)이 모두 맞아야 통과다. 반환값은 맞고 줄만 틀린 케이스를 `wrong_output`으로 따로 센다.
-- **줄 읽기.** BRB 드라이버는 케이스가 끝나면 머리 줄 `K ok ..`를 찍고 비운다. 대상의 출력은 같은 stdout을 쓰므로(BMB `print_i64`는 C 라이브러리의 `printf`, Rust `println!`과 판정기의 `write!`는 같은 `std::io::stdout()`) 그 케이스의 머리 줄 바로 앞에 온다. 머리 줄은 다음 케이스 번호를 단 줄만이다.
-- **정의역 검사의 호출자**는 `#[effects(io)]`다(출력하는 대상을 부른다).
-- **판정기 적정성**: 과제마다 Rust 변이체 4개, 합계 16개를 숨은 케이스가 모두 죽인다(`adequacy`, CI).
+- **Printed lines.** A case passes when the return value, the `&mut` slices and the printed lines (one integer per line, surrounding whitespace ignored) are all right. Cases where the return value is right and only the lines are wrong are counted apart as `wrong_output`.
+- **Reading the lines.** The BRB driver prints the header line `K ok ..` when a case ends, and flushes. The target's output uses the same stdout (BMB `print_i64` is the C library's `printf`; Rust's `println!` and the judge's `write!` are the same `std::io::stdout()`), so it comes right before that case's header line. A header line is only a line that carries the next case number.
+- **The caller in the domain check** is `#[effects(io)]` (it calls a target that prints).
+- **Adequacy of the judge**: 4 Rust mutants per task, 16 in all, and the hidden cases kill all of them (`adequacy`, CI).
 
-대조군: 약한 해법은 두 팔 모두 자기 검사를 통과하고 숨은 판정에서 결함이 난다(CI). BMB 약한 해법 넷 중 셋(f01 거부 때 출력, f03 기준 시각 갱신, f04 출력 순서)은 결함이 출력 함수 안에 있다(증명이 값을 진술하지 않는 곳). f02는 순수 핵심(`longest_above`)의 결함인데 기준 해법의 계약이 그 값을 진술하지 않아 증명을 통과한다.
+Controls: the weak solutions pass the self-check in both arms and have a defect under the hidden judge (CI). In three of the four BMB weak solutions (f01 the output on a refusal, f03 the update of the reference time, f04 the output order) the defect is inside the printing function (where the proof states nothing about the values). In f02 the defect is in the pure core (`longest_above`), and it passes the proof because the reference solution's contract does not state that value.
 
-## 반증 조건 (첫 실행 전에 등록, 2026-11-02)
+## Refutation condition (registered before the first run, 2026-11-02)
 
-ADR-0078의 H-EFFECT 행을 그대로 쓴다. 이 집합에서의 측정 정의:
+The H-EFFECT row of ADR-0078 is used as it is. The definitions of the measurement on this set:
 
-- **남은 테스트 면적:** 숨은 판정을 통과한 BMB 세션들의 `bmb query tests` 요약에서 Σ`test_needed_defs` / Σ`exec_defs`. 분모는 실행 정의다(`spec fn`은 테스트가 필요 없는 정의라 넣으면 술어를 많이 쓸수록 면적이 작아진다).
-- **테스트 코드 줄:** BRB의 G8과 같다. BMB는 통과 세션의 남은 면적의 줄(`test_lines`), Rust는 통과 세션의 에이전트 테스트 코드 줄.
-- **판정(모델마다 BMB 결과 하나와 Rust 결과 하나):** 면적 ≤ 0.20이고 BMB 줄 ≤ Rust 줄 × 1/3이면 그 모델에서 확정 조건 충족, 둘 중 하나라도 넘으면 반증. 가설의 확정은 두 모델(qwen, sonnet, ADR-0066) 모두 충족일 때다. 숨은 판정을 통과한 세션이 한 비교군에 없거나 Rust 테스트가 0줄이면 판정 불가(면적이 이미 넘으면 반증).
+- **Remaining test area:** Σ`test_needed_defs` / Σ`exec_defs` over the `bmb query tests` summaries of the BMB sessions that passed the hidden judge. The denominator is the executable definitions (a `spec fn` is a definition that needs no test, so counting it would make the area smaller the more predicates are used).
+- **Test code lines:** as G8 of BRB. For BMB the lines of the remaining area of the passed sessions (`test_lines`), for Rust the lines of test code the agent wrote in the passed sessions.
+- **Verdict (one BMB result and one Rust result per model):** when the area ≤ 0.20 and the BMB lines ≤ Rust lines × 1/3, the confirmation condition is met for that model; when either is exceeded, it is refuted. The hypothesis is confirmed when both models (qwen, sonnet, ADR-0066) meet it. When no session of one arm passed the hidden judge, or Rust has 0 lines of tests, it cannot be judged (refuted if the area is already over).
 
-**미리 알려 둘 것:** 기준 해법의 분해로도 면적이 0.211로 기준(0.20)을 넘는다. 출력 껍데기는 과제마다 적어도 하나라 과제가 작을수록 면적의 하한이 크다(f04는 1/2). 이 집합에서 면적 조건을 충족하려면 에이전트가 기준 해법보다 잘게 나눠야 한다. 과제를 기준에 맞춰 키우지 않았다(과제 크기는 BRB 꼴이고 분해는 문장이 시키지 않는다). **결정(사람 승인 2026-11-02 "결정사항 권장안 채택"):** 기준 0.20은 그대로 둔다(측정 전에 완화하지 않는다). 판정 줄 아래에 기준 해법 면적(4/19 = 0.211) 대비 배수를 보조 지표로 함께 적는다(`REFERENCE_AREA`, 판정에 쓰지 않음).
+**To be known beforehand:** even with the decomposition of the reference solutions the area is 0.211, over the criterion (0.20). There is at least one printing shell per task, so the smaller the task the larger the lower bound of the area (1/2 for f04). To meet the area condition on this set an agent has to split finer than the reference solutions. The tasks were not grown to fit the criterion (the task size is BRB's, and the statement does not ask for a decomposition). **Decision (approved by a person on 2026-11-02, adopting the recommended option):** the criterion 0.20 stays (it is not relaxed before the measurement). Below the verdict line the multiple of the reference solutions' area (4/19 = 0.211) is given as an auxiliary metric (`REFERENCE_AREA`, not used for the verdict).
 
-H-EFFECT가 재지 않는 것: 외부 의존(시계, 난수, 파일). 지금 언어의 `io`는 출력뿐이다(입력은 인자로 받는다).
+What H-EFFECT does not measure: external dependencies (clock, random numbers, files). The language's `io` is output only for now (input comes as arguments).

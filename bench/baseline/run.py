@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rust baseline for BMB (backlog 1E-05, genesis §3.4-3.5).
+"""Rust baseline for BMB.
 
 Builds each benchmark three ways from the same algorithm:
   bmb     - `bmb build` (clang -O2); bounds checks removed only by proofs
@@ -11,10 +11,10 @@ round-robin; the reported time is the median wall-clock of RUNS runs.
 Usage: run.py [--runs N] [--out results/DATE.md] [--max-ratio R]
 
 --max-ratio R exits 1 when some benchmark's BMB/safe-Rust ratio exceeds R
-(the nightly performance check, backlog INF-12: G6 is +-5%, so R = 1.05;
+(the nightly performance check: G6 is +-5%, so R = 1.05;
 being faster is not a regression). A benchmark above R is measured once more
 with the same number of runs, and only one that is above R in both
-measurements fails (backlog INF-25: on a shared CI runner one median of 15
+measurements fails (on a shared CI runner one median of 15
 runs crossed 1.05 on noise, gather 1.053 while the same day's quiet-machine
 ratio was 0.979). A real regression shows in both; the report keeps the first
 measurement and lists the second.
@@ -139,14 +139,14 @@ def main():
             "bmb_vs_unck": round(med["bmb"] / med["unck"], 3),
         })
     lines = [
-        f"# Rust 기준선 ({env['date']})",
+        f"# Rust baseline ({env['date']})",
         "",
-        f"- 환경: {env['cpu']} ({env['cores']} cores), {env['os']}",
-        f"- 도구: {env['rustc']}; {env['clang']}; bmb `build`(clang -O2)",
-        f"- 방법: 변형별 {args.runs}회 교차 실행의 중앙값(벽시계). 출력 일치 확인 후 측정.",
-        "- 비율 < 1 이면 BMB가 빠르다.",
+        f"- Environment: {env['cpu']} ({env['cores']} cores), {env['os']}",
+        f"- Tools: {env['rustc']}; {env['clang']}; bmb `build` (clang -O2)",
+        f"- Method: the median (wall clock) of {args.runs} interleaved runs per variant. Measured after the outputs were checked to agree.",
+        "- A ratio < 1 means BMB is faster.",
         "",
-        "| 벤치 | BMB ms | Rust safe ms | Rust unchecked ms | BMB/safe | BMB/unchecked |",
+        "| Bench | BMB ms | Rust safe ms | Rust unchecked ms | BMB/safe | BMB/unchecked |",
         "| --- | ---: | ---: | ---: | ---: | ---: |",
     ]
     for r in rows:
@@ -157,8 +157,8 @@ def main():
     if args.max_ratio is not None:
         above = [b for b in BENCHES if rows[BENCHES.index(b)]["bmb_vs_safe"] > args.max_ratio]
         if above:
-            lines += ["", f"- 재측정(BMB/safe > {args.max_ratio}, 같은 {args.runs}회): " + ", ".join(
-                f"{b} {again[b]}" for b in above) + ". 두 측정 모두 넘은 것만 실패로 본다(INF-25)."]
+            lines += ["", f"- Measured again (BMB/safe > {args.max_ratio}, the same {args.runs} runs): " + ", ".join(
+                f"{b} {again[b]}" for b in above) + ". Only what is above the limit in both measurements counts as a failure."]
     report = "\n".join(lines) + "\n"
     print(report)
     if args.out:

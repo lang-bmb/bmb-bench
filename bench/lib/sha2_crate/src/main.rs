@@ -1,4 +1,4 @@
-// Twin of ../sha256_speed.bmb with the `sha2` crate (backlog T4-01): the same
+// Twin of ../sha256_speed.bmb with the `sha2` crate: the same
 // data and the same folded output.
 use sha2::{Digest, Sha256};
 

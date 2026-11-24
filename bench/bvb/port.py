@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the frozen BVB task files from their port sources (backlog 2A-08, ADR-0034).
+"""Builds the frozen BVB task files from their port sources (ADR-0034).
 
   port.py build     write tasks/<id>.json from port/<id>.task
   port.py check     the task files are exactly what `build` writes (no drift)
@@ -18,7 +18,7 @@ A port source is a sequence of sections. A line `@@ NAME` starts section NAME;
                                              passes, and a weak control that must fail
   verus.signature, verus.target              the original Verus signature and name
   verus.specs / .pre / .post / .args         the original spec, verbatim up to renaming
-                                             helpers to `bvb_ref_*` (2A-09 spec check)
+                                             helpers to `bvb_ref_*` (the spec check of the Verus side)
   verus.reference                            a verified Verus solution (the original
                                              when one exists, see verus.reference_origin)
   verus.reference_origin                     `upstream`, `upstream-triggers` or
@@ -84,6 +84,8 @@ def value(s):
 
 
 def unit_ops(code):
+    # The Korean summary goes into the frozen task files (`port.py check`
+    # compares them byte for byte): it is data and stays as it is.
     return [{"op": "unit", "path": "tasks", "summary": "과제 구현"},
             {"op": "put", "unit": "tasks", "code": code}]
 

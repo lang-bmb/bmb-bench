@@ -1,39 +1,39 @@
-# m3 질의 시간: MCP 전단 캐시와 정의 하나의 증명 (2026-10-24)
+# m3 query time: the MCP front-end cache and proving one definition (2026-10-24)
 
-백로그 3A-03(MCP 서버가 전단 결과를 호출 사이에 둔다)·3A-04(`surface DEF`는 DEF만 증명한다)의 측정. 기준은 같은 날 앞선 측정 `2026-10-24.md`(발견 1·2). 그 파일은 그대로 둔다.
-원자료: `2026-10-24-front-cache.jsonl`. 행마다 `build`가 `before`(커밋 `5d3ab9c`의 컴파일러) 또는 `after`(커밋 `6e85bfa`)다. 두 빌드를 같은 작업 공간·같은 하네스(이 커밋의 `scale.py`)로 연달아 쟀다.
+The measurement of two changes: the MCP server keeps the front-end result between calls (below, "front-end cache"), and `surface DEF` proves only DEF (below, "single-definition proof"). The baseline is the earlier measurement of the same day, `2026-10-24.md` (findings 1 and 2). That file is left as it is.
+Raw data: `2026-10-24-front-cache.jsonl`. In every row `build` is `before` (the compiler of commit `5d3ab9c`) or `after` (commit `6e85bfa`). The two builds were measured one after the other on the same workspace with the same harness (`scale.py` of this commit).
 
-## 환경
+## Environment
 
-| 항목 | 값 |
+| Item | Value |
 | --- | --- |
 | CPU | Intel Xeon @ 2.10GHz, vCPU 4 |
 | OS | Linux 6.18.44 (firecracker VM), Python 3.13.17 |
 | Z3 | 4.15.4, `rlimit` 5000000 |
-| 빌드 | `cargo build --release` |
-| 부하 | load average 약 1~2(앞선 측정의 약 10보다 조용했다). CPU 시간은 서버 프로세스의 `/proc` 값이라 10ms 눈금이다: `0`은 10ms 미만 |
+| Build | `cargo build --release` |
+| Load | load average about 1 to 2 (quieter than the about 10 of the earlier measurement). CPU time is the `/proc` value of the server process, so it has a 10 ms grain: `0` means under 10 ms |
 
-## 재현
+## Reproduction
 
 ```
 cargo build --release
-python3 bench/m3/scale.py verify  --work W                  # 생성 + 증명(작업 공간과 .bmb-cache)
-bmb verify --cache W/nNNNNN/.bmb-cache W/nNNNNN              # 빌드를 바꾸면 증분 캐시를 그 빌드로 데움(키에 컴파일러 정체성)
+python3 bench/m3/scale.py verify  --work W                  # generate + prove (workspace and .bmb-cache)
+bmb verify --cache W/nNNNNN/.bmb-cache W/nNNNNN              # after changing the build, warm the incremental cache with that build (the key holds the compiler's identity)
 BMB=path/to/bmb python3 bench/m3/scale.py queries --work W --runs 5 --out R.jsonl
 python3 bench/m3/scale.py table R.jsonl
 ```
 
-`scale.py`는 이번에 두 가지가 늘었다. `$BMB`로 바이너리를 고를 수 있고, 질의 뒤에 쓰기 측정(`tx_commit`, `slice after commit`, `surface after commit`)을 한다: m1의 첫 `shift` 잎의 분기 상수를 tx_put으로 +1·원래대로 번갈아 커밋하고(계약은 그대로), 그때마다 chain_top 프로브의 `slice`·`surface`를 한 번 부른다. 커밋 직후 첫 읽기의 비용이다. 짝수 번 커밋해 원문으로 끝난다.
+`scale.py` grew by two things this time. `$BMB` picks the binary, and after the queries it measures writes (`tx_commit`, `slice after commit`, `surface after commit`): it commits the branch constant of the first `shift` leaf of m1 by tx_put, alternately +1 and back (the contract stays), and each time calls `slice` and `surface` of the chain_top probe once. That is the cost of the first read right after a commit. It commits an even number of times and so ends with the original source.
 
-## 결과
+## Results
 
-### 응답 바이트
+### Response bytes
 
-모든 크기·프로브·질의에서 before와 after의 응답 바이트가 같다(284행 비교, 차이 0). 별도로 N=1,000 작업 공간에서 CLI `map L0/L1/L2/all`, `units`·`status`·`duplicates`·`effects`·`contracts`·`find`, 28개 정의의 `surface`·`slice`·`impact`(iface·body)·`effects`·`find`·`edges`(out/in/both × 깊이 1~3) 431개 요청의 출력과 종료 코드가 두 빌드에서 같았다(측정 보조 스크립트, 커밋하지 않음). 게이트에서는 `tests/mcp_cache.rs`가 같은 것을 확인한다(아래).
+At every size, probe and query the response bytes of before and after are the same (284 rows compared, 0 differences). Apart from that, on the N=1,000 workspace the output and exit code of 431 requests were the same for the two builds: CLI `map L0/L1/L2/all`, `units`, `status`, `duplicates`, `effects`, `contracts`, `find`, and for 28 definitions `surface`, `slice`, `impact` (iface, body), `effects`, `find`, `edges` (out/in/both × depth 1 to 3) (a helper script of the measurement, not committed). In the gate `tests/mcp_cache.rs` checks the same (below).
 
-### 정의 단위 질의 (N=10,000, 서버 CPU ms, 5회 중앙값)
+### Per-definition queries (N=10,000, server CPU ms, median of 5)
 
-| 프로브 | `find` | `slice` | `edges` | `edges both` | `impact` | `effects` | `surface` |
+| Probe | `find` | `slice` | `edges` | `edges both` | `impact` | `effects` | `surface` |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | chain_top | 500 → 10 | 500 → 10 | 510 → 0 | 440 → 0 | 490 → 0 | 480 → 0 | 1,150 → 140 |
 | leaf | 470 → 10 | 450 → 0 | 510 → 0 | 470 → 0 | 440 → 0 | 430 → 0 | 1,270 → 140 |
@@ -42,41 +42,41 @@ python3 bench/m3/scale.py table R.jsonl
 | show | 490 → 0 | 460 → 0 | 660 → 0 | 680 → 0 | 580 → 0 | 480 → 0 | 1,430 → 90 |
 | spec_inb | 540 → 0 | - | 470 → 0 | 520 → 0 | 620 → 0 | - | 1,240 → 90 |
 
-벽시계(after, N=10,000): `surface` 외 정의 단위 질의는 3~7ms, `surface`는 88~138ms.
+Wall clock (after, N=10,000): per-definition queries other than `surface` take 3 to 7 ms, `surface` 88 to 138 ms.
 
-### 크기별 요약 (CPU ms, 최소/중앙/최대 또는 중앙값)
+### Summary per size (CPU ms, min/median/max or median)
 
-| 질의 | N=100 before → after | N=1,000 | N=10,000 |
+| Query | N=100 before → after | N=1,000 | N=10,000 |
 | --- | --- | --- | --- |
-| 정의 단위(`find`·`slice`·`edges`·`impact`·`effects`, 34개) | 0/0/0 → 0/0/0 | 30/30/50 → 0/0/0 | 420/485/680 → 0/0/10 |
-| `surface`(6개) | 10 → 0 | 90 → 10 | 1,150/1,225/1,430 → 80/105/140 |
-| `map L0`(전체, 1.19MB) | 0 → 0 | 30 → 0 | 510 → 40 |
-| `find inb`(일치가 N에 비례) | 0 → 0 | 30 → 0 | 520 → 10 |
-| `tx_commit`(쓰기 1건) | 5 → 0 | 60 → 95 | 905 → 1,030 |
-| 커밋 직후 첫 `slice` | 0 → 0 | 30 → 25 | 485 → 230 |
-| 커밋 직후 첫 `surface` | 10 → 0 | 95 → 10 | 1,295 → 115 |
-| `cli check`(CLI, 전단만, 기준선) | 4 → 6 | 27 → 29 | 333 → 333 |
+| per definition (`find`, `slice`, `edges`, `impact`, `effects`; 34) | 0/0/0 → 0/0/0 | 30/30/50 → 0/0/0 | 420/485/680 → 0/0/10 |
+| `surface` (6) | 10 → 0 | 90 → 10 | 1,150/1,225/1,430 → 80/105/140 |
+| `map L0` (whole, 1.19 MB) | 0 → 0 | 30 → 0 | 510 → 40 |
+| `find inb` (matches proportional to N) | 0 → 0 | 30 → 0 | 520 → 10 |
+| `tx_commit` (1 write) | 5 → 0 | 60 → 95 | 905 → 1,030 |
+| first `slice` right after a commit | 0 → 0 | 30 → 25 | 485 → 230 |
+| first `surface` right after a commit | 10 → 0 | 95 → 10 | 1,295 → 115 |
+| `cli check` (CLI, front end only, baseline) | 4 → 6 | 27 → 29 | 333 → 333 |
 
-## 설계 (무엇이 무엇을 다시 쓰나)
+## Design (what reuses what)
 
-- **3A-03, `FrontCache`(`compiler/src/lib.rs`).** 서버는 호출마다 `src/*.bmb`를 다시 읽는다(10,000에서 약 5ms, 다른 쓰는 쪽과 직접 편집이 보인다). 파일마다 (이름, 위치, 원문, 구문 트리, 렉서·파서 진단)을 두고, 이름·위치·원문이 같은 파일은 다시 파싱하지 않는다. 스팬이 파일 위치를 담으므로 위치가 바뀐 파일은 다시 파싱한다. 하나라도 바뀌면 검사기는 프로그램 전체에 다시 돈다: 표(`fns`·`types`·`recursive`)가 전역이라 단위별로 나누려면 검사기를 바꿔야 한다(아래 남은 비용). 아무것도 안 바뀌면 검사도 색인도 다시 하지 않는다.
-- **맵 색인(`map::Index`).** `Model`을 프로그램에 대한 참조가 없는 `Index`(단위, 정의 항목, 간선, `io` 집합, 역간선 표)와 질의마다 만드는 얇은 뷰(`Model::view`: 정의 목록 한 번 훑기 + 증명 상태 표)로 나눴다. 정의 해시(ADR-0019 §2)는 처음 쓸 때 계산한다(`OnceCell`). 정의 단위 질의는 나가는 간선을 정렬된 간선 집합의 구간 조회로, 들어오는 간선을 역간선 표로 찾아 전체 간선을 훑지 않는다(`slice`·`edges`·`impact`·`effects`·L1 행의 `uses`). 이 부분은 CLI에도 적용된다.
-- **3A-04, `surface DEF`.** 정의의 상태는 자기 의무로만 정해진다: 질의는 자기 원문과 다른 정의의 계약·`#[uses]` 텍스트로 만들고, 의무마다 `(reset)`된 해법기에서 푼다. 그래서 DEF만 증명한다(`verify::verify_only`). `verify_defs`와 달리 첫 실패에서 멈추지 않아 실패한 정의의 `failed` 수도 같다. 증분 키는 DEF가 닿는 정의의 해시·텍스트만 계산하고(`incremental::Session::new_for`, 같은 키 함수에서 지연 계산), 증분 캐시 파일 줄의 SHA-256은 읽는 줄만 확인한다(저장할 때는 전부 확인하므로 손상된 줄은 지금처럼 버려진다).
-- **동일성 확인.** `tests/mcp_cache.rs`(게이트): (1) 오래 사는 서버 하나와 호출마다 새 서버에 같은 요청을 보내 응답 JSON 전체를 비교한다. 세션은 빈 작업 공간, 커밋, 본문 변경 커밋(다시 파싱한 파일 1개·검사 1회를 함께 확인), 다른 서버의 커밋(앞에 정렬되는 단위라 모든 파일의 위치가 바뀐다), 구문 오류를 넣는 직접 편집과 복구, 단위 제거를 섞고, 매번 모든 `map` 수준·모든 질의(정의 7개 × 9가지)·`verify`·`build`(거부)를 비교한다. (2) 정의마다 `surface` 행이 전체 증명의 `map L1` 행과 같음을 캐시 없음·콜드·웜에서 확인하고, 콜드 캐시에는 그 정의의 항목만 생김을 확인한다. 실패 의무가 2개인 정의를 포함한다.
+- **Front-end cache, `FrontCache` (`compiler/src/lib.rs`).** The server reads `src/*.bmb` again at every call (about 5 ms at 10,000; other writers and direct edits are seen). For every file it keeps (name, position, source, syntax tree, lexer and parser diagnostics), and a file whose name, position and source are the same is not parsed again. Spans hold file positions, so a file whose position changed is parsed again. If even one changed, the checker runs on the whole program again: its tables (`fns`, `types`, `recursive`) are global, so splitting by unit would need a change of the checker (remaining cost below). If nothing changed, neither the check nor the index is redone.
+- **Map index (`map::Index`).** `Model` was split into an `Index` without references to the program (units, definition entries, edges, the `io` set, a table of reverse edges) and a thin view made per query (`Model::view`: one pass over the definition list + the table of proof states). Definition hashes (ADR-0019 §2) are computed on first use (`OnceCell`). A per-definition query finds outgoing edges by a range lookup in the sorted edge set and incoming edges in the reverse edge table, and does not scan all edges (`slice`, `edges`, `impact`, `effects`, `uses` of L1 rows). This part applies to the CLI too.
+- **Single-definition proof, `surface DEF`.** The state of a definition is fixed by its own obligations alone: a query is made from its own source and the contract and `#[uses]` texts of other definitions, and every obligation is solved in a solver after `(reset)`. So only DEF is proved (`verify::verify_only`). Unlike `verify_defs` it does not stop at the first failure, so the `failed` count of a failing definition is the same too. The incremental key computes only the hashes and texts of the definitions DEF reaches (`incremental::Session::new_for`, lazily in the same key function), and the SHA-256 of the lines of the incremental cache file is checked only for the lines read (when saving all are checked, so a damaged line is dropped as now).
+- **Checking identity.** `tests/mcp_cache.rs` (gate): (1) the same requests are sent to one long-lived server and to a new server per call, and the whole response JSON is compared. The session mixes an empty workspace, a commit, a commit changing a body (checking 1 file parsed again and 1 check together), a commit by another server (a unit that sorts in front, so the position of every file changes), a direct edit that puts in a syntax error and its repair, and the removal of a unit, and every time compares all `map` levels, all queries (7 definitions × 9 kinds), `verify` and `build` (refused). (2) For every definition it checks that the `surface` row equals the `map L1` row of the whole proof, with no cache, a cold and a warm cache, and that a cold cache gets only the entries of that definition. A definition with 2 failing obligations is included.
 
-## 해석
+## Interpretation
 
-**정의 단위 질의 시간은 이제 전체 크기와 무관하다(원칙 7).** 변경이 없는 동안 10,000 정의에서 `find`·`slice`·`edges`·`impact`·`effects`는 서버 CPU 10ms 미만(벽시계 3~7ms)으로, 1,000·100과 구별되지 않는다(전에는 420~680ms, N에 선형). 남은 고정비는 매 호출 파일 읽기와 원문 비교(10,000에서 약 5~10ms)로, 크기에 비례하지만 전보다 두 자릿수 작다. 이것을 없애려면 파일 변경 감지를 mtime 등으로 바꿔야 하는데, 바이트 동일성 보장을 약하게 하므로 하지 않았다.
+**The time of a per-definition query no longer depends on the whole size (principle 7).** While nothing changes, at 10,000 definitions `find`, `slice`, `edges`, `impact` and `effects` take under 10 ms of server CPU (3 to 7 ms wall clock), indistinguishable from 1,000 and 100 (before: 420 to 680 ms, linear in N). The remaining fixed cost is reading the files and comparing the sources at every call (about 5 to 10 ms at 10,000), proportional to the size but two orders of magnitude smaller than before. Removing it would mean detecting file changes by mtime or the like, which weakens the guarantee of byte identity, so it was not done.
 
-**`surface`는 10배 남짓 줄었지만 아직 N에 비례하는 부분이 있다.** 10,000에서 1.15~1.43초 → 80~140ms. 요청 정의의 키 계산과 증명 자체는 작고, 남은 것은 작업 공간 크기에 비례하는 준비 비용이다(프로파일, 커밋하지 않은 보조 프로그램): 증명 캐시 파일(`proofs`, 39,740줄) 읽기 약 10ms, 증분 세션 준비(정의 목록·`spec fn` 선언 표 7ms·캐시 파일 줄 나누기) 약 20~30ms, `verify_only` 준비(정의 목록, `spec fn` 선언·기호 표) 약 20ms. 이 셋을 서버 메모리에 두면(캐시 파일은 길이·mtime으로 다시 읽기 판단) 더 줄일 수 있다(후보).
+**`surface` fell a little more than 10 times but still has a part proportional to N.** At 10,000, from 1.15~1.43 seconds to 80~140 ms. The key computation and the proof of the requested definition are small, and what remains is preparation cost proportional to the size of the workspace (profiled with a helper program, not committed): reading the proof cache file (`proofs`, 39,740 lines) about 10 ms, preparing the incremental session (definition list, table of `spec fn` declarations 7 ms, splitting the cache file into lines) about 20 to 30 ms, preparing `verify_only` (definition list, `spec fn` declarations and symbol table) about 20 ms. Keeping these three in the server's memory (deciding by length and mtime whether to read the cache file again) could reduce it further (a candidate).
 
-**커밋 직후 첫 읽기는 전체 검사 비용을 낸다.** 10,000에서 커밋 뒤 첫 `slice`가 230ms(전 485ms): 바뀐 파일 하나만 파싱하지만 검사기 전체(약 130ms)와 색인 재구성(약 65ms)을 다시 한다. 두 번째 읽기부터는 다시 10ms 미만이다. 커밋 직후 첫 `surface`가 115ms로 `slice`보다 싼 것은 순서 때문이다(재검사·재색인을 앞의 `slice`가 이미 냈다). 검사를 단위별로 다시 하려면 검사기의 전역 표를 단위별로 나눠야 한다(후보).
+**The first read right after a commit pays for the whole check.** At 10,000 the first `slice` after a commit takes 230 ms (before: 485 ms): only the one changed file is parsed, but the whole checker (about 130 ms) and the rebuilding of the index (about 65 ms) run again. From the second read on it is under 10 ms again. That the first `surface` after a commit, 115 ms, is cheaper than `slice` is due to the order (the `slice` before it already paid for the recheck and the reindexing). Rechecking per unit would need the checker's global tables split per unit (a candidate).
 
-**`tx_commit`은 바뀌지 않았다(약 0.9~1.0초, N에 선형).** 커밋은 이 태스크 범위 밖이고 `workspace::commit`이 작업 공간을 다시 읽어 전체를 두 번 파싱·검사한다(변경 전 해시용, 적용 뒤 검사용). 905 → 1,030ms 차이는 반복 측정의 흔들림 범위로 본다(코드 경로가 같다). 서버의 캐시된 프로그램·해시를 `plan`에 넘기면 변경 전 파싱·검사를 없앨 수 있다(후보).
+**`tx_commit` did not change (about 0.9 to 1.0 seconds, linear in N).** The commit is outside the scope of this work, and `workspace::commit` reads the workspace again and parses and checks the whole twice (for the hashes before the change, and for the check after applying it). The difference 905 → 1,030 ms is taken as within the variation of repeated measurements (the code path is the same). Handing the server's cached program and hashes to `plan` could remove the parse and check before the change (a candidate).
 
-**전체 질의.** `map L0`(1.19MB 응답)은 510 → 40ms로 이제 직렬화가 대부분이다. `status`·`map L1`은 전체 증분 세션을 돌므로 여전히 N에 비례한다(이 측정의 프로브에는 없다).
+**Whole-workspace queries.** `map L0` (a 1.19 MB response) went from 510 to 40 ms and is now mostly serialization. `status` and `map L1` run the whole incremental session, so they are still proportional to N (not among the probes of this measurement).
 
-## 판정
+## Verdict
 
-- 3A-03: 목표(10,000에서 정의 단위 질의가 400~500ms보다 훨씬 작음) 충족. 10,000에서 CPU 10ms 미만, 응답 바이트 동일. 커밋 뒤 첫 읽기는 전체 검사 비용(230ms)을 낸다.
-- 3A-04: `surface` 10,000에서 1.15~1.43초 → 80~140ms, 행은 전체 증명과 같은 바이트. 남은 80ms 남짓은 캐시 파일·선언 표 준비로, 크기에 비례한다.
+- Front-end cache: the goal (per-definition queries at 10,000 far below 400 to 500 ms) is met. Under 10 ms of CPU at 10,000, with the same response bytes. The first read after a commit pays for the whole check (230 ms).
+- Single-definition proof: `surface` at 10,000 from 1.15~1.43 seconds to 80~140 ms, and the row has the same bytes as with the whole proof. The 80 ms or so that remain are the preparation of the cache file and the declaration tables, proportional to the size.

@@ -1,4 +1,4 @@
-"""BSB: specification mutant kill rate (ADR-0034 G3, backlog 2A-10).
+"""BSB: specification mutant kill rate (ADR-0034 G3).
 
 A task set may carry hidden mutant sets in `<set>/mutants/<task-id>.json`
 (made by `bsb_gen.py`, checked by `<set>/mutants/MANIFEST`). A mutant is a

@@ -1,44 +1,44 @@
-# 2R-05 쓰기 판: ADR-0095 앞뒤 문법 A/B (`bench/m1b-write`)
+# 2r05, write variant: syntax A/B before and after ADR-0095 (`bench/m1b-write`)
 
-2R-05(`../2r05/`)와 같은 비교를 정식 쓰기 표면(ADR-0101)에서 한다. 작업 트리는 `2624533f`이고, 컴파일러는 앞 `99138a9d`, 뒤 `2624533f`다. 하네스는 `bench/m1/harness.py --set bench/m1b-write`다.
+The same comparison as `2r05` (`../2r05/`) on the official write surface (ADR-0101). The working tree is `2624533f`, and the compilers are `99138a9d` (before) and `2624533f` (after). The harness is `bench/m1/harness.py --set bench/m1b-write`.
 
-## 판정 규칙 (첫 실행 전 등록, 2026-11-09)
+## Verdict rule (registered before the first run, 2026-11-09)
 
-1. qwen으로 한 번 돈다(과제 전부). 작성 성공률의 차이가 D(30%p)를 넘으면 그 차이로 판정한다.
-2. 차이가 D 안이면 작성 과제만 같은 조건에서 3회까지 반복한다(ADR-0103 결정 2). 순서는 앞→뒤로 번갈고, 세션 기록을 남긴다.
-3. 3회 판정: 두 쪽 각각 ADR-0077 §3의 95% 구간(`bench/repeat.py interval`)을 낸다.
-   - 뒤의 아래 끝이 앞의 위 끝보다 높으면 "뒤가 높다"다.
-   - 앞의 아래 끝이 뒤의 위 끝보다 높으면 "뒤가 낮다"다.
-   - 그 밖은 "실행 간 변동 안"이다.
-   - 반복 여부는 첫 실행의 차이로만 정한다.
-4. 보조 지표(판정에 쓰지 않음): 거부된 커밋, 한도 도달, 흔들린 과제, 모델 입력 토큰.
-5. sonnet(ADR-0103 결정 3, 주장의 기준 모델)은 앞뒤 컴파일러로 같은 커밋에서 한 번씩 돈다. sonnet의 차이는 D(30%p)를 넘을 때만 주장한다. 넘지 않으면 qwen 판정과 함께 "방향만" 보고한다. sonnet은 반복하지 않는다(ADR-0077 §2).
+1. It runs once with qwen (all tasks). If the difference of the write success rates is over D (30%p), the verdict is made on that difference.
+2. If the difference is inside D, only the write tasks are repeated under the same conditions, up to 3 runs (ADR-0103 decision 2). The order alternates before→after, and session records are kept.
+3. Verdict over the 3 runs: for each side the 95% interval of ADR-0077 §3 (`bench/repeat.py interval`).
+   - If the lower end of after is above the upper end of before, it is "after is higher".
+   - If the lower end of before is above the upper end of after, it is "after is lower".
+   - Otherwise it is "inside run-to-run variation".
+   - Whether to repeat is decided by the difference of the first run only.
+4. Auxiliary metrics (not used for the verdict): rejected commits, limit reached, unstable tasks, model input tokens.
+5. sonnet (ADR-0103 decision 3, the reference model of the claim) runs once with each of the two compilers at the same commit. A difference for sonnet is claimed only when it is over D (30%p). Otherwise it is reported with the qwen verdict as "direction only". sonnet is not repeated (ADR-0077 §2).
 
-## 결과 (qwen3.8-27b, 2026-11-10)
+## Results (qwen3.8-27b, 2026-11-10)
 
-| 회차 | 앞 | 뒤 |
+| Run | Before | After |
 | --- | --- | --- |
-| 1(37과제) | 25/25 | 22/25 |
-| 2(작성 25) | 23/25 | 24/25 |
-| 3(작성 25) | 24/25 | 24/25 |
-| 평균 [95% 구간] | 0.960 [0.861, 1.000] | 0.933 [0.819, 1.000] |
+| 1 (37 tasks) | 25/25 | 22/25 |
+| 2 (25 write) | 23/25 | 24/25 |
+| 3 (25 write) | 24/25 | 24/25 |
+| mean [95% interval] | 0.960 [0.861, 1.000] | 0.933 [0.819, 1.000] |
 
-- 1회차 차이(−12%p)가 D 안이라 규칙 2대로 3회까지 반복했다.
-- 3회 판정은 규칙 3에 따라 **실행 간 변동 안**이다(구간이 겹침). 방향은 회차마다 바뀐다(−3, +1, 0).
-- 보조 지표:
-  - 거부된 커밋은 앞 28·37·30, 뒤 16·13·11로 세 회차 모두 줄었다(합 95 → 40).
-  - 한도 도달은 두 쪽 모두 0이다.
-  - 흔들린 과제는 앞 2개(w11, w24), 뒤 4개(w02, w10, w11, w14)다.
-- 1회차 뒤 실행은 컨테이너 재시작으로 한 번 이어 돌았다(`resumes`).
-## sonnet (규칙 5, 2026-11-10)
+- The difference of run 1 (−12%p) is inside D, so by rule 2 it was repeated up to 3 runs.
+- The verdict over the 3 runs is, by rule 3, **inside run-to-run variation** (the intervals overlap). The direction changes from run to run (−3, +1, 0).
+- Auxiliary metrics:
+  - Rejected commits: before 28, 37, 30; after 16, 13, 11; fewer in all three runs (sum 95 → 40).
+  - Limit reached: 0 on both sides.
+  - Unstable tasks: 2 before (w11, w24), 4 after (w02, w10, w11, w14).
+- The after run of run 1 was resumed once after a container restart (`resumes`).
+## sonnet (rule 5, 2026-11-10)
 
-| | 앞 | 뒤 |
+| | Before | After |
 | --- | --- | --- |
-| 작성 성공 | 25/25 | 25/25 |
-| 탐색 성공 | 12/12 | 12/12 |
-| 거부된 커밋(작성) | 4 | 1 |
-| 작성 과제 모델 입력 토큰 | 153만 | 175만 |
+| write successes | 25/25 | 25/25 |
+| navigation successes | 12/12 | 12/12 |
+| rejected commits (write) | 4 | 1 |
+| model input tokens of the write tasks | 1.53 million | 1.75 million |
 
-- 차이 0이라 규칙 5에 따라 주장하지 않는다. 두 쪽 모두 천장이다.
-- 거부된 커밋은 qwen과 같은 방향(줄어듦)이지만 수가 작다.
-- 작업 트리 `2624533f`이고, 결과 파일은 `sonnet-{before,after}.jsonl`이다.
+- The difference is 0, so by rule 5 nothing is claimed. Both sides are at the ceiling.
+- Rejected commits go the same way as for qwen (fewer), but the numbers are small.
+- The working tree is `2624533f`, and the result files are `sonnet-{before,after}.jsonl`.

@@ -1,85 +1,85 @@
-# BCB: BMB Cumulative-cost Bench (ADR-0040 G7·H-AMORT, ADR-0042, 백로그 2A-14)
+# BCB: BMB Cumulative-cost Bench (ADR-0040 G7 and H-AMORT, ADR-0042)
 
-같은 커밋 이력을 BMB 작업 공간과 Rust 쌍둥이에 재생해, 커밋마다 검증에 드는 CPU를 누적한다. BMB는 증분 재증명(계약 방화벽, ADR-0032)과 남은 테스트, Rust는 테스트 실행(전부·선택·캐시)이다. 설계와 사전 등록한 반증 조건은 ADR-0042에 있다.
+The same commit history is replayed on a BMB workspace and its Rust twin, and the CPU that checking takes is accumulated commit by commit. For BMB that is the incremental re-proof (the contract firewall, ADR-0032) and the remaining tests; for Rust, running the tests (all, selected, cached). The design and the refutation conditions registered beforehand are in ADR-0042.
 
-| 파일 | 내용 |
+| File | Contents |
 | --- | --- |
-| `history.py` | 이력 생성·재생. `bench/m3/gen.py`의 계획을 편집해 두 렌더러(BMB `gen.py`, Rust `bench/bnb/twin.py`)로 같은 편집을 쓴다. 커밋마다 트리 다이제스트를 기록하고 재생이 확인한다 |
-| `rtests.py` | Rust 테스트: 실행 정의마다 `#[test]` 하나(단위 파일 끝의 `mod tests`). `requires`를 만족하는 고정 입력(경계값 + 이름 시드 무작위)으로 부르고, 판정은 쌍둥이의 계약 `debug_assert!`와 넘침·범위 패닉뿐이다. 오라클용 큰 입력 집합(`strong_cases`)은 쌍둥이에 들어가지 않는다 |
-| `rustify.py` | BMB 실행 정의 → 쌍둥이 형식 Rust 변환기(생성 부분집합). 원본을 변환하면 쌍둥이와 바이트 단위로 같음을 매번 확인한다. 변이체를 두 언어의 같은 자리에 적용하는 데 쓴다 |
-| `kills.py` | 판별률: W0904 변이체(`bmb mutate`)를 두 언어에 적용해 BMB 증명·Rust 테스트·오라클 테스트의 판정을 비교 |
-| `bcb.py` | 재생 하네스(`run`)와 표(`table`). 팔 `rust`(한 번의 재생에서 R0·R1·R2: 빌드는 같고 테스트 선택만 다르다), `b1`(유지 캐시), `b0`(표본 커밋마다 새 캐시). 커밋마다 명령별 CPU(user+sys, `wait4`)·벽시계, 선택한 테스트 수, R2가 덮는 정의 수, B1이 다시 증명한 정의(`build --stats`)를 JSONL로 쓴다. 사건 커밋은 캐시를 지우고 한 번 더 잰다(`"cold": true`) |
-| `compat.py` | H-COMPAT(T1-46): 계약 편집마다 `bmb query impact LEAF iface`가 생성기의 호출처(`Tree.callers`)를 모두 짚는지(재현율)와 `bmb weaken` 판정이 정답과 같은지(정확도, 미결정은 실패). 결과 `dev-docs/measurements/compat/` |
-| `test_bcb.py` | 게이트: 이력 결정성, 다이제스트 재현, 모든 커밋에서 BMB 전부 증명·Rust `cargo check --tests`(경고 = 오류), 편집 종류별 성질(body 편집은 시그니처·계약 불변), `contract-heavy` 이력 끝에서 판별 동등성, 편집 국소화(`localize.py`), 호환 판정(`compat.py`) |
+| `history.py` | generates and replays histories. It edits the plan of `bench/m3/gen.py` and writes the same edit with both renderers (BMB `gen.py`, Rust `bench/bnb/twin.py`). A tree digest is recorded per commit and the replay checks it |
+| `rtests.py` | the Rust tests: one `#[test]` per executable definition (`mod tests` at the end of the unit file). It calls the definition with fixed inputs that satisfy `requires` (boundary values + random values seeded by the name), and the only verdicts are the contract `debug_assert!`s of the twin and overflow and bounds panics. The large input set for the oracle (`strong_cases`) does not go into the twin |
+| `rustify.py` | translator from BMB executable definitions to Rust in the twin's form (the generated subset). Every time, it checks that translating the original gives the twin byte for byte. Used to apply a mutant at the same place in both languages |
+| `kills.py` | kill rates: applies W0904 mutants (`bmb mutate`) to both languages and compares the verdicts of the BMB proof, the Rust tests and the oracle tests |
+| `bcb.py` | the replay harness (`run`) and the tables (`table`). Arms `rust` (R0, R1 and R2 in one replay: the build is the same and only the test selection differs), `b1` (kept cache), `b0` (a new cache at every sampled commit). Per commit it writes as JSONL the CPU (user+sys, `wait4`) and wall-clock time per command, the number of selected tests, the number of definitions R2 covers, and the definitions B1 proved again (`build --stats`). An event commit clears the caches and is measured once more (`"cold": true`) |
+| `compat.py` | H-COMPAT: at every contract edit, whether `bmb query impact LEAF iface` names all the callers the generator knows (`Tree.callers`) (recall) and whether the `bmb weaken` verdict equals the ground truth (accuracy; undecided counts as a failure). `--write` gives the report |
+| `test_bcb.py` | gate: determinism of the histories, reproduction of the digests, at every commit all of BMB proved and Rust `cargo check --tests` (warnings = errors), the properties of each kind of edit (a body edit leaves signature and contract unchanged), equal kills at the end of the `contract-heavy` history, edit localization (`localize.py`), the compatibility verdict (`compat.py`) |
 
 ```
-python3 bench/bcb/bcb.py run H.jsonl --work W --out R.jsonl [--b0-every 50]   # 측정(팔 rust,b1,b0)
-python3 bench/bcb/bcb.py defects H.jsonl --work W --out D.jsonl           # 결함 심기
-python3 bench/bcb/bcb.py table R.jsonl D.jsonl                             # 누적 CPU·검출률 표와 판정
-python3 bench/bcb/kills.py --defs 1000                                     # 판별 동등성(초기 트리)
-python3 bench/bcb/kills.py --history H.jsonl --at 500                      # 이력의 커밋 500에서
+python3 bench/bcb/bcb.py run H.jsonl --work W --out R.jsonl [--b0-every 50]   # measurement (arms rust,b1,b0)
+python3 bench/bcb/bcb.py defects H.jsonl --work W --out D.jsonl           # planting defects
+python3 bench/bcb/bcb.py table R.jsonl D.jsonl                             # tables of cumulative CPU and detection rates, and the verdict
+python3 bench/bcb/kills.py --defs 1000                                     # equal kills (initial tree)
+python3 bench/bcb/kills.py --history H.jsonl --at 500                      # at commit 500 of a history
 python3 bench/bcb/history.py gen H.jsonl --defs 1000 --commits 1000 --profile body-heavy
 python3 bench/bcb/history.py stats H.jsonl
 python3 bench/bcb/history.py replay H.jsonl --bmb W/bmb --rust W/rust --upto 500
 ```
 
-## 편집
+## Edits
 
-| 종류 | BMB | Rust 쌍둥이 |
+| Kind | BMB | Rust twin |
 | --- | --- | --- |
-| `body` | 본문만(상수·템플릿·피호출자·결과 형태). `#[uses]`는 피호출자 단위에 따라 바뀔 수 있다 | 같은 본문 |
-| `contract` | 잎의 `ensures`에 `_ok` 술어를 넣거나 뺀다(처음이면 술어 추가) | 문서 줄과 `debug_assert!` |
-| `spec` | `_ok` 술어의 상한 | 술어 함수 본문 |
-| `add` / `remove` | 잎 추가 / 호출자 없는 잎 삭제 | 같음 |
+| `body` | the body only (constants, template, callees, result form). `#[uses]` may change with the callees' units | the same body |
+| `contract` | puts an `_ok` predicate into a leaf's `ensures` or takes it out (the first time, the predicate is added) | the documentation line and the `debug_assert!` |
+| `spec` | the upper bound of an `_ok` predicate | the body of the predicate function |
+| `add` / `remove` | adds a leaf / deletes a leaf without callers | the same |
 
-프로필(`history.py`의 `PROFILES`): `body-heavy`, `contract-heavy`, `body-only`. 툴체인 사건 커밋은 머리 줄의 `events`(K·j/5)이고 재생 하네스가 적용한다.
+Profiles (`PROFILES` of `history.py`): `body-heavy`, `contract-heavy`, `body-only`. The toolchain event commits are the `events` of the header line (K·j/5), and the replay harness applies them.
 
-## 동결과 측정 계획
+## The freeze and the measurement plan
 
-`MANIFEST`는 하네스 파일(`bcb.py`, `history.py`, `rtests.py`, `rustify.py`, `kills.py`)과 측정 이력 8개(`bcb.py`의 `FROZEN`: 프로필 3 × N=1,000·10,000, N=1,000 깊이 2·6, 모두 K=1,000)의 SHA-256이다. 이력 파일은 커밋하지 않고 결정론적으로 다시 만든다(`manifest --histories DIR`이 만들고 대조한다). 게이트는 하네스 해시를 확인한다.
+`MANIFEST` is the SHA-256 of the harness files (`bcb.py`, `history.py`, `rtests.py`, `rustify.py`, `kills.py`) and of the 8 measurement histories (`FROZEN` of `bcb.py`: 3 profiles × N=1,000 and 10,000, N=1,000 at depths 2 and 6, all with K=1,000). The history files are not committed and are made again deterministically (`manifest --histories DIR` makes and compares them). The gate checks the harness hashes.
 
-`bcb.py suite --work W --results R`는 `SUITE`(측정 계획)를 순서대로 돌리고, 결과를 `R/<이력>.<팔>.jsonl`에 쓴다. 중단되면 같은 명령이 멈춘 곳에서 잇는다. 잘린 줄은 버린다. 사건 커밋이 따뜻한 행만 있으면 차가운 측정만 한다(따뜻한 측정을 다시 하면 그 일이 이미 캐시에 있다). 재개한 첫 커밋은 중단 시점의 부분 작업(부분 컴파일 등)이 남아 있을 수 있다. 결과 머리 줄의 `from`이 재개 지점이다. 머리 줄에는 머신·툴체인·커밋·MANIFEST·컴파일러 해시도 기록한다.
+`bcb.py suite --work W --results R` runs `SUITE` (the measurement plan) in order and writes the results to `R/<history>.<arm>.jsonl`. When interrupted, the same command continues where it stopped. A cut line is dropped. When an event commit has only its warm row, only the cold measurement is made (a repeated warm measurement would find its work already in the cache). The first commit after a resumption may still have partial work from the moment of the interruption (a partial compilation, for example). `from` of a result header line is the point of resumption. The header line also records the machine, the toolchain, the commit, the MANIFEST and the compiler's hash.
 
-`suite`는 커밋되지 않은 트리에서는 돌지 않고, 처음 돌 때 컴파일러를 `W/bin/bmb`로 복사해 그 사본만 쓴다. 첫 시도(2026-10-25)는 측정 중 같은 머신에서 `cargo build --release`를 돌려 버렸다. 그 빌드가 측정 중인 컴파일러를 바꿀 수 있었고 CPU도 경합했다. 그래서 그 결과를 버리고 이 두 장치를 넣었다. 측정 중에는 같은 머신에서 컴파일·게이트 같은 무거운 작업을 하지 않는다.
+`suite` does not run on an uncommitted tree, and the first time it runs it copies the compiler to `W/bin/bmb` and uses only that copy. In the first attempt (2026-10-25) `cargo build --release` was run on the same machine during the measurement. That build could change the compiler being measured, and it competed for the CPU. So those results were thrown away and these two guards were added. During a measurement no heavy work such as compiling or the gate is done on the same machine.
 
-N=10,000 탐침(2026-10-25, K=5, 예비): Rust 따뜻한 커밋 CPU 약 19.5초(빌드 5.3 + 테스트 빌드 14), 차가운 커밋 41초. B1 따뜻한 커밋 약 3.5초, 차가운 커밋 약 205초. 계획 전체는 약 28시간(대부분 N=10,000 Rust 팔)이다.
+Probe at N=10,000 (2026-10-25, K=5, preliminary): Rust about 19.5 seconds of CPU for a warm commit (build 5.3 + test build 14), 41 seconds for a cold one. B1 about 3.5 seconds for a warm commit, about 205 seconds for a cold one. The whole plan is about 28 hours (mostly the Rust arm at N=10,000).
 
-## 팔의 실제 명령
+## The real commands of the arms
 
-| 팔 | 커밋마다 |
+| Arm | Per commit |
 | --- | --- |
-| R0·R1·R2 | `cargo build`, `cargo test --no-run`(공통), 테스트 실행 파일을 `--exact 이름..`으로(R0는 전부). R1은 바뀐 단위와 그것에 (전이적으로) 의존하는 단위의 테스트, R2는 호출·계약 검사로 바뀐 정의에 닿는 정의의 테스트와 바뀐 테스트 |
-| B1 | `bmb build --cache C --stats S src tests driver -o exe`(증명 게이트와 빌드가 한 명령), `exe` 실행과 출력 비교. 남은 테스트는 `show` 정의마다 `tests/tU.bmb`의 테스트 함수(Rust 테스트와 같은 입력)이고, `driver/bcb_main.bmb`의 `main`이 R2 규칙으로 고른 것을 부른다. 기대 출력은 계획에서 계산한다 |
-| B0 | 같은 명령을 새 캐시로, 남은 테스트 전부. `--b0-every S` 커밋마다(마지막 커밋 포함) |
+| R0, R1, R2 | `cargo build`, `cargo test --no-run` (shared), then the test executables with `--exact name..` (R0: all). R1 runs the tests of the changed units and of the units that depend on them (transitively); R2 the tests of the definitions that reach a changed definition through calls and contract checks, and the changed tests |
+| B1 | `bmb build --cache C --stats S src tests driver -o exe` (the proof gate and the build are one command), running `exe` and comparing the output. The remaining tests are test functions in `tests/tU.bmb` for each `show` definition (the same inputs as the Rust tests), and `main` of `driver/bcb_main.bmb` calls those selected by the R2 rule. The expected output is computed from the plan |
+| B0 | the same command with a new cache, all the remaining tests. At every `--b0-every S` commits (and at the last commit) |
 
-## 결함 심기(ADR-0042 §4)
+## Planting defects (ADR-0042 §4)
 
-`bcb.py defects`는 커밋마다 그 커밋이 편집한 실행 정의 하나를 고르고(고정 시드), 그 정의의 W0904 변이체 하나(생존 변이체 포함)를 두 언어에 심은 곁가지를 만든다. 각 팔은 그 커밋의 선택 규칙대로 돈다.
+For every commit `bcb.py defects` picks one executable definition that the commit edited (fixed seed) and makes a side branch in which one W0904 mutant of that definition (surviving mutants included) is planted in both languages. Each arm runs by its selection rule for that commit.
 
-| 팔 | 잡는 조건 |
+| Arm | Catches when |
 | --- | --- |
-| R0·R1·R2 | 선택된 Rust 테스트 중 하나가 실패 |
-| B1·B0 | 증명 게이트 실패(`proof`), 또는 선택된(B0는 전부) 남은 테스트 중 심은 정의에 닿는 것의 출력이 계획 값과 다름(`B1_tests`) |
+| R0, R1, R2 | one of the selected Rust tests fails |
+| B1, B0 | the proof gate fails (`proof`), or the output of a selected (B0: any) remaining test that reaches the planted definition differs from the plan's value (`B1_tests`) |
 
-곁가지는 다음 커밋 전에 되돌린다. 편집이 삭제뿐이거나 변이체가 없는 커밋은 `skipped`. 게이트는 Rust가 잡은 결함은 언제나 증명도 실패함(Rust 테스트는 계약만 본다)과 선택의 포함 관계를 확인한다.
+The side branch is undone before the next commit. A commit whose edits are only deletions, or that has no mutant, is `skipped`. The gate checks that a defect Rust catches always fails the proof too (the Rust tests look only at the contract) and that the selections nest.
 
-## 테스트 동등성(ADR-0042 §4)
+## Test equality (ADR-0042 §4)
 
-변이체 하나는 BMB에서 정의가 더는 증명되지 않으면, Rust에서 그 정의의 테스트가 실패하면 죽는다. 오라클(입력 수백 개)이 계약 위반 입력을 찾으면 그 변이체는 계약을 실제로 어긴다.
+A mutant is killed in BMB when the definition is no longer proved, and in Rust when the test of that definition fails. When the oracle (hundreds of inputs) finds an input that violates the contract, the mutant really breaks the contract.
 
-| 범주 | 뜻 |
+| Category | Meaning |
 | --- | --- |
-| `contract` | BMB가 거부하고 오라클도 위반을 찾음. **동등성은 이 집합에서 잰다**: Rust 테스트가 모두 죽여야 한다(`gaps` = 0) |
-| `annotation_only` | BMB가 거부하지만 계약은 지켜짐. 루프 시작 1, 보폭 2 같은 변이가 불변식 `k <= a.len()`을 깨는 경우다(E0806·E0807). 계약만 보는 테스트로는 원리상 구별할 수 없다. BMB가 더 엄격한 몫으로 따로 보고한다 |
-| `unsound` | 오라클이 위반을 찾았는데 BMB가 증명함. 0이어야 한다(건전성 교차 확인) |
-| `extra` | Rust 테스트가 죽였는데 BMB가 증명함. 0이어야 한다 |
+| `contract` | BMB rejects it and the oracle finds a violation too. **Equality is measured on this set**: the Rust tests must kill all of them (`gaps` = 0) |
+| `annotation_only` | BMB rejects it but the contract holds. A mutation such as a loop start of 1 or a step of 2 breaks the invariant `k <= a.len()` (E0806, E0807). Tests that look only at the contract cannot tell these apart in principle. Reported apart as the part where BMB is stricter |
+| `unsound` | the oracle found a violation and BMB proved it. Must be 0 (a cross-check of soundness) |
+| `extra` | a Rust test killed it and BMB proved it. Must be 0 |
 
-측정(2026-10-25, release): N=100 초기 트리 변이체 338개 중 BMB 거부 195개(계약 165, 주석만 30), Rust 165개, 누락·불건전·초과 0. 커밋 200개 뒤 `body-heavy` 424개 중 계약 179·Rust 179, `contract-heavy` 566개 중 계약 209·Rust 209, 모두 누락 0. N=1,000 초기 트리 3,351개 중 계약 1,571·Rust 1,571, 주석만 300, 누락·불건전·초과 0.
+Measured (2026-10-25, release): of the 338 mutants of the initial tree at N=100, BMB rejects 195 (165 contract, 30 annotation only) and Rust 165; 0 gaps, unsound and extra. After 200 commits: `body-heavy`, of 424, contract 179 and Rust 179; `contract-heavy`, of 566, contract 209 and Rust 209; 0 gaps in both. Of the 3,351 of the initial tree at N=1,000: contract 1,571 and Rust 1,571, annotation only 300; 0 gaps, unsound and extra.
 
-## 진행
+## Progress
 
-- 2A-14a: 설계(ADR-0042), 이력 생성기, 게이트, `bmb verify --stats`(재증명 집합).
-- 2A-14b: Rust 테스트와 판별 동등성(`rtests.py`, `rustify.py`, `kills.py`).
-- 2A-14c: 재생 하네스(`bcb.py`), `build --stats`.
-- 2A-14d: 결함 심기(`bcb.py defects`, 표의 검출률과 조건 4).
-- 다음: 동결·측정(2A-14e).
+- The design (ADR-0042), the history generator, the gate, `bmb verify --stats` (the set proved again).
+- The Rust tests and equal kills (`rtests.py`, `rustify.py`, `kills.py`).
+- The replay harness (`bcb.py`), `build --stats`.
+- Planting defects (`bcb.py defects`, the detection rates of the table and condition 4).
+- Next: the freeze and the measurement (registered in `results/2a14e/`).
