@@ -28,4 +28,8 @@ changed: bench/twin/pair.py
 changed: bench/twin/port_change.py
 changed: bench/twin/port_replay.py
 changed: bench/twin/port_tasks.py
+changed: bench/twin/results/3p-17/qwen-1.jsonl
+changed: bench/twin/results/3p-17/sonnet-1.jsonl
 added: bench/lang_bmb.py
+added: bench/twin/results/3p-17/qwen-2.jsonl
+added: bench/twin/results/3p-17/qwen-3.jsonl
