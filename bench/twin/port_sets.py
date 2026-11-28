@@ -28,6 +28,10 @@ Fields:
     conditions  the tool conditions of `parity.json` a `rename` task also
                 carries reference and weak solutions for, beside the main
                 one (`port`)
+    overlays    the tool conditions that came after the set's tasks were
+                written: the solutions of both arms under them are in
+                `cond/CONDITION.json` beside the tasks (`port_change.py`),
+                and the task files do not change
     replays, histories, steps
                 the counts of `port_replay.py`
     sites       which diagnostic codes are replayed: `one` (each side
@@ -39,7 +43,8 @@ Fields:
     port_sets.py manifest NAME [--check]   write (or compare) the set's MANIFEST
 
 A frozen set has a `MANIFEST` (`scripts/manifests.py`): its tasks and
-`REVIEW.md`, its fixture and the two prompts. The harness and the
+`REVIEW.md`, the solutions of its later conditions (`cond/`), its fixture
+and the two prompts. The harness and the
 generators are not in it: a result row names the commit of this repository
 it was made with.
 """
@@ -55,12 +60,14 @@ SETS = {
         "dir": "port", "fixture": "port", "seed": 20261117, "avoid": [],
         "comprehend": {"callers": 7, "impact": 5, "diag": 7, "state": 5}, "state": "table",
         "change": {"rename": 10, "swap": 6}, "hand": True, "conditions": [],
+        "overlays": ["port-rename-both"],
         "replays": 22, "histories": 4, "steps": 5, "first": "replays", "sites": "one",
     },
     "gate-d": {
         "dir": "gate-d", "fixture": "port-full", "seed": 20261128, "avoid": ["port"],
         "comprehend": {"callers": 10, "impact": 10, "diag": 10, "state": 10}, "state": "derived",
         "change": {"rename": 12, "swap": 8}, "hand": False, "conditions": ["port-rename"],
+        "overlays": ["port-rename-both"],
         "replays": 30, "histories": 12, "steps": 5, "first": "histories", "sites": "every",
     },
 }
@@ -123,6 +130,8 @@ def manifest(s):
     the path relative to the set's directory."""
     d = out_dir(s)
     paths = sorted(f for f in os.listdir(d) if f.endswith(".json") or f == "REVIEW.md")
+    cond = os.path.join(d, "cond")
+    paths += sorted("cond/" + f for f in os.listdir(cond)) if os.path.isdir(cond) else []
     paths += [f"../fixtures/{s['fixture']}/fixture.json", "../prompt-bmb.md", "../prompt-rust.md"]
     lines = []
     for p in paths:

@@ -1,5 +1,5 @@
 {
-  "about": "What an agent can do in each arm of the port twin, operation by operation. Made before a measurement is frozen; `parity.py check` holds it against the tools the harness really gives.",
+  "about": "What an agent can do in each arm of the port twin, operation by operation. Made before a measurement is frozen; `parity.py check` holds it against the tools the harness really gives. A condition is the flags of the BMB arm's server and, under `rust`, the tools it adds to the Rust arm's.",
   "conditions": {
     "port": {
       "flags": [
@@ -7,7 +7,8 @@
         "--compact",
         "--bounded"
       ],
-      "tools": "sha256:276b5a469a8d5d0ba73335f8cd8a19423a08883450c9e6922d89aa2fc3725a8c"
+      "tools": "sha256:276b5a469a8d5d0ba73335f8cd8a19423a08883450c9e6922d89aa2fc3725a8c",
+      "rust_tools": "sha256:b78691b04fccec636a86798b9e7f797cb422031ba5af2ff402d02a918a15f51f"
     },
     "port-rename": {
       "flags": [
@@ -16,10 +17,23 @@
         "--bounded",
         "--rename-ops"
       ],
-      "tools": "sha256:aa3a3bc022674447fd70ee80aadd9f2eac7c4d09df4c7a43ceea8d01fa824255"
+      "tools": "sha256:aa3a3bc022674447fd70ee80aadd9f2eac7c4d09df4c7a43ceea8d01fa824255",
+      "rust_tools": "sha256:b78691b04fccec636a86798b9e7f797cb422031ba5af2ff402d02a918a15f51f"
+    },
+    "port-rename-both": {
+      "flags": [
+        "--write-tool",
+        "--compact",
+        "--bounded",
+        "--rename-ops"
+      ],
+      "rust": [
+        "rename"
+      ],
+      "tools": "sha256:aa3a3bc022674447fd70ee80aadd9f2eac7c4d09df4c7a43ceea8d01fa824255",
+      "rust_tools": "sha256:50699f655b1ba80600f975b1199c4173b33648ef6c7a2fada380310aeccb70ae"
     }
   },
-  "rust_tools": "sha256:b78691b04fccec636a86798b9e7f797cb422031ba5af2ff402d02a918a15f51f",
   "operations": [
     {
       "op": "list what exists",
@@ -183,7 +197,12 @@
     },
     {
       "op": "rename a definition and every use in one call",
-      "rust": [],
+      "rust": [
+        {
+          "tool": "rename",
+          "needs": "rename"
+        }
+      ],
       "bmb": [
         {
           "tool": "write",
@@ -191,7 +210,7 @@
           "needs": "--rename-ops"
         }
       ],
-      "gap": "Neither arm has it in condition `port`: Rust searches and edits place by place, BMB writes unit by unit. In condition `port-rename` only BMB has it. A Rust arm with an equal tool (a rename through the language server) does not exist in the harness."
+      "gap": "A gap in the conditions where an arm lacks it. `port`: neither arm has it (Rust searches and edits place by place, BMB writes unit by unit); this is the control. `port-rename`: only BMB has it. `port-rename-both`: both have it (BMB `write` with `rename`, Rust `rename` through rust-analyzer), and refactoring is judged there. Not equal where both have it: BMB names the definition by its path and the change is checked and proved before it is taken; Rust names one occurrence by file, line and name, and the edit is not built."
     },
     {
       "op": "change a signature whose call sites are in several files or units, in one step",

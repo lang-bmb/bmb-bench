@@ -72,12 +72,27 @@ class Frozen(unittest.TestCase):
                 continue
             for calls in [t["oracle"]] + [w for w in t["weak"] if w["bmb"]]:
                 arms = sorted(k for k in calls if k != "fails")
-                self.assertEqual(arms, ["bmb", "bmb:port-rename", "rust"] if t["family"] == "rename" else ["bmb", "rust"],
-                                 t["id"])
+                self.assertEqual(arms, ["bmb", "bmb:port-rename", "bmb:port-rename-both", "rust", "rust:port-rename-both"]
+                                 if t["family"] == "rename" else ["bmb", "rust"], t["id"])
             name, args = t["oracle"].get("bmb:port-rename", [[None, {}]])[0]
             if t["family"] == "rename":
                 self.assertEqual((name, sorted(args), len(t["oracle"]["bmb:port-rename"])), ("write", ["rename"], 1))
                 self.assertGreater(len(t["oracle"]["bmb"]), 1)
+                # Where both arms rename: one call each, the BMB arm's as under `port-rename`.
+                self.assertEqual(t["oracle"]["bmb:port-rename-both"], t["oracle"]["bmb:port-rename"])
+                (name, args), = t["oracle"]["rust:port-rename-both"]
+                self.assertEqual((name, sorted(args)), ("rename", ["line", "name", "new_name", "path"]))
+                self.assertGreater(len(t["oracle"]["rust"]), 1)
+
+    def test_the_later_condition_left_the_task_files_as_they_were(self):
+        # The solutions of `port-rename-both` are beside the tasks (`cond/`): a task file has none of them.
+        import json
+        for f in sorted(os.listdir(SET)):
+            if f.endswith(".json"):
+                with open(os.path.join(SET, f), encoding="utf-8") as h:
+                    self.assertNotIn("port-rename-both", h.read(), f)
+        with open(os.path.join(SET, "cond", "port-rename-both.json"), encoding="utf-8") as h:
+            self.assertEqual(sorted(json.load(h)), sorted(t["id"] for t in self.tasks if t["family"] == "rename"))
 
 
 class Conditions(unittest.TestCase):
@@ -104,8 +119,24 @@ class Conditions(unittest.TestCase):
         self.assertEqual(pair.stamp(task, "bmb"), {"docs": "none", "mcp": "--write-tool --compact --bounded --rename-ops",
                                                    "cond": "port-rename"})
         self.assertEqual(pair.stamp(task, "rust"), {"docs": "none", "mcp": None, "cond": "port-rename"})
+        # Where both arms rename: the server's flags are those of `port-rename`, each arm takes its solution.
+        both = {**calls, "bmb:port-rename-both": ["one write"], "rust:port-rename-both": ["one rename"]}
+        self.assertEqual(pair.calls_of(both, "rust", "port-full"), ["edits"])
+        os.environ["PAIR_COND"] = "port-rename-both"
+        self.assertEqual(pair.mcp_flags("port-full"), ["--write-tool", "--compact", "--bounded", "--rename-ops"])
+        self.assertEqual(pair.calls_of(both, "bmb", "port-full"), ["one write"])
+        self.assertEqual(pair.calls_of(both, "rust", "port-full"), ["one rename"])
+        self.assertEqual(pair.calls_of(calls, "rust", "port-full"), ["edits"])  # a `swap` task has one solution
+        if pair.ra.version():  # the row has the language server's version; without one the condition does not run
+            row = pair.stamp(task, "rust")
+            self.assertEqual({k: row[k] for k in ("docs", "mcp", "cond")},
+                             {"docs": "none", "mcp": None, "cond": "port-rename-both"})
+            self.assertEqual(row["rust_analyzer"], pair.ra.version())
+        self.assertEqual(pair.rust_extra("port-full"), ["rename"])
         del os.environ["PAIR_COND"]
-        # Flags given one by one are named when a condition has exactly them.
+        self.assertEqual(pair.rust_extra("port-full"), [])
+        # Flags given one by one are named when a condition has exactly them
+        # (the one that gives the Rust arm nothing: flags do not reach that arm).
         os.environ["PAIR_MCP"] = "--write-tool --compact --bounded --rename-ops"
         self.assertEqual(pair.condition("port-full"), "port-rename")
         os.environ["PAIR_MCP"] = "--write-tool --compact"

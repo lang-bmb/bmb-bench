@@ -1,0 +1,146 @@
+{
+ "id": "c17-impact-def_ref",
+ "kind": "comprehend",
+ "family": "impact",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `fmt::Printer::def_ref` directly, or call one of its direct callers (its callers up to two levels)? Leave out `fmt::Printer::def_ref` itself unless it is called from one of them. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `fmt::IdMode::def_ref` directly, or call one of its direct callers (its callers up to two levels)? Leave out `fmt::IdMode::def_ref` itself unless it is called from one of them. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`).",
+  "unlearned": "Which functions call `fmt::IdMode::def_ref` directly, or call one of its direct callers (its callers up to two levels)? Leave out `fmt::IdMode::def_ref` itself unless it is called from one of them. Answer with `module::function`, or `module::Type::method` for a method of an `zrir` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "fmt::Printer::attr_line",
+   "fmt::Printer::expr",
+   "fmt::Printer::expr_raw",
+   "fmt::Printer::function",
+   "fmt::Printer::uses_name"
+  ],
+  "bmb": [
+   "fmt::Printer::attr_line",
+   "fmt::Printer::call_text",
+   "fmt::Printer::expr_raw",
+   "fmt::Printer::function",
+   "fmt::Printer::uses_name"
+  ],
+  "unlearned": [
+   "fmt::Printer::attr_line",
+   "fmt::Printer::expr",
+   "fmt::Printer::expr_raw",
+   "fmt::Printer::function",
+   "fmt::Printer::uses_name"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "fmt::Printer::def_ref",
+      "in",
+      "2"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "fmt::Printer::attr_line",
+      "fmt::Printer::call_text",
+      "fmt::Printer::expr_raw",
+      "fmt::Printer::function",
+      "fmt::Printer::uses_name"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])def_ref\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "fmt::Printer::attr_line",
+      "fmt::Printer::expr",
+      "fmt::Printer::expr_raw",
+      "fmt::Printer::function",
+      "fmt::Printer::uses_name"
+     ]
+    }
+   ]
+  ],
+  "unlearned": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])def_ref\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "fmt::Printer::attr_line",
+      "fmt::Printer::expr",
+      "fmt::Printer::expr_raw",
+      "fmt::Printer::function",
+      "fmt::Printer::uses_name"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "fmt::Printer::call_text",
+       "fmt::Printer::expr_raw",
+       "fmt::Printer::function",
+       "fmt::Printer::uses_name"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "fmt::Printer::expr",
+       "fmt::Printer::expr_raw",
+       "fmt::Printer::function",
+       "fmt::Printer::uses_name"
+      ]
+     }
+    ]
+   ],
+   "unlearned": [
+    [
+     "answer",
+     {
+      "defs": [
+       "fmt::Printer::expr",
+       "fmt::Printer::expr_raw",
+       "fmt::Printer::function",
+       "fmt::Printer::uses_name"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

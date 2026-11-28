@@ -1,0 +1,197 @@
+{
+ "id": "c18-impact-axiom",
+ "kind": "comprehend",
+ "family": "impact",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `encode_spec::axiom` directly, or call one of its direct callers (its callers up to two levels)? Leave out `encode_spec::axiom` itself unless it is called from one of them. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `verify::Prog::axiom` directly, or call one of its direct callers (its callers up to two levels)? Leave out `verify::Prog::axiom` itself unless it is called from one of them. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`).",
+  "unlearned": "Which functions call `verify::Prog::axiom` directly, or call one of its direct callers (its callers up to two levels)? Leave out `verify::Prog::axiom` itself unless it is called from one of them. Answer with `module::function`, or `module::Type::method` for a method of an `zrir` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "lib::dump_stage",
+   "lib::examples_sources",
+   "lint::lint_sources_selected",
+   "verify::dump_queries",
+   "verify::dump_smt",
+   "verify::examples::examples",
+   "verify::preconditions_satisfiable",
+   "verify::results_determined",
+   "verify::verify_impl",
+   "verify::verify_pass",
+   "verify::verify_trusting"
+  ],
+  "bmb": [
+   "encode_query::encoded",
+   "encode_query::reach_encoded",
+   "encode_query::refinement",
+   "encode_query::revealed_axioms",
+   "encode_spec::dump",
+   "encode_spec::dump_def",
+   "examples::examples",
+   "examples::of_def",
+   "sat::determined",
+   "sat::preconditions"
+  ],
+  "unlearned": [
+   "lib::dump_stage",
+   "lib::examples_sources",
+   "lint::lint_sources_selected",
+   "verify::dump_queries",
+   "verify::dump_smt",
+   "verify::examples::examples",
+   "verify::preconditions_satisfiable",
+   "verify::results_determined",
+   "verify::verify_impl",
+   "verify::verify_pass",
+   "verify::verify_trusting"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "encode_spec::axiom",
+      "in",
+      "2"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "encode_query::encoded",
+      "encode_query::reach_encoded",
+      "encode_query::refinement",
+      "encode_query::revealed_axioms",
+      "encode_spec::dump",
+      "encode_spec::dump_def",
+      "examples::examples",
+      "examples::of_def",
+      "sat::determined",
+      "sat::preconditions"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])axiom\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "lib::dump_stage",
+      "lib::examples_sources",
+      "lint::lint_sources_selected",
+      "verify::dump_queries",
+      "verify::dump_smt",
+      "verify::examples::examples",
+      "verify::preconditions_satisfiable",
+      "verify::results_determined",
+      "verify::verify_impl",
+      "verify::verify_pass",
+      "verify::verify_trusting"
+     ]
+    }
+   ]
+  ],
+  "unlearned": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])axiom\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "lib::dump_stage",
+      "lib::examples_sources",
+      "lint::lint_sources_selected",
+      "verify::dump_queries",
+      "verify::dump_smt",
+      "verify::examples::examples",
+      "verify::preconditions_satisfiable",
+      "verify::results_determined",
+      "verify::verify_impl",
+      "verify::verify_pass",
+      "verify::verify_trusting"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "encode_query::reach_encoded",
+       "encode_query::refinement",
+       "encode_query::revealed_axioms",
+       "encode_spec::dump",
+       "encode_spec::dump_def",
+       "examples::examples",
+       "examples::of_def",
+       "sat::determined",
+       "sat::preconditions"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "lib::examples_sources",
+       "lint::lint_sources_selected",
+       "verify::dump_queries",
+       "verify::dump_smt",
+       "verify::examples::examples",
+       "verify::preconditions_satisfiable",
+       "verify::results_determined",
+       "verify::verify_impl",
+       "verify::verify_pass",
+       "verify::verify_trusting"
+      ]
+     }
+    ]
+   ],
+   "unlearned": [
+    [
+     "answer",
+     {
+      "defs": [
+       "lib::examples_sources",
+       "lint::lint_sources_selected",
+       "verify::dump_queries",
+       "verify::dump_smt",
+       "verify::examples::examples",
+       "verify::preconditions_satisfiable",
+       "verify::results_determined",
+       "verify::verify_impl",
+       "verify::verify_pass",
+       "verify::verify_trusting"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

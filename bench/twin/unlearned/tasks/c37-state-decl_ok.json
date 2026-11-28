@@ -1,0 +1,108 @@
+{
+ "id": "c37-state-decl_ok",
+ "kind": "comprehend",
+ "family": "state",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions change the field `decl_ok` of `parser::Parser`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions change the field `decl_ok` of `parser::Parser`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`).",
+  "unlearned": "Which functions change the field `decl_ok` of `parser::Parser`: assign it, add to it, remove from it, clear it, or pass it on as `&zlet`? Answer with `module::function`, or `module::Type::method` for a method of an `zrir` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "parser::Parser::parse_fn",
+   "parser::Parser::parse_trait"
+  ],
+  "bmb": [
+   "parser::Parser::parse_fn",
+   "parser::Parser::parse_trait"
+  ],
+  "unlearned": [
+   "parser::Parser::parse_fn",
+   "parser::Parser::parse_trait"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Parser::parse_fn",
+      "parser::Parser::parse_trait"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\\.decl_ok\\b"
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Parser::parse_fn",
+      "parser::Parser::parse_trait"
+     ]
+    }
+   ]
+  ],
+  "unlearned": [
+   [
+    "grep",
+    {
+     "pattern": "\\.decl_ok\\b"
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Parser::parse_fn",
+      "parser::Parser::parse_trait"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Parser::parse_trait"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Parser::parse_trait"
+      ]
+     }
+    ]
+   ],
+   "unlearned": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Parser::parse_trait"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

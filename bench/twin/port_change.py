@@ -32,6 +32,13 @@ the reference solution, the task carries that solution too, under
 `port-rename` the BMB solution of a `rename` task is one `write` with
 `rename`.
 
+A condition of the set's `overlays` came after the set's tasks were written
+(and, for a frozen set, measured with): its solutions are in one file
+beside the tasks, `cond/CONDITION.json` (`pair.load_tasks` reads it), and
+the task files stay byte for byte. Under `port-rename-both` the solution of
+a `rename` task is one call in each arm: `write` with `rename`, and the Rust
+arm's `rename` at the line of the declaration.
+
 The choice of targets is mechanical, as in `port_tasks.py`: the candidates
 that meet the family's rule in sorted order, a seeded shuffle, at most
 `PER_FILE` per Rust file. The seed and the counts are the set's; a set that
@@ -336,12 +343,19 @@ def rename(twin, name, rk, bk):
     b_calls = [["write", {"unit": u, "code": bmb_code(sorted(units[u]), texts, heads)}]
                for u in [home] + sorted(u for u in units if u != home)]
     b_calls.append(["write", {"unit": home, "remove": [bk]}])
+    # With `--rename-ops` (the condition `port-rename`): the declaration and
+    # every reference in one call. The Rust arm's `rename` of the condition
+    # `port-rename-both`: the same, named by the line of the declaration
+    # (`clean`: there is one).
+    one = [["write", {"rename": [{"def": bk, "to": new}]}]]
+    decl = re.compile(r"fn " + re.escape(name) + r"\s*(?:<[^>]*>)?\(")
+    f, at = next((f, m.start()) for f, text in twin.files_with(name) for m in [decl.search(text)] if m)
+    r_one = [["rename", {"path": "src/" + f, "line": twin.files[f].count("\n", 0, at) + 1, "name": name,
+                         "new_name": new}]]
     return {"names": {"rust": {"target": rk, "new": new}, "bmb": {"target": bk, "new": new}},
             "scope": {"rust": sorted(r_scope + [r_new]), "bmb": sorted(b_scope + [b_new])},
             "oracle": {"rust": r_calls, "bmb": b_calls},
-            # With `--rename-ops` (the condition `port-rename`): the
-            # declaration and every reference in one call.
-            "by_condition": {"port-rename": [["write", {"rename": [{"def": bk, "to": new}]}]]}}
+            "by_condition": {"port-rename": {"bmb": one}, "port-rename-both": {"bmb": one, "rust": r_one}}}
 
 
 def swap(twin, name, rk, bk):
@@ -478,13 +492,22 @@ def make(commit, s):
     twin = Twin(commit, port_sets.rust_files(s), port_sets.beside(s))
     cands = candidates(twin, port_sets.avoided(s))
     out = {}
+    over = {c: {} for c in s["overlays"]}
     for family in FAMILIES:
         for t in picked_of(cands[family], s, family, twin):
             tid = f"r{len(out) + 1:02d}-{family}-{index.simple(t['names']['rust']['target']).lower()}"
             # The solutions of the BMB arm under the set's other tool
             # conditions, where the condition's tool changes them.
-            also = {f"bmb:{c}": calls for c, calls in t.get("by_condition", {}).items() if c in s["conditions"]}
+            also = {f"bmb:{c}": calls["bmb"] for c, calls in t.get("by_condition", {}).items() if c in s["conditions"]}
             oracle = {**t["oracle"], **also}
+            # The solutions of both arms under the conditions that came
+            # after the set: beside the tasks, not in them.
+            for c in s["overlays"]:
+                if c in t.get("by_condition", {}):
+                    ref = {f"{arm}:{c}": calls for arm, calls in sorted(t["by_condition"][c].items())}
+                    over[c][tid] = {"oracle": ref,
+                                    "weak": [{key: calls + weak(key.split(":")[0], twin, k) for key, calls in ref.items()}
+                                             for k in ("scope", "corpus")] + [{}]}
             task = {
                 "id": tid,
                 "kind": "change",
@@ -508,6 +531,8 @@ def make(commit, s):
                 "weak": [{"fails": k, **{arm: t["oracle"][arm] + weak(arm, twin, k) for arm in ("bmb", "rust")}}
                          for k in ("scope", "corpus")] + [NOTHING]}
         out[tid + ".json"] = json.dumps(task, indent=1, ensure_ascii=False) + "\n"
+    for c in s["overlays"]:
+        out[f"cond/{c}.json"] = json.dumps(over[c], indent=1, ensure_ascii=False) + "\n"
     return out
 
 
@@ -539,9 +564,11 @@ def cmd_make(a):
         if re.fullmatch(r"r\d\d-.*\.json", f):
             os.remove(os.path.join(OUT, f))
     for name, text in files.items():
+        os.makedirs(os.path.dirname(os.path.join(OUT, name)), exist_ok=True)
         with open(os.path.join(OUT, name), "w", encoding="utf-8") as h:
             h.write(text)
-    print(f"wrote {len(files)} tasks to {os.path.relpath(OUT, ROOT)}")
+    tasks = sum(1 for f in files if "/" not in f)
+    print(f"wrote {tasks} tasks and the solutions of {len(files) - tasks} later conditions to {os.path.relpath(OUT, ROOT)}")
 
 
 def cmd_check(a):
@@ -552,6 +579,9 @@ def cmd_check(a):
     if not have:
         sys.exit("no tasks")
     commits = {json.loads(t)["commit"] for t in have.values()}
+    cond = os.path.join(OUT, "cond")
+    for f in sorted(os.listdir(cond)) if os.path.isdir(cond) else []:
+        have["cond/" + f] = open(os.path.join(cond, f), encoding="utf-8").read()
     if len(commits) != 1:
         sys.exit(f"tasks of several commits: {sorted(commits)}")
     want = make(commits.pop(), s)
@@ -561,7 +591,7 @@ def cmd_check(a):
         print(p, file=sys.stderr)
     if problems:
         sys.exit(1)
-    print(f"ok: {len(have)} tasks are what `make` writes")
+    print(f"ok: {len(have)} files (tasks and the solutions of later conditions) are what `make` writes")
 
 
 def main():

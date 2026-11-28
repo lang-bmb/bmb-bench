@@ -1,0 +1,164 @@
+{
+ "id": "c07-callers-need_own",
+ "kind": "comprehend",
+ "family": "callers",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `body::need_own` directly? Leave out `body::need_own` itself unless it calls itself. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `check::FnCtx::need_own` directly? Leave out `check::FnCtx::need_own` itself unless it calls itself. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`).",
+  "unlearned": "Which functions call `check::FnCtx::need_own` directly? Leave out `check::FnCtx::need_own` itself unless it calls itself. Answer with `module::function`, or `module::Type::method` for a method of an `zrir` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "check::Checker::assume_stmt",
+   "check::Checker::check_fn",
+   "check::Checker::clone_method",
+   "check::Checker::expr_inner",
+   "check::Checker::vec_method",
+   "check::text::Checker::text_call",
+   "check::text::Checker::text_method"
+  ],
+  "bmb": [
+   "body::Body::assume_stmt",
+   "body::Body::call_expr",
+   "body::Body::check_fn",
+   "body::Body::clone_method",
+   "body::Body::text_call",
+   "body::Body::text_method",
+   "body::Body::vec_method"
+  ],
+  "unlearned": [
+   "check::Checker::assume_stmt",
+   "check::Checker::check_fn",
+   "check::Checker::clone_method",
+   "check::Checker::expr_inner",
+   "check::Checker::vec_method",
+   "check::text::Checker::text_call",
+   "check::text::Checker::text_method"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "body::need_own",
+      "in",
+      "1"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "body::Body::assume_stmt",
+      "body::Body::call_expr",
+      "body::Body::check_fn",
+      "body::Body::clone_method",
+      "body::Body::text_call",
+      "body::Body::text_method",
+      "body::Body::vec_method"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])need_own\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "check::Checker::assume_stmt",
+      "check::Checker::check_fn",
+      "check::Checker::clone_method",
+      "check::Checker::expr_inner",
+      "check::Checker::vec_method",
+      "check::text::Checker::text_call",
+      "check::text::Checker::text_method"
+     ]
+    }
+   ]
+  ],
+  "unlearned": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])need_own\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "check::Checker::assume_stmt",
+      "check::Checker::check_fn",
+      "check::Checker::clone_method",
+      "check::Checker::expr_inner",
+      "check::Checker::vec_method",
+      "check::text::Checker::text_call",
+      "check::text::Checker::text_method"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "body::Body::call_expr",
+       "body::Body::check_fn",
+       "body::Body::clone_method",
+       "body::Body::text_call",
+       "body::Body::text_method",
+       "body::Body::vec_method"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "check::Checker::check_fn",
+       "check::Checker::clone_method",
+       "check::Checker::expr_inner",
+       "check::Checker::vec_method",
+       "check::text::Checker::text_call",
+       "check::text::Checker::text_method"
+      ]
+     }
+    ]
+   ],
+   "unlearned": [
+    [
+     "answer",
+     {
+      "defs": [
+       "check::Checker::check_fn",
+       "check::Checker::clone_method",
+       "check::Checker::expr_inner",
+       "check::Checker::vec_method",
+       "check::text::Checker::text_call",
+       "check::text::Checker::text_method"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

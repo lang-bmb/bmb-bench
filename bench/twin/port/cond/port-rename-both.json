@@ -1,0 +1,1212 @@
+{
+ "r01-rename-range_bound": {
+  "oracle": {
+   "bmb:port-rename-both": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "parser::Parser::range_bound",
+        "to": "range_bound_renamed"
+       }
+      ]
+     }
+    ]
+   ],
+   "rust:port-rename-both": [
+    [
+     "rename",
+     {
+      "path": "src/parser.rs",
+      "line": 3271,
+      "name": "range_bound",
+      "new_name": "range_bound_renamed"
+     }
+    ]
+   ]
+  },
+  "weak": [
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "parser::Parser::range_bound",
+         "to": "range_bound_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "sha256",
+       "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/parser.rs",
+       "line": 3271,
+       "name": "range_bound",
+       "new_name": "range_bound_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/sha256.rs",
+       "old": "    let mut s = String::from(\"sha256:\");",
+       "new": "    let mut s = \"sha256:\".to_string();"
+      }
+     ]
+    ]
+   },
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "parser::Parser::range_bound",
+         "to": "range_bound_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/parser.rs",
+       "line": 3271,
+       "name": "range_bound",
+       "new_name": "range_bound_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   },
+   {}
+  ]
+ },
+ "r02-rename-has_struct_lit": {
+  "oracle": {
+   "bmb:port-rename-both": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "fmt::has_struct_lit",
+        "to": "has_struct_lit_renamed"
+       }
+      ]
+     }
+    ]
+   ],
+   "rust:port-rename-both": [
+    [
+     "rename",
+     {
+      "path": "src/fmt.rs",
+      "line": 1660,
+      "name": "has_struct_lit",
+      "new_name": "has_struct_lit_renamed"
+     }
+    ]
+   ]
+  },
+  "weak": [
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "fmt::has_struct_lit",
+         "to": "has_struct_lit_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "sha256",
+       "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/fmt.rs",
+       "line": 1660,
+       "name": "has_struct_lit",
+       "new_name": "has_struct_lit_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/sha256.rs",
+       "old": "    let mut s = String::from(\"sha256:\");",
+       "new": "    let mut s = \"sha256:\".to_string();"
+      }
+     ]
+    ]
+   },
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "fmt::has_struct_lit",
+         "to": "has_struct_lit_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/fmt.rs",
+       "line": 1660,
+       "name": "has_struct_lit",
+       "new_name": "has_struct_lit_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   },
+   {}
+  ]
+ },
+ "r03-rename-attr_impl_path": {
+  "oracle": {
+   "bmb:port-rename-both": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "parser::Parser::attr_impl_path",
+        "to": "attr_impl_path_renamed"
+       }
+      ]
+     }
+    ]
+   ],
+   "rust:port-rename-both": [
+    [
+     "rename",
+     {
+      "path": "src/parser.rs",
+      "line": 3532,
+      "name": "attr_impl_path",
+      "new_name": "attr_impl_path_renamed"
+     }
+    ]
+   ]
+  },
+  "weak": [
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "parser::Parser::attr_impl_path",
+         "to": "attr_impl_path_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "sha256",
+       "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/parser.rs",
+       "line": 3532,
+       "name": "attr_impl_path",
+       "new_name": "attr_impl_path_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/sha256.rs",
+       "old": "    let mut s = String::from(\"sha256:\");",
+       "new": "    let mut s = \"sha256:\".to_string();"
+      }
+     ]
+    ]
+   },
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "parser::Parser::attr_impl_path",
+         "to": "attr_impl_path_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/parser.rs",
+       "line": 3532,
+       "name": "attr_impl_path",
+       "new_name": "attr_impl_path_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   },
+   {}
+  ]
+ },
+ "r04-rename-parse_generics": {
+  "oracle": {
+   "bmb:port-rename-both": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "parser::Parser::parse_generics",
+        "to": "parse_generics_renamed"
+       }
+      ]
+     }
+    ]
+   ],
+   "rust:port-rename-both": [
+    [
+     "rename",
+     {
+      "path": "src/parser.rs",
+      "line": 726,
+      "name": "parse_generics",
+      "new_name": "parse_generics_renamed"
+     }
+    ]
+   ]
+  },
+  "weak": [
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "parser::Parser::parse_generics",
+         "to": "parse_generics_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "sha256",
+       "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/parser.rs",
+       "line": 726,
+       "name": "parse_generics",
+       "new_name": "parse_generics_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/sha256.rs",
+       "old": "    let mut s = String::from(\"sha256:\");",
+       "new": "    let mut s = \"sha256:\".to_string();"
+      }
+     ]
+    ]
+   },
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "parser::Parser::parse_generics",
+         "to": "parse_generics_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/parser.rs",
+       "line": 726,
+       "name": "parse_generics",
+       "new_name": "parse_generics_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   },
+   {}
+  ]
+ },
+ "r05-rename-vec_elem_ok": {
+  "oracle": {
+   "bmb:port-rename-both": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "decls::Checker::vec_elem_ok",
+        "to": "vec_elem_ok_renamed"
+       }
+      ]
+     }
+    ]
+   ],
+   "rust:port-rename-both": [
+    [
+     "rename",
+     {
+      "path": "src/check.rs",
+      "line": 3543,
+      "name": "vec_elem_ok",
+      "new_name": "vec_elem_ok_renamed"
+     }
+    ]
+   ]
+  },
+  "weak": [
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "decls::Checker::vec_elem_ok",
+         "to": "vec_elem_ok_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "sha256",
+       "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/check.rs",
+       "line": 3543,
+       "name": "vec_elem_ok",
+       "new_name": "vec_elem_ok_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/sha256.rs",
+       "old": "    let mut s = String::from(\"sha256:\");",
+       "new": "    let mut s = \"sha256:\".to_string();"
+      }
+     ]
+    ]
+   },
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "decls::Checker::vec_elem_ok",
+         "to": "vec_elem_ok_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/check.rs",
+       "line": 3543,
+       "name": "vec_elem_ok",
+       "new_name": "vec_elem_ok_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   },
+   {}
+  ]
+ },
+ "r06-rename-spec_loop": {
+  "oracle": {
+   "bmb:port-rename-both": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "body::Body::spec_loop",
+        "to": "spec_loop_renamed"
+       }
+      ]
+     }
+    ]
+   ],
+   "rust:port-rename-both": [
+    [
+     "rename",
+     {
+      "path": "src/check.rs",
+      "line": 5468,
+      "name": "spec_loop",
+      "new_name": "spec_loop_renamed"
+     }
+    ]
+   ]
+  },
+  "weak": [
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "body::Body::spec_loop",
+         "to": "spec_loop_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "sha256",
+       "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/check.rs",
+       "line": 5468,
+       "name": "spec_loop",
+       "new_name": "spec_loop_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/sha256.rs",
+       "old": "    let mut s = String::from(\"sha256:\");",
+       "new": "    let mut s = \"sha256:\".to_string();"
+      }
+     ]
+    ]
+   },
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "body::Body::spec_loop",
+         "to": "spec_loop_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/check.rs",
+       "line": 5468,
+       "name": "spec_loop",
+       "new_name": "spec_loop_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   },
+   {}
+  ]
+ },
+ "r07-rename-expr_inner": {
+  "oracle": {
+   "bmb:port-rename-both": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "body::Body::expr_inner",
+        "to": "expr_inner_renamed"
+       }
+      ]
+     }
+    ]
+   ],
+   "rust:port-rename-both": [
+    [
+     "rename",
+     {
+      "path": "src/check.rs",
+      "line": 7020,
+      "name": "expr_inner",
+      "new_name": "expr_inner_renamed"
+     }
+    ]
+   ]
+  },
+  "weak": [
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "body::Body::expr_inner",
+         "to": "expr_inner_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "sha256",
+       "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/check.rs",
+       "line": 7020,
+       "name": "expr_inner",
+       "new_name": "expr_inner_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/sha256.rs",
+       "old": "    let mut s = String::from(\"sha256:\");",
+       "new": "    let mut s = \"sha256:\".to_string();"
+      }
+     ]
+    ]
+   },
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "body::Body::expr_inner",
+         "to": "expr_inner_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/check.rs",
+       "line": 7020,
+       "name": "expr_inner",
+       "new_name": "expr_inner_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   },
+   {}
+  ]
+ },
+ "r08-rename-type_hashes": {
+  "oracle": {
+   "bmb:port-rename-both": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "fmt::type_hashes",
+        "to": "type_hashes_renamed"
+       }
+      ]
+     }
+    ]
+   ],
+   "rust:port-rename-both": [
+    [
+     "rename",
+     {
+      "path": "src/fmt.rs",
+      "line": 1464,
+      "name": "type_hashes",
+      "new_name": "type_hashes_renamed"
+     }
+    ]
+   ]
+  },
+  "weak": [
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "fmt::type_hashes",
+         "to": "type_hashes_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "sha256",
+       "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/fmt.rs",
+       "line": 1464,
+       "name": "type_hashes",
+       "new_name": "type_hashes_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/sha256.rs",
+       "old": "    let mut s = String::from(\"sha256:\");",
+       "new": "    let mut s = \"sha256:\".to_string();"
+      }
+     ]
+    ]
+   },
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "fmt::type_hashes",
+         "to": "type_hashes_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/fmt.rs",
+       "line": 1464,
+       "name": "type_hashes",
+       "new_name": "type_hashes_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   },
+   {}
+  ]
+ },
+ "r09-rename-bound_names": {
+  "oracle": {
+   "bmb:port-rename-both": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "closures::bound_names",
+        "to": "bound_names_renamed"
+       }
+      ]
+     }
+    ]
+   ],
+   "rust:port-rename-both": [
+    [
+     "rename",
+     {
+      "path": "src/closures.rs",
+      "line": 99,
+      "name": "bound_names",
+      "new_name": "bound_names_renamed"
+     }
+    ]
+   ]
+  },
+  "weak": [
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "closures::bound_names",
+         "to": "bound_names_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "sha256",
+       "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/closures.rs",
+       "line": 99,
+       "name": "bound_names",
+       "new_name": "bound_names_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/sha256.rs",
+       "old": "    let mut s = String::from(\"sha256:\");",
+       "new": "    let mut s = \"sha256:\".to_string();"
+      }
+     ]
+    ]
+   },
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "closures::bound_names",
+         "to": "bound_names_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/closures.rs",
+       "line": 99,
+       "name": "bound_names",
+       "new_name": "bound_names_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   },
+   {}
+  ]
+ },
+ "r10-rename-qualified_text": {
+  "oracle": {
+   "bmb:port-rename-both": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "fmt::qualified_text",
+        "to": "qualified_text_renamed"
+       }
+      ]
+     }
+    ]
+   ],
+   "rust:port-rename-both": [
+    [
+     "rename",
+     {
+      "path": "src/fmt.rs",
+      "line": 1364,
+      "name": "qualified_text",
+      "new_name": "qualified_text_renamed"
+     }
+    ]
+   ]
+  },
+  "weak": [
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "fmt::qualified_text",
+         "to": "qualified_text_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "sha256",
+       "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/fmt.rs",
+       "line": 1364,
+       "name": "qualified_text",
+       "new_name": "qualified_text_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/sha256.rs",
+       "old": "    let mut s = String::from(\"sha256:\");",
+       "new": "    let mut s = \"sha256:\".to_string();"
+      }
+     ]
+    ]
+   },
+   {
+    "bmb:port-rename-both": [
+     [
+      "write",
+      {
+       "rename": [
+        {
+         "def": "fmt::qualified_text",
+         "to": "qualified_text_renamed"
+        }
+       ]
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ],
+    "rust:port-rename-both": [
+     [
+      "rename",
+      {
+       "path": "src/fmt.rs",
+       "line": 1364,
+       "name": "qualified_text",
+       "new_name": "qualified_text_renamed"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   },
+   {}
+  ]
+ }
+}

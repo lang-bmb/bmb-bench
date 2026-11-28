@@ -99,6 +99,87 @@ class RustTools(unittest.TestCase):
             self.assertEqual(t.call("grep", {"pattern": "z$"})[0], "src/a.rs:1:x x z\n")
 
 
+class Rename(unittest.TestCase):
+    """The Rust arm's `rename` (rust-analyzer), which only the tool
+    condition `port-rename-both` gives."""
+
+    def test_only_the_condition_gives_it(self):
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "src"))
+            t = pair.RustTools(d, os.path.join(d, "target"))
+            self.assertEqual([x["name"] for x in t.tools], [x["name"] for x in pair.RUST_TOOLS])
+            self.assertEqual(t.call("rename", {"path": "src/a.rs", "line": 1, "name": "x", "new_name": "y"}),
+                             ("unknown tool rename", True))
+            self.assertEqual(t.facts(), {})
+        kept = os.environ.pop("PAIR_COND", None)
+        try:
+            self.assertEqual(pair.rust_extra("port-full"), [])
+            os.environ["PAIR_COND"] = "port-rename"
+            self.assertEqual(pair.rust_extra("port-full"), [])
+            os.environ["PAIR_COND"] = "port-rename-both"
+            self.assertEqual(pair.rust_extra("port-full"), ["rename"])
+            self.assertEqual([x["name"] for x in pair.rust_tools(["rename"])][-1], "rename")
+        finally:
+            os.environ.pop("PAIR_COND", None)
+            if kept is not None:
+                os.environ["PAIR_COND"] = kept
+
+    def test_edits_are_applied_by_utf16_position(self):
+        import ra
+        text = "let é = f(a);\nlet 𝑥 = f(b); f(c)\n"
+        edit = lambda ln, a, b, new: {"range": {"start": {"line": ln, "character": a},  # noqa: E731
+                                                "end": {"line": ln, "character": b}}, "newText": new}
+        # `𝑥` is two UTF-16 units: the first `f` of line 1 is at unit 9, character 8.
+        got = ra.apply_edits(text, [edit(0, 8, 9, "g"), edit(1, 9, 10, "g"), edit(1, 15, 16, "g")])
+        self.assertEqual(got, "let é = g(a);\nlet 𝑥 = g(b); g(c)\n")
+        self.assertEqual(ra.column("a.drop(drop_all, drop)", "drop"), 2)
+        self.assertIsNone(ra.column("dropped", "drop"))
+
+    @unittest.skipUnless(__import__("ra").version(), "no rust-analyzer (rustup component add rust-analyzer rust-src)")
+    def test_a_rename_is_the_declaration_and_every_use(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as d:
+            crate = os.path.join(d, "stk")
+            shutil.copytree(os.path.join(HERE, "fixtures", "stk", "rust"), crate, ignore=shutil.ignore_patterns("target"))
+            want = {}
+            for f in ("vm.rs", "main.rs", "lex.rs"):
+                with open(os.path.join(crate, "src", f), encoding="utf-8") as h:
+                    want[f] = h.read().replace("pub fn drop(", "pub fn discard(").replace("vm::drop(st)", "vm::discard(st)")
+            t = pair.RustTools(crate, os.path.join(d, "target"), ["rename"])
+            try:
+                with open(os.path.join(crate, "src", "main.rs"), encoding="utf-8") as h:
+                    use = next(i for i, ln in enumerate(h.read().split("\n"), 1) if "vm::drop(st)" in ln)
+                # Named by a use, not the declaration; the string "drop" on the line before stays.
+                text, err = t.call("rename", {"path": "src/main.rs", "line": use, "name": "drop", "new_name": "discard"})
+                self.assertEqual((text, err), ("renamed `drop` to `discard`: 2 places in 2 files\nsrc/main.rs: 1\n"
+                                               "src/vm.rs: 1\n", False))
+                for f, text in want.items():
+                    with open(os.path.join(crate, "src", f), encoding="utf-8") as h:
+                        self.assertEqual(h.read(), text, f)
+                # What it refuses: a name that is not on the line, a name of the standard library, no identifier.
+                refused = lambda **a: t.call("rename", {"path": "src/main.rs", "line": use, **a})  # noqa: E731
+                self.assertEqual(refused(name="drop", new_name="x"),
+                                 (f"error: `drop` is not on line {use} of src/main.rs", True))
+                self.assertTrue(refused(name="discard", new_name="a b")[1])
+                with open(os.path.join(crate, "src", "vm.rs"), encoding="utf-8") as h:
+                    vec = next(i for i, ln in enumerate(h.read().split("\n"), 1) if "Vec<" in ln)
+                text, err = t.call("rename", {"path": "src/vm.rs", "line": vec, "name": "Vec", "new_name": "List"})
+                self.assertTrue(err and "non-local" in text, text)
+                # An edit of the session is what the next rename sees.
+                self.assertFalse(t.call("edit_file", {"path": "src/vm.rs", "old": "pub fn discard(",
+                                                      "new": "\n\npub fn discard("})[1])
+                text, err = t.call("rename", {"path": "src/main.rs", "line": use, "name": "discard", "new_name": "drop"})
+                self.assertFalse(err, text)
+                with open(os.path.join(crate, "src", "vm.rs"), encoding="utf-8") as h:
+                    self.assertIn("\n\n\npub fn drop(st", h.read())
+                facts = t.facts()
+                self.assertEqual(len(facts["rename_s"]), 3)  # the two the harness refused did not reach the server
+                self.assertGreater(facts["ra_ready_s"], 0)
+            finally:
+                t.close()
+            self.assertEqual(pair.cargo(crate, os.path.join(d, "target"), ["build"])[0], 0)
+
+
 class Gate(unittest.TestCase):
     def test_check(self):
         r = subprocess.run([sys.executable, os.path.join(HERE, "pair.py"), "check"], capture_output=True, text=True)

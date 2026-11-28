@@ -152,6 +152,7 @@ grep -qF "\"spec_accepted\": 0, \"eligible\": 45" <<< "$st" || { echo "bvb weak:
   --job "bench twin=python3 bench/twin/test_pair.py"
   --job "bench twin tool parity=python3 bench/twin/parity.py check > /dev/null && python3 bench/twin/test_parity.py > /dev/null"
   --job "bench twin gate-d (the frozen set at full size: generated, no target of the first set, two questions)=python3 bench/twin/test_gate_d.py"
+  --job "bench twin unlearned control arm (table, prompt and set generated; round trip of the fixtures; stk and two questions)=python3 bench/twin/test_unlearned.py"
   --job "bench run_models (dry run)=python3 bench/run_models.py --dry-run --limit 2 > /dev/null && python3 bench/test_run_models.py"
   --job "bench bcb=python3 bench/bcb/test_bcb.py > /dev/null"
   --job 'bench brb oracle=b=$(mktemp); r=$(mktemp); trap "rm -f $b $r" EXIT

@@ -1,0 +1,108 @@
+{
+ "id": "c38-state-no_struct",
+ "kind": "comprehend",
+ "family": "state",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions change the field `no_struct` of `parser::Parser`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions change the field `no_struct` of `parser::Parser`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`).",
+  "unlearned": "Which functions change the field `no_struct` of `parser::Parser`: assign it, add to it, remove from it, clear it, or pass it on as `&zlet`? Answer with `module::function`, or `module::Type::method` for a method of an `zrir` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "parser::Parser::cond_expr",
+   "parser::Parser::range_bound"
+  ],
+  "bmb": [
+   "parser::Parser::cond_expr",
+   "parser::Parser::range_bound"
+  ],
+  "unlearned": [
+   "parser::Parser::cond_expr",
+   "parser::Parser::range_bound"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Parser::cond_expr",
+      "parser::Parser::range_bound"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\\.no_struct\\b"
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Parser::cond_expr",
+      "parser::Parser::range_bound"
+     ]
+    }
+   ]
+  ],
+  "unlearned": [
+   [
+    "grep",
+    {
+     "pattern": "\\.no_struct\\b"
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Parser::cond_expr",
+      "parser::Parser::range_bound"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Parser::range_bound"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Parser::range_bound"
+      ]
+     }
+    ]
+   ],
+   "unlearned": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Parser::range_bound"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

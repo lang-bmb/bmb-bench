@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 """Port-twin harness (ADR-0104).
 
-One task, two arms, the same statement, model and tool-call budget:
+One task, two arms and a control, the same statement, model and tool-call budget:
 
   bmb   a BMB workspace through `bmb mcp --write-tool` (maps, queries, `write`,
         `verify`, `build`; the transaction tools hidden, ADR-0101)
   rust  the same program as a Rust crate through file tools: list_dir,
         read_file (line ranges), grep, write_file, edit_file, cargo_build,
-        cargo_test (no shell)
+        cargo_test (no shell); under a tool condition that says so, `rename`
+        through rust-analyzer (`ra.py`)
+
+  unlearned  a control (ADR-0154 decision 2): the Rust crate with its keywords
+        and library names renamed, through the Rust arm's tools on the renamed
+        surface (`unlearned.py`); built and judged as the Rust arm is, on the
+        crate the surface maps back to
 
 A twin is a fixture directory with `bmb/*.bmb`, `rust/` (a crate) and
 `corpus/NAME.in` with `NAME.out`: both programs read standard input and must
@@ -68,6 +74,7 @@ sys.path.insert(0, os.path.join(BENCH, "m1"))
 import harness  # noqa: E402
 sys.path.insert(0, HERE)
 import index  # noqa: E402
+import ra  # noqa: E402
 
 MAX_TOOL_CALLS = 60
 RUN_TIMEOUT = 20  # seconds per corpus case
@@ -420,7 +427,11 @@ def run_repo_cases(exe, cases, cwd):
 def defs_of(task, arm, root):
     """{definition: text} of an arm's code, to see what a session changed.
     A repository fixture is split by function and method (`index.py`):
-    its `impl` blocks are too large to be one item."""
+    its `impl` blocks are too large to be one item. The unlearned arm's
+    are those of the Rust crate behind its surface."""
+    if arm == "unlearned":
+        import unlearned
+        arm, root = "rust", unlearned.sync(root)
     if not repo_fixture(task["fixture"]):
         return bmb_defs(root) if arm == "bmb" else rust_defs(root)
     if arm == "bmb":
@@ -449,31 +460,56 @@ def mcp_flags(fixture):
     return ["--write-tool", "--compact", "--bounded"] if repo_fixture(fixture) else ["--write-tool"]
 
 
-def conditions():
-    """{name: flags} of the tool conditions of `parity.json`. `PAIR_COND`
-    names the one a run is made under (`port`, `port-rename`); it wins over
-    `PAIR_MCP`."""
+def parity_conditions():
+    """The tool conditions of `parity.json`, as written there. `PAIR_COND`
+    names the one a run is made under (`port`, `port-rename`,
+    `port-rename-both`); it wins over `PAIR_MCP`."""
     with open(os.path.join(HERE, "parity.json"), encoding="utf-8") as h:
-        out = {name: c["flags"] for name, c in json.load(h)["conditions"].items()}
+        out = json.load(h)["conditions"]
     cond = os.environ.get("PAIR_COND")
     if cond is not None and cond not in out:
         raise SystemExit(f"PAIR_COND={cond!r}: {', '.join(sorted(out))}")
     return out
 
 
+def conditions():
+    """{name: flags of the BMB arm's server} of the tool conditions."""
+    return {name: c["flags"] for name, c in parity_conditions().items()}
+
+
 def condition(fixture):
-    """The name of the tool condition of a session on `fixture`: the
-    condition of `parity.json` that has exactly the server's flags, or
-    None (a fixture outside the port twin, or flags of no condition)."""
+    """The name of the tool condition of a session on `fixture`: the one
+    `PAIR_COND` names; without it the condition of `parity.json` that has
+    exactly the server's flags and gives the Rust arm no tool of its own
+    (flags say nothing about the Rust arm), or None (a fixture outside the
+    port twin, or flags of no condition)."""
+    if "PAIR_COND" in os.environ:
+        parity_conditions()
+        return os.environ["PAIR_COND"]
     flags = sorted(mcp_flags(fixture))
-    return next((name for name, fl in sorted(conditions().items()) if sorted(fl) == flags), None)
+    return next((name for name, c in sorted(parity_conditions().items())
+                 if sorted(c["flags"]) == flags and not c.get("rust")), None)
+
+
+def rust_extra(fixture):
+    """The names of the tools the condition of the run adds to the Rust
+    arm (`rust` of the condition in `parity.json`): none without
+    `PAIR_COND`."""
+    if "PAIR_COND" not in os.environ:
+        return []
+    return list(parity_conditions()[os.environ["PAIR_COND"]].get("rust", []))
+
+
+def rust_tools(extra=()):
+    """The tools of the Rust arm with those a condition adds."""
+    return RUST_TOOLS + [RUST_EXTRA[n] for n in extra]
 
 
 def calls_of(calls, arm, fixture):
     """The scripted calls of `arm` in `calls` ({arm: calls} of a reference
     or a weak solution): those written for the tool condition of the run
     (`ARM:CONDITION`) where the task has them, else the arm's."""
-    return calls.get(f"{arm}:{condition(fixture)}", calls[arm]) if arm == "bmb" else calls[arm]
+    return calls.get(f"{arm}:{condition(fixture)}", calls[arm])
 
 
 def stamp(task, arm):
@@ -482,7 +518,23 @@ def stamp(task, arm):
     condition of the run (in the rows of both arms: the Rust sessions of a
     run belong to its comparison, though no flag reaches them)."""
     fx = task["fixture"]
-    return {"docs": docs_of(fx), "mcp": " ".join(mcp_flags(fx)) if arm == "bmb" else None, "cond": condition(fx)}
+    out = {"docs": docs_of(fx), "mcp": " ".join(mcp_flags(fx)) if arm == "bmb" else None, "cond": condition(fx)}
+    if arm == "rust" and "rename" in rust_extra(fx):
+        out["rust_analyzer"] = language_server()  # the version the condition's `rename` ran with
+    if arm == "unlearned":
+        import unlearned
+        out["table"] = unlearned.Table().digest  # the renaming the session saw
+    return out
+
+
+def make_tools(task, arm, root, target):
+    """The tools of a session of `arm` on the code at `root`."""
+    if arm == "bmb":
+        return BmbTools(root, mcp_flags(task["fixture"]))
+    if arm == "unlearned":
+        import unlearned
+        return unlearned.Tools(root, target)
+    return RustTools(root, target, rust_extra(task["fixture"]))
 
 
 class BmbTools:
@@ -552,6 +604,31 @@ RUST_TOOLS = [
      "inputSchema": _schema({"filter": {"type": "string"}}, [])},
 ]
 
+# Tools only a tool condition gives the Rust arm (`rust` of the condition in
+# `parity.json`).
+#
+# `rename`: the symbol is named by file, line and name. An agent has no
+# cursor: `grep` and `read_file` print the file and the line number of every
+# occurrence, and the harness finds the column (the first whole word NAME on
+# the line), which a model counts badly. A path such as `module::Type::name`
+# is no address the language server takes, and resolving one outside it
+# would be a second, weaker resolver. Any occurrence will do, the
+# declaration or a use.
+RUST_EXTRA = {
+    "rename": {
+        "name": "rename",
+        "description": "Rename a symbol (function, method, type, field, constant, variable) and every reference "
+                       "to it in the crate, through the language server (rust-analyzer). Name the symbol by one "
+                       "occurrence of it: the file, the line (1-based, as `grep` and `read_file` print it) and its "
+                       "present name; the declaration or any use will do. Only .rs files under src/ and tests/ are "
+                       "changed; the answer lists the places changed per file, and any place in another file that "
+                       "the rename would have changed and did not. Does not build: run `cargo_build` afterwards.",
+        "inputSchema": _schema({"path": {"type": "string"}, "line": {"type": "integer"},
+                                "name": {"type": "string", "description": "the present name, as written on that line"},
+                                "new_name": {"type": "string"}}, ["path", "line", "name", "new_name"]),
+    },
+}
+
 
 def cargo(crate, target_dir, args, timeout=CARGO_TIMEOUT):
     env = {**os.environ, "CARGO_TARGET_DIR": target_dir, "CARGO_TERM_COLOR": "never", "RUST_BACKTRACE": "0",
@@ -564,11 +641,34 @@ def cargo(crate, target_dir, args, timeout=CARGO_TIMEOUT):
         return -1, f"timed out after {timeout} s"
 
 
+def language_server():
+    """The version of the rust-analyzer a condition with `rename` runs
+    with; no run without it (and without the standard library's sources,
+    which it reads to know the types of the crate's expressions)."""
+    v = ra.version()
+    if v is None:
+        raise SystemExit("this tool condition gives the Rust arm `rename`, which needs rust-analyzer: "
+                         "rustup component add rust-analyzer rust-src")
+    sysroot = subprocess.run(["rustc", "--print", "sysroot"], capture_output=True, text=True).stdout.strip()
+    if not os.path.isdir(os.path.join(sysroot, "lib", "rustlib", "src", "rust", "library")):
+        raise SystemExit("this tool condition gives the Rust arm `rename`, which needs the standard library's "
+                         "sources: rustup component add rust-src")
+    return v
+
+
 class RustTools:
-    def __init__(self, crate, target_dir):
+    def __init__(self, crate, target_dir, extra=()):
         self.root = os.path.realpath(crate)
         self.target_dir = target_dir
-        self.tools = RUST_TOOLS
+        self.tools = rust_tools(extra)
+        self.extra = set(extra)
+        self.server = None
+        self.renames = []
+        if "rename" in self.extra:
+            # Started with the session and gone with it: the crate loads
+            # while the agent works, and a `rename` waits for it.
+            self.version = language_server()
+            self.server = ra.Server(self.root, target_dir + "-ra")
 
     def _path(self, p, write=False):
         if not isinstance(p, str) or os.path.isabs(p):
@@ -594,10 +694,25 @@ class RustTools:
         return sorted(out)
 
     def call(self, name, args):
+        if name in RUST_EXTRA and name not in self.extra:
+            return f"unknown tool {name}", True
         try:
             return getattr(self, "t_" + name)(**args)
         except Exception as e:  # noqa: BLE001 (any failure is the agent's error message)
             return f"error: {e}", True
+
+    def _wrote(self, full):
+        if self.server:
+            self.server.changed(full)
+
+    def facts(self):
+        """What a result row says of the language server, beside its
+        version (`stamp`): how long the crate took to load, and each
+        rename's seconds (the first one's include what was left of the
+        loading)."""
+        if not self.server:
+            return {}
+        return {"ra_ready_s": self.server.ready_s, "rename_s": self.renames}
 
     def t_list_dir(self, path="."):
         full = self._path(path)
@@ -641,6 +756,7 @@ class RustTools:
         os.makedirs(os.path.dirname(p), exist_ok=True)
         with open(p, "w", encoding="utf-8") as f:
             f.write(content)
+        self._wrote(p)
         return f"wrote {path} ({len(content.encode())} bytes)\n", False
 
     def t_edit_file(self, path, old, new):
@@ -651,7 +767,48 @@ class RustTools:
             return f"error: `old` occurs {n} times in {path}", True
         with open(p, "w", encoding="utf-8") as f:
             f.write(text.replace(old, new, 1))
+        self._wrote(p)
         return f"edited {path}\n", False
+
+    def t_rename(self, path, line, name, new_name):
+        p = self._path(path, write=True)
+        if not isinstance(new_name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", new_name) or new_name == "_":
+            return f"error: not an identifier: {new_name!r}", True
+        lines = open(p, encoding="utf-8").read().split("\n")
+        if not isinstance(line, int) or not 1 <= line <= len(lines):
+            return f"error: {path} has no line {line}", True
+        col = ra.column(lines[line - 1], name) if isinstance(name, str) and name else None
+        if col is None:
+            return f"error: `{name}` is not on line {line} of {path}", True
+        t0 = time.perf_counter()
+        try:
+            edits = self.server.rename(p, line - 1, col, new_name)
+        except ra.Refused as e:
+            self.renames.append(round(time.perf_counter() - t0, 3))
+            why = "its file would move (a module); only text is changed" if "rename capability" in str(e) else e
+            return f"error: rust-analyzer does not rename this: {why}", True
+        done, left = [], []
+        for f in sorted(edits):
+            rel = os.path.relpath(os.path.realpath(f), self.root)
+            try:
+                full = self._path(rel, write=True)
+            except ValueError:
+                left.append((rel, len(edits[f])))
+                continue
+            with open(full, encoding="utf-8") as h:
+                text = h.read()
+            with open(full, "w", encoding="utf-8") as h:
+                h.write(ra.apply_edits(text, edits[f]))
+            self._wrote(full)
+            done.append((rel, len(edits[f])))
+        self.renames.append(round(time.perf_counter() - t0, 3))
+        out = [f"renamed `{name}` to `{new_name}`: {sum(n for _, n in done)} places in {len(done)} files"]
+        out += [f"{rel}: {n}" for rel, n in done]
+        if left:
+            out.append(f"NOT changed (only .rs files under src/ and tests/ are written): "
+                       f"{sum(n for _, n in left)} places in {len(left)} files that also name it")
+            out += [f"{rel}: {n}" for rel, n in left]
+        return "\n".join(out) + "\n", bool(left)
 
     def _cargo(self, args):
         code, out = cargo(self.root, self.target_dir, args)
@@ -666,7 +823,8 @@ class RustTools:
         return self._cargo(["test"] + ([filter] if isinstance(filter, str) and filter else []))
 
     def close(self):
-        pass
+        if self.server:
+            self.server.close()
 
 
 # ---------- scope: which definitions changed ----------
@@ -799,6 +957,10 @@ def run_cases(exe, cases, cwd=None):
 
 def judge_change(task, arm, root, before, work):
     t0 = time.perf_counter()
+    if arm == "unlearned":
+        # Judged as the Rust arm is, on the crate the surface maps back to.
+        import unlearned
+        arm, root = "rust", unlearned.sync(root)
     out = _judge_change(task, arm, root, before, work)
     out["judge_s"] = round(time.perf_counter() - t0, 3)  # what the hidden judge took (no part of `wall_s`)
     return out
@@ -883,12 +1045,17 @@ def set_up(task, arm, dest, work):
     calls that take the code back to the state the task starts from (a
     replayed commit undone). A BMB setup proves the
     workspace, so its result is kept per commit, task and condition."""
+    if arm == "unlearned":
+        # The Rust arm's start, beside the surface made of it (`unlearned.py`).
+        import unlearned
+        return unlearned.to_surface(set_up(task, "rust", unlearned.base_of(dest), work), dest)
     calls = task.get("setup", {}).get(arm)
     if not calls:
         return materialize(task, arm, dest)
 
     def apply(root):
-        tools = BmbTools(root, mcp_flags(task["fixture"])) if arm == "bmb" else RustTools(root, os.path.join(work, "setup-target"))
+        tools = (BmbTools(root, mcp_flags(task["fixture"])) if arm == "bmb"
+                 else RustTools(root, os.path.join(work, "setup-target")))
         try:
             for name, args in calls:
                 text, err = tools.call(name, args)
@@ -962,14 +1129,14 @@ def run_task(task, arm, agent_kind, script=None):
     try:
         root = set_up(task, arm, os.path.join(work, "code"), work)
         before = defs_of(task, arm, root)
-        tools = BmbTools(root, mcp_flags(task["fixture"])) if arm == "bmb" else RustTools(root, os.path.join(work, "target"))
+        tools = make_tools(task, arm, root, os.path.join(work, "target"))
         comprehend = task["kind"] == "comprehend"
         try:
             m, answer = drive(make_agent(agent_kind, arm, task, script), tools, comprehend)
         finally:
             tools.close()
         row = {"id": task["id"], "kind": task["kind"], "fixture": task["fixture"], "arm": arm, "agent": agent_kind,
-               **stamp(task, arm), **m}
+               **stamp(task, arm), **m, **(tools.facts() if arm != "bmb" else {})}
         if comprehend:
             truth = task["truth"]
             want, got = set(truth[arm] if isinstance(truth, dict) else truth), set(answer or [])
@@ -1005,12 +1172,13 @@ def run_history(task, arm, agent_kind, script=None):
                    "own_cases_only": k + 1 < len(task["steps"])}
             cases = sub["cases"]
             before = defs_of(task, arm, root)
-            tools = BmbTools(root, mcp_flags(task["fixture"])) if arm == "bmb" else RustTools(root, os.path.join(work, "target"))
+            tools = make_tools(task, arm, root, os.path.join(work, "target"))
             try:
                 m, _ = drive(make_agent(agent_kind, arm, sub, None if script is None else script[k]), tools, False)
             finally:
                 tools.close()
-            steps.append({"step": k, **m, **judge_change(sub, arm, root, before, work)})
+            steps.append({"step": k, **m, **(tools.facts() if arm != "bmb" else {}),
+                          **judge_change(sub, arm, root, before, work)})
         usage = {}
         for st in steps:
             for key, v in st["model_usage"].items():
@@ -1030,11 +1198,24 @@ def run_history(task, arm, agent_kind, script=None):
 # ---------- tasks, check, run ----------
 
 def load_tasks(d):
+    """The tasks of directory `d`, with the solutions of its other tool
+    conditions (`d/cond/CONDITION.json`: {task: {"oracle": {ARM:CONDITION:
+    calls}, "weak": [the same per weak solution]}}; a set that is frozen
+    gets a condition's solutions there, its task files stay as they are)."""
     out = []
     for f in sorted(os.listdir(d)):
         if f.endswith(".json"):
             with open(os.path.join(d, f), encoding="utf-8") as h:
                 out.append(json.load(h))
+    cond = os.path.join(d, "cond")
+    for f in sorted(os.listdir(cond)) if os.path.isdir(cond) else []:
+        with open(os.path.join(cond, f), encoding="utf-8") as h:
+            more = json.load(h)
+        for t in out:
+            m = more.get(t["id"])
+            if m:
+                t["oracle"] = {**t["oracle"], **m["oracle"]}
+                t["weak"] = [{**w, **x} for w, x in zip(t["weak"], m["weak"], strict=True)]
     return out
 
 
@@ -1203,13 +1384,14 @@ def cmd_check(a):
     lock = threading.Lock()
     # A check that was cut goes on from its log: a session whose row is
     # there (same task, arm and agent, and for the BMB arm the same tool
-    # condition: a Rust session does not depend on it) is not run again,
-    # its row is judged as it is.
+    # condition: a Rust session depends on it only where the condition
+    # gives the Rust arm a tool) is not run again, its row is judged as it is.
     done = {}
     if a.log and os.path.exists(a.log):
         with open(a.log, encoding="utf-8") as h:
             for r in map(json.loads, h):
-                done[(r["id"], r["arm"], r["agent"], r.get("cond") if r["arm"] == "bmb" else None)] = r
+                done[(r["id"], r["arm"], r["agent"],
+                      r.get("cond") if r["arm"] == "bmb" or "rust_analyzer" in r else None)] = r
     log = open(a.log, "a", encoding="utf-8") if a.log else None
 
     def problem(text):
@@ -1223,7 +1405,7 @@ def cmd_check(a):
                 log.flush()
 
     def session(t, arm, agent, script=None):
-        key = (t["id"], arm, agent, condition(t["fixture"]) if arm == "bmb" else None)
+        key = (t["id"], arm, agent, condition(t["fixture"]) if arm == "bmb" or rust_extra(t["fixture"]) else None)
         if key in done:
             return done[key]
         r = run_task(t, arm, agent, script)
@@ -1255,7 +1437,7 @@ def cmd_check(a):
             one(u)
     if problems:
         sys.exit(1)
-    print(f"ok: {len(tasks)} tasks, {'both arms' if len(a.arms) == 2 else 'arm ' + a.arms[0]}")
+    print(f"ok: {len(tasks)} tasks, {'both arms' if a.arms == ['bmb', 'rust'] else 'arms ' + ', '.join(a.arms)}")
 
 
 def cmd_run(a):
@@ -1282,13 +1464,13 @@ def main():
     ck = sub.add_parser("check")
     ck.add_argument("--tasks", default=os.path.join(HERE, "tasks"))
     ck.add_argument("--only", nargs="*", help="only these tasks")
-    ck.add_argument("--arms", nargs="+", default=["bmb", "rust"], choices=["bmb", "rust"])
+    ck.add_argument("--arms", nargs="+", default=["bmb", "rust"], choices=["bmb", "rust", "unlearned"])
     ck.add_argument("--jobs", type=int, default=1, help="sessions side by side (each builds: at most 2 on 4 cores)")
     ck.add_argument("--log", help="append every session's row (the oracle's and each weak control's) to this file; "
                                   "a session whose row is already there is not run again")
     rn = sub.add_parser("run")
     rn.add_argument("--agent", default="oracle")
-    rn.add_argument("--arms", nargs="+", default=["bmb", "rust"], choices=["bmb", "rust"])
+    rn.add_argument("--arms", nargs="+", default=["bmb", "rust"], choices=["bmb", "rust", "unlearned"])
     rn.add_argument("--tasks", default=os.path.join(HERE, "tasks"))
     rn.add_argument("--only", nargs="*")
     rn.add_argument("--out")

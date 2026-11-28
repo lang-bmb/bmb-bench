@@ -1,0 +1,128 @@
+{
+ "id": "c01-callers-needs_valid",
+ "kind": "comprehend",
+ "family": "callers",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `encode_exec::Exec::needs_valid` directly? Leave out `encode_exec::Exec::needs_valid` itself unless it calls itself. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `verify::invariants::Prog::needs_valid` directly? Leave out `verify::invariants::Prog::needs_valid` itself unless it calls itself. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`).",
+  "unlearned": "Which functions call `verify::invariants::Prog::needs_valid` directly? Leave out `verify::invariants::Prog::needs_valid` itself unless it calls itself. Answer with `module::function`, or `module::Type::method` for a method of an `zrir` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "verify::invariants::Enc::loop_valid_vars",
+   "verify::invariants::Enc::valid",
+   "verify::invariants::Enc::valid_dt"
+  ],
+  "bmb": [
+   "encode_exec::Exec::loop_valid_vars",
+   "encode_exec::Exec::valid",
+   "encode_exec::Exec::valid_dt"
+  ],
+  "unlearned": [
+   "verify::invariants::Enc::loop_valid_vars",
+   "verify::invariants::Enc::valid",
+   "verify::invariants::Enc::valid_dt"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "encode_exec::Exec::needs_valid",
+      "in",
+      "1"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "encode_exec::Exec::loop_valid_vars",
+      "encode_exec::Exec::valid",
+      "encode_exec::Exec::valid_dt"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])needs_valid\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "verify::invariants::Enc::loop_valid_vars",
+      "verify::invariants::Enc::valid",
+      "verify::invariants::Enc::valid_dt"
+     ]
+    }
+   ]
+  ],
+  "unlearned": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])needs_valid\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "verify::invariants::Enc::loop_valid_vars",
+      "verify::invariants::Enc::valid",
+      "verify::invariants::Enc::valid_dt"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "encode_exec::Exec::valid",
+       "encode_exec::Exec::valid_dt"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "verify::invariants::Enc::valid",
+       "verify::invariants::Enc::valid_dt"
+      ]
+     }
+    ]
+   ],
+   "unlearned": [
+    [
+     "answer",
+     {
+      "defs": [
+       "verify::invariants::Enc::valid",
+       "verify::invariants::Enc::valid_dt"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}
