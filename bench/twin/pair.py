@@ -73,7 +73,9 @@ RUN_TIMEOUT = 20  # seconds per corpus case
 CARGO_TIMEOUT = 600
 OUTPUT_LIMIT = 20000
 WRITE_LIMIT = 200000
-HIDDEN = ["tx_begin", "tx_unit", "tx_put", "tx_remove", "tx_remove_unit", "tx_commit", "tx_abort"]
+# `tx_rename` and `tx_expect` exist only under `--rename-ops`; without `tx_begin` they are of no use.
+HIDDEN = ["tx_begin", "tx_unit", "tx_put", "tx_remove", "tx_remove_unit", "tx_commit", "tx_abort", "tx_rename",
+          "tx_expect"]
 
 
 def bmb_bin():

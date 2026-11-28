@@ -35,6 +35,14 @@ The environment variable `PAIR_DOCS` picks the condition, and `docs` of the resu
 - **The server of the BMB arm.** `stk` uses `bmb mcp --write-tool`, the port twin `bmb mcp --write-tool --compact --bounded` (ADR-0146: a response is a window of 32,768 bytes and the description mentions the text search of bodies, `query text`. The first measurements, `3p-05a` and `3p-05b`, ran without `--bounded`: `PAIR_MCP="--write-tool --compact"`). `--compact` is ADR-0144 (the proof result is the status lines of the definitions that failed and one line with the number of proved definitions. Without the compact view the response to one write on the port is about 40 thousand tokens). `PAIR_MCP` changes it and `mcp` of the result row records it.
 - **Gate.** `check` builds the crates of the three conditions and the BMB sources of the two conditions and compares them all with the corpus. The oracle and the weak controls run in the main condition.
 
+## Tool parity (`parity.json`)
+
+Twice a verdict of the twin was decided by a tool one arm lacked: text search (the first measurement) and renaming (the refactoring tasks). `parity.json` lists, operation by operation, the tools of each arm that do it, and marks every operation only one arm can do as a `gap` with its reason. It is written before a measurement is frozen, and a measurement report carries it (`parity.py table`).
+
+- **Conditions.** `port` is the server of the port twin as measured so far (`--write-tool --compact --bounded`). `port-rename` adds `--rename-ops`: `write` then takes `rename` (a definition and every reference in one call). The Rust arm has no equal tool, so a measurement under `port-rename` reports that row as a gap in its favour.
+- **Check** (gate): every tool an arm has is in a row, every tool and form a row names exists, a row with an empty arm says why, and the tool lists equal the pinned ones (`parity.py pin` after the table was read against a change).
+- **Gaps at present:** renaming in one call, a signature change across units in one step (Rust only), running tests (Rust only), proving (BMB only), running the program (neither).
+
 ## The fixture `stk`
 
 A program that executes the commands on standard input on one stack (three units `lex`, `vm`, `main`; in Rust three modules of the same names). Errors are `error LINE: WHAT`, with `depth N` at the end. The BMB side is fully proved. On the 8 corpus files (overflow, `i64::MIN`, the stack limit of 4096, whitespace and CR, bytes that are not UTF-8, empty input) the output bytes of the two sides are the same (`check` verifies this every time).

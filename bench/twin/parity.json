@@ -1,0 +1,272 @@
+{
+  "about": "What an agent can do in each arm of the port twin, operation by operation. Made before a measurement is frozen; `parity.py check` holds it against the tools the harness really gives.",
+  "conditions": {
+    "port": {
+      "flags": [
+        "--write-tool",
+        "--compact",
+        "--bounded"
+      ],
+      "tools": "sha256:276b5a469a8d5d0ba73335f8cd8a19423a08883450c9e6922d89aa2fc3725a8c"
+    },
+    "port-rename": {
+      "flags": [
+        "--write-tool",
+        "--compact",
+        "--bounded",
+        "--rename-ops"
+      ],
+      "tools": "sha256:aa3a3bc022674447fd70ee80aadd9f2eac7c4d09df4c7a43ceea8d01fa824255"
+    }
+  },
+  "rust_tools": "sha256:b78691b04fccec636a86798b9e7f797cb422031ba5af2ff402d02a918a15f51f",
+  "operations": [
+    {
+      "op": "list what exists",
+      "rust": [
+        {
+          "tool": "list_dir"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "map"
+        },
+        {
+          "tool": "query",
+          "form": "overview"
+        },
+        {
+          "tool": "query",
+          "form": "units"
+        }
+      ],
+      "note": "Rust: files and directories. BMB: units and their definitions."
+    },
+    {
+      "op": "read the text of a definition",
+      "rust": [
+        {
+          "tool": "read_file"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "query",
+          "form": "slice DEF"
+        }
+      ],
+      "note": "Rust reads a line range of a file; BMB reads a definition with what it depends on."
+    },
+    {
+      "op": "read signatures without bodies",
+      "rust": [
+        {
+          "tool": "grep"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "map"
+        },
+        {
+          "tool": "query",
+          "form": "surface DEF"
+        }
+      ],
+      "note": "Rust has no tool of its own for it: a search for `fn ` lines gives the first line of each signature."
+    },
+    {
+      "op": "find a definition by name",
+      "rust": [
+        {
+          "tool": "grep"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "query",
+          "form": "find NAME"
+        }
+      ]
+    },
+    {
+      "op": "search the text of bodies",
+      "rust": [
+        {
+          "tool": "grep"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "query",
+          "form": "text PATTERN"
+        }
+      ],
+      "note": "Not equal: Rust searches with a regular expression and context lines, BMB with the text as written."
+    },
+    {
+      "op": "callers and callees of a function",
+      "rust": [
+        {
+          "tool": "grep"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "query",
+          "form": "edges DEF"
+        }
+      ],
+      "note": "Not equal: Rust finds call sites by name, BMB reads the call edges. This difference is part of what is measured."
+    },
+    {
+      "op": "change part of a definition",
+      "rust": [
+        {
+          "tool": "edit_file"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "write"
+        }
+      ],
+      "note": "Not equal: Rust replaces one occurrence of a text; BMB sends the whole definition again."
+    },
+    {
+      "op": "add or replace whole definitions",
+      "rust": [
+        {
+          "tool": "write_file"
+        },
+        {
+          "tool": "edit_file"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "write"
+        }
+      ]
+    },
+    {
+      "op": "remove a definition",
+      "rust": [
+        {
+          "tool": "edit_file"
+        },
+        {
+          "tool": "write_file"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "write",
+          "form": "remove"
+        }
+      ]
+    },
+    {
+      "op": "create a file or unit",
+      "rust": [
+        {
+          "tool": "write_file"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "write",
+          "form": "summary"
+        }
+      ]
+    },
+    {
+      "op": "rename a definition and every use in one call",
+      "rust": [],
+      "bmb": [
+        {
+          "tool": "write",
+          "form": "rename",
+          "needs": "--rename-ops"
+        }
+      ],
+      "gap": "Neither arm has it in condition `port`: Rust searches and edits place by place, BMB writes unit by unit. In condition `port-rename` only BMB has it. A Rust arm with an equal tool (a rename through the language server) does not exist in the harness."
+    },
+    {
+      "op": "change a signature whose call sites are in several files or units, in one step",
+      "rust": [
+        {
+          "tool": "edit_file"
+        },
+        {
+          "tool": "write_file"
+        }
+      ],
+      "bmb": [],
+      "gap": "Rust may leave the crate broken between edits. BMB writes one unit at a time and each write must check, so the change goes through a second name (see the README, `Changes across units`)."
+    },
+    {
+      "op": "check that the code compiles",
+      "rust": [
+        {
+          "tool": "cargo_build"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "verify"
+        },
+        {
+          "tool": "write"
+        }
+      ],
+      "note": "A BMB write is checked before it is taken."
+    },
+    {
+      "op": "run tests",
+      "rust": [
+        {
+          "tool": "cargo_test"
+        }
+      ],
+      "bmb": [],
+      "gap": "The BMB arm cannot run anything. What it has in the place of tests is the next row."
+    },
+    {
+      "op": "prove the contracts",
+      "rust": [],
+      "bmb": [
+        {
+          "tool": "verify"
+        },
+        {
+          "tool": "write"
+        },
+        {
+          "tool": "build"
+        }
+      ],
+      "gap": "The Rust arm has no prover. This difference is part of what is measured."
+    },
+    {
+      "op": "build the program",
+      "rust": [
+        {
+          "tool": "cargo_build"
+        }
+      ],
+      "bmb": [
+        {
+          "tool": "build"
+        }
+      ]
+    },
+    {
+      "op": "run the program on an input",
+      "rust": [],
+      "bmb": [],
+      "gap": "Neither arm. The hidden judge does it after the session."
+    }
+  ]
+}
