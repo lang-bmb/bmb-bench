@@ -1,0 +1,76 @@
+{
+ "id": "c29-diag-e0424",
+ "kind": "comprehend",
+ "family": "diag",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions report the diagnostic code `E0424`, that is, write the code in their own body? Leave out the table that lists every code. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions report the diagnostic code `E0424`, that is, write the code in their own body? Leave out the table that lists every code. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "check::Checker::builtin_variant",
+   "check::Checker::instance"
+  ],
+  "bmb": [
+   "body::Body::builtin_variant",
+   "body::Body::instance"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "body::Body::builtin_variant",
+      "body::Body::instance"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\"E0424\""
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "check::Checker::builtin_variant",
+      "check::Checker::instance"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "body::Body::instance"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "check::Checker::instance"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

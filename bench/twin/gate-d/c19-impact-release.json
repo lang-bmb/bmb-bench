@@ -1,0 +1,132 @@
+{
+ "id": "c19-impact-release",
+ "kind": "comprehend",
+ "family": "impact",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `codegen::Gen::release` directly, or call one of its direct callers (its callers up to two levels)? Leave out `codegen::Gen::release` itself unless it is called from one of them. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `codegen::Gen::release` directly, or call one of its direct callers (its callers up to two levels)? Leave out `codegen::Gen::release` itself unless it is called from one of them. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "codegen::Gen::block_expr",
+   "codegen::Gen::cond",
+   "codegen::Gen::expr",
+   "codegen::Gen::loop_expr",
+   "codegen::Gen::match_expr",
+   "codegen::Gen::region",
+   "codegen::Gen::stmt",
+   "codegen::emit_with"
+  ],
+  "bmb": [
+   "codegen::Gen::binary",
+   "codegen::Gen::block_expr",
+   "codegen::Gen::expr",
+   "codegen::Gen::for_stmt",
+   "codegen::Gen::if_array",
+   "codegen::Gen::if_expr",
+   "codegen::Gen::loop_expr",
+   "codegen::Gen::match_expr",
+   "codegen::Gen::region_expr",
+   "codegen::Gen::while_stmt",
+   "codegen::lower_fn"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "codegen::Gen::release",
+      "in",
+      "2"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "codegen::Gen::binary",
+      "codegen::Gen::block_expr",
+      "codegen::Gen::expr",
+      "codegen::Gen::for_stmt",
+      "codegen::Gen::if_array",
+      "codegen::Gen::if_expr",
+      "codegen::Gen::loop_expr",
+      "codegen::Gen::match_expr",
+      "codegen::Gen::region_expr",
+      "codegen::Gen::while_stmt",
+      "codegen::lower_fn"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])release\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "codegen::Gen::block_expr",
+      "codegen::Gen::cond",
+      "codegen::Gen::expr",
+      "codegen::Gen::loop_expr",
+      "codegen::Gen::match_expr",
+      "codegen::Gen::region",
+      "codegen::Gen::stmt",
+      "codegen::emit_with"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "codegen::Gen::block_expr",
+       "codegen::Gen::expr",
+       "codegen::Gen::for_stmt",
+       "codegen::Gen::if_array",
+       "codegen::Gen::if_expr",
+       "codegen::Gen::loop_expr",
+       "codegen::Gen::match_expr",
+       "codegen::Gen::region_expr",
+       "codegen::Gen::while_stmt",
+       "codegen::lower_fn"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "codegen::Gen::cond",
+       "codegen::Gen::expr",
+       "codegen::Gen::loop_expr",
+       "codegen::Gen::match_expr",
+       "codegen::Gen::region",
+       "codegen::Gen::stmt",
+       "codegen::emit_with"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

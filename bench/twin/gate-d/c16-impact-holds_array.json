@@ -1,0 +1,114 @@
+{
+ "id": "c16-impact-holds_array",
+ "kind": "comprehend",
+ "family": "impact",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `decls::Checker::holds_array` directly, or call one of its direct callers (its callers up to two levels)? Leave out `decls::Checker::holds_array` itself unless it is called from one of them. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `check::Checker::holds_array` directly, or call one of its direct callers (its callers up to two levels)? Leave out `check::Checker::holds_array` itself unless it is called from one of them. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "check::Checker::check_type_cycles",
+   "check::Checker::collect",
+   "check::Checker::holds_array",
+   "check::Checker::targ_ok",
+   "check::Checker::vec_elem_ok",
+   "check::Checker::vec_type"
+  ],
+  "bmb": [
+   "decls::Checker::check_type_cycles",
+   "decls::Checker::collect",
+   "decls::Checker::holds_array",
+   "decls::Checker::parts_hold_array",
+   "decls::Checker::targ_ok",
+   "decls::Checker::vec_elem_ok",
+   "decls::Checker::vec_type"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "decls::Checker::holds_array",
+      "in",
+      "2"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "decls::Checker::check_type_cycles",
+      "decls::Checker::collect",
+      "decls::Checker::holds_array",
+      "decls::Checker::parts_hold_array",
+      "decls::Checker::targ_ok",
+      "decls::Checker::vec_elem_ok",
+      "decls::Checker::vec_type"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])holds_array\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "check::Checker::check_type_cycles",
+      "check::Checker::collect",
+      "check::Checker::holds_array",
+      "check::Checker::targ_ok",
+      "check::Checker::vec_elem_ok",
+      "check::Checker::vec_type"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "decls::Checker::collect",
+       "decls::Checker::holds_array",
+       "decls::Checker::parts_hold_array",
+       "decls::Checker::targ_ok",
+       "decls::Checker::vec_elem_ok",
+       "decls::Checker::vec_type"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "check::Checker::collect",
+       "check::Checker::holds_array",
+       "check::Checker::targ_ok",
+       "check::Checker::vec_elem_ok",
+       "check::Checker::vec_type"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

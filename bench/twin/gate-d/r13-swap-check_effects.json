@@ -1,0 +1,165 @@
+{
+ "id": "r13-swap-check_effects",
+ "kind": "change",
+ "family": "swap",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Change the signature of the function `body::Body::check_effects`: its first two parameters after `self` change places (`d` and `cx`). Update every call of it. The program's behaviour must not change; change nothing else.",
+  "rust": "Change the signature of the function `check::Checker::check_effects`: its first two parameters after `self` change places (`f` and `cx`). Update every call of it. The program's behaviour must not change; change nothing else."
+ },
+ "scope": {
+  "rust": [
+   "check::Checker::check_effects",
+   "check::Checker::check_fn"
+  ],
+  "bmb": [
+   "body::Body::check_effects",
+   "body::Body::check_fn"
+  ]
+ },
+ "must_change": {
+  "rust": [
+   "check::Checker::check_effects",
+   "check::Checker::check_fn"
+  ],
+  "bmb": [
+   "body::Body::check_effects",
+   "body::Body::check_fn"
+  ]
+ },
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "            self.check_effects(f, &cx);",
+     "new": "            self.check_effects(&cx, f);"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "    fn check_effects(&mut self, f: &FnDef, cx: &FnCtx) {",
+     "new": "    fn check_effects(&mut self, cx: &FnCtx, f: &FnDef) {"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "body",
+     "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_effects(self: &mut Body, cx: &FnCtx, d: &ast::FnDef) -> () {\n            let need: types::Effects = needed(cx);\n            let missing: types::Effects = types::e_minus(need, cx.effect);\n            if types::is_pure(missing) || types::is_pure(cx.effect) && only_io(missing) {\n                return;\n            }\n            let mut k: usize = d.attrs.len();\n            for i in 0..d.attrs.len()\n                invariant 0 <= i && i <= d.attrs.len() && k <= d.attrs.len(),\n            {\n                if k == d.attrs.len() && d.attrs[i].name.name == \"effects\" {\n                    k = i;\n                }\n            }\n            {\n                {\n                    if k < d.attrs.len() {\n                        let mut why: String = String::new();\n                        let mut first: bool = true;\n                        for j in 0..cx.needs.len()\n                            invariant 0 <= j && j <= cx.needs.len(),\n                        {\n                            if types::e_contains(missing, cx.needs[j].e) {\n                                if !first {\n                                    why.push_str(\" and \");\n                                }\n                                first = false;\n                                why.push_str(\"`\");\n                                why.push_str(types::e_text(cx.needs[j].e).as_str());\n                                why.push_str(\"` (\");\n                                why.push_str(cx.needs[j].what.as_str());\n                                why.push_str(\")\");\n                            }\n                        }\n                        let want: String = types::e_text(types::e_union(cx.effect, need));\n                        let msg: String = types::cat7(\"`\", d.name.name.as_str(), \"` needs \", why.as_str(), \" but declares `#[effects(\", types::e_text(cx.effect).as_str(), \")]`\");\n                        let fix: String = types::cat3(\"declare `#[effects(\", want.as_str(), \")]`\");\n                        let to: String = types::cat3(\"#[effects(\", want.as_str(), \")]\");\n                        self.c.fixed(\"E0606\", d.attrs[k].span, msg.as_str(), fix.as_str(), to.as_str());\n                    }\n                }\n            }\n        }\n\n        #[effects(alloc)]\n        fn check_fn(self: &mut Body, d: &ast::FnDef, mp: &str, path: &str) -> () {\n            let at: usize = match self.c.fns.find(path) {\n                None => { return; },\n                Some(i) => i,\n            };\n            let sig: types::FnSig = self.c.fns.items[at].clone();\n            self.c.tparams = sig.generics.clone();\n            let mut cx: FnCtx = new_ctx(path, mp, sig.effect, is_proof(d.kind));\n            if !self.calls.has(path) {\n                let none: Vec<String> = Vec::new();\n                self.calls.insert(path, none);\n            }\n            for i in 0..d.attrs.len()\n                invariant 0 <= i && i <= d.attrs.len(),\n            {\n                if d.attrs[i].name.name == \"uses\" {\n                    self.check_uses(&d.attrs[i], mp);\n                }\n            }\n            for i in 0..d.params.len()\n                invariant 0 <= i && i <= d.params.len(),\n            {\n                let ty: ast::TypeKind = self.c.canon(&d.params[i].ty, mp, true, 1000000000);\n                self.check_param_type(&d.params[i].ty, d.kind, !ty_has_error(&ty, 1000000000));\n                self.declare(&mut cx, &d.params[i].name, ty, false, true);\n            }\n            self.check_value_type(&d.ret.ty, \"return type\");\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"Vec\") {\n                self.spec_vec(d.ret.ty.span);\n            }\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"String\") {\n                self.spec_string(d.ret.ty.span);\n            }\n            let ret_ty: ast::TypeKind = self.c.canon(&d.ret.ty, mp, true, 1000000000);\n            cx.ret = ret_ty.clone();\n            if is_spec(d.kind) {\n                if d.pre.len() > 0 {\n                    self.c.err(\"E0207\", d.pre[0].span, \"spec functions take no `requires` / `ensures` in milestone 1\");\n                } else if d.post.len() > 0 {\n                    self.c.err(\"E0207\", d.post[0].span, \"spec functions take no `requires` / `ensures` in milestone 1\");\n                }\n            }\n            for i in 0..d.pre.len()\n                invariant 0 <= i && i <= d.pre.len(),\n            {\n                self.check_contract(&mut cx, &d.pre[i], false);\n            }\n            if d.post.len() > 0 {\n                let scope: Vec<Local> = Vec::new();\n                cx.scopes.push(scope);\n                match &d.ret.name {\n                    None => {},\n                    Some(n) => self.declare(&mut cx, n, ret_ty.clone(), false, false),\n                }\n                for i in 0..d.post.len()\n                    invariant 0 <= i && i <= d.post.len(),\n                {\n                    self.check_contract(&mut cx, &d.post[i], true);\n                }\n                cx.scopes.pop();\n            }\n            match &d.ret.name {\n                None => {},\n                Some(n) => { types::add(&mut cx.reserved, n.name.as_str()); },\n            }\n            match &d.measure {\n                None => {},\n                Some(m) => { let no: Option<ast::TypeKind> = None; let t: ast::TypeKind = self.expr(&mut cx, m, &no, Mode::Spec(false), 1000000000); self.measure_type(&t, m.span); },\n            }\n            if is_some(&sig.trait_of) && !sig.default {\n                self.c.tparams = Vec::new();\n                return;\n            }\n            let mode: Mode = match d.kind {\n                ast::FnKind::Exec => Mode::Exec,\n                ast::FnKind::Spec => Mode::Spec(false),\n                ast::FnKind::Proof => Mode::Ghost,\n            };\n            let want: Option<ast::TypeKind> = Some(ret_ty.clone());\n            self.open_lets = Vec::new();\n            self.typed_uses = Vec::new();\n            self.spec_at = Vec::new();\n            let t: ast::TypeKind = self.block(&mut cx, &d.body, &want, mode, 1000000000);\n            self.spec_widen = !is_exec(d.kind);\n            let end: source::Span = match &d.body.tail {\n                None => d.body.span,\n                Some(e) => e.span,\n            };\n            self.expect_ty(&t, &ret_ty, end);\n            self.spec_widen = false;\n            self.settle_lets(d, mp);\n            if is_exec(d.kind) {\n                if has_attr(d.attrs.as_slice(), \"external_body\") {\n                    need_own(&mut cx, panic_effect(), \"`#[external_body]`\");\n                    types::add(&mut self.external, path);\n                }\n                self.check_effects(&cx, d);\n                let info: moves::MoveInfo = self.check_moves(d, path);\n                self.needs.insert(path, Needs { own: cx.own, body: needed(&cx), moves: info });\n            }\n            self.c.tparams = Vec::new();\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "scope",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "body",
+      "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_effects(self: &mut Body, cx: &FnCtx, d: &ast::FnDef) -> () {\n            let need: types::Effects = needed(cx);\n            let missing: types::Effects = types::e_minus(need, cx.effect);\n            if types::is_pure(missing) || types::is_pure(cx.effect) && only_io(missing) {\n                return;\n            }\n            let mut k: usize = d.attrs.len();\n            for i in 0..d.attrs.len()\n                invariant 0 <= i && i <= d.attrs.len() && k <= d.attrs.len(),\n            {\n                if k == d.attrs.len() && d.attrs[i].name.name == \"effects\" {\n                    k = i;\n                }\n            }\n            {\n                {\n                    if k < d.attrs.len() {\n                        let mut why: String = String::new();\n                        let mut first: bool = true;\n                        for j in 0..cx.needs.len()\n                            invariant 0 <= j && j <= cx.needs.len(),\n                        {\n                            if types::e_contains(missing, cx.needs[j].e) {\n                                if !first {\n                                    why.push_str(\" and \");\n                                }\n                                first = false;\n                                why.push_str(\"`\");\n                                why.push_str(types::e_text(cx.needs[j].e).as_str());\n                                why.push_str(\"` (\");\n                                why.push_str(cx.needs[j].what.as_str());\n                                why.push_str(\")\");\n                            }\n                        }\n                        let want: String = types::e_text(types::e_union(cx.effect, need));\n                        let msg: String = types::cat7(\"`\", d.name.name.as_str(), \"` needs \", why.as_str(), \" but declares `#[effects(\", types::e_text(cx.effect).as_str(), \")]`\");\n                        let fix: String = types::cat3(\"declare `#[effects(\", want.as_str(), \")]`\");\n                        let to: String = types::cat3(\"#[effects(\", want.as_str(), \")]\");\n                        self.c.fixed(\"E0606\", d.attrs[k].span, msg.as_str(), fix.as_str(), to.as_str());\n                    }\n                }\n            }\n        }\n\n        #[effects(alloc)]\n        fn check_fn(self: &mut Body, d: &ast::FnDef, mp: &str, path: &str) -> () {\n            let at: usize = match self.c.fns.find(path) {\n                None => { return; },\n                Some(i) => i,\n            };\n            let sig: types::FnSig = self.c.fns.items[at].clone();\n            self.c.tparams = sig.generics.clone();\n            let mut cx: FnCtx = new_ctx(path, mp, sig.effect, is_proof(d.kind));\n            if !self.calls.has(path) {\n                let none: Vec<String> = Vec::new();\n                self.calls.insert(path, none);\n            }\n            for i in 0..d.attrs.len()\n                invariant 0 <= i && i <= d.attrs.len(),\n            {\n                if d.attrs[i].name.name == \"uses\" {\n                    self.check_uses(&d.attrs[i], mp);\n                }\n            }\n            for i in 0..d.params.len()\n                invariant 0 <= i && i <= d.params.len(),\n            {\n                let ty: ast::TypeKind = self.c.canon(&d.params[i].ty, mp, true, 1000000000);\n                self.check_param_type(&d.params[i].ty, d.kind, !ty_has_error(&ty, 1000000000));\n                self.declare(&mut cx, &d.params[i].name, ty, false, true);\n            }\n            self.check_value_type(&d.ret.ty, \"return type\");\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"Vec\") {\n                self.spec_vec(d.ret.ty.span);\n            }\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"String\") {\n                self.spec_string(d.ret.ty.span);\n            }\n            let ret_ty: ast::TypeKind = self.c.canon(&d.ret.ty, mp, true, 1000000000);\n            cx.ret = ret_ty.clone();\n            if is_spec(d.kind) {\n                if d.pre.len() > 0 {\n                    self.c.err(\"E0207\", d.pre[0].span, \"spec functions take no `requires` / `ensures` in milestone 1\");\n                } else if d.post.len() > 0 {\n                    self.c.err(\"E0207\", d.post[0].span, \"spec functions take no `requires` / `ensures` in milestone 1\");\n                }\n            }\n            for i in 0..d.pre.len()\n                invariant 0 <= i && i <= d.pre.len(),\n            {\n                self.check_contract(&mut cx, &d.pre[i], false);\n            }\n            if d.post.len() > 0 {\n                let scope: Vec<Local> = Vec::new();\n                cx.scopes.push(scope);\n                match &d.ret.name {\n                    None => {},\n                    Some(n) => self.declare(&mut cx, n, ret_ty.clone(), false, false),\n                }\n                for i in 0..d.post.len()\n                    invariant 0 <= i && i <= d.post.len(),\n                {\n                    self.check_contract(&mut cx, &d.post[i], true);\n                }\n                cx.scopes.pop();\n            }\n            match &d.ret.name {\n                None => {},\n                Some(n) => { types::add(&mut cx.reserved, n.name.as_str()); },\n            }\n            match &d.measure {\n                None => {},\n                Some(m) => { let no: Option<ast::TypeKind> = None; let t: ast::TypeKind = self.expr(&mut cx, m, &no, Mode::Spec(false), 1000000000); self.measure_type(&t, m.span); },\n            }\n            if is_some(&sig.trait_of) && !sig.default {\n                self.c.tparams = Vec::new();\n                return;\n            }\n            let mode: Mode = match d.kind {\n                ast::FnKind::Exec => Mode::Exec,\n                ast::FnKind::Spec => Mode::Spec(false),\n                ast::FnKind::Proof => Mode::Ghost,\n            };\n            let want: Option<ast::TypeKind> = Some(ret_ty.clone());\n            self.open_lets = Vec::new();\n            self.typed_uses = Vec::new();\n            self.spec_at = Vec::new();\n            let t: ast::TypeKind = self.block(&mut cx, &d.body, &want, mode, 1000000000);\n            self.spec_widen = !is_exec(d.kind);\n            let end: source::Span = match &d.body.tail {\n                None => d.body.span,\n                Some(e) => e.span,\n            };\n            self.expect_ty(&t, &ret_ty, end);\n            self.spec_widen = false;\n            self.settle_lets(d, mp);\n            if is_exec(d.kind) {\n                if has_attr(d.attrs.as_slice(), \"external_body\") {\n                    need_own(&mut cx, panic_effect(), \"`#[external_body]`\");\n                    types::add(&mut self.external, path);\n                }\n                self.check_effects(&cx, d);\n                let info: moves::MoveInfo = self.check_moves(d, path);\n                self.needs.insert(path, Needs { own: cx.own, body: needed(&cx), moves: info });\n            }\n            self.c.tparams = Vec::new();\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "            self.check_effects(f, &cx);",
+      "new": "            self.check_effects(&cx, f);"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "    fn check_effects(&mut self, f: &FnDef, cx: &FnCtx) {",
+      "new": "    fn check_effects(&mut self, cx: &FnCtx, f: &FnDef) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/sha256.rs",
+      "old": "    let mut s = String::from(\"sha256:\");",
+      "new": "    let mut s = \"sha256:\".to_string();"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "body",
+      "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_effects(self: &mut Body, cx: &FnCtx, d: &ast::FnDef) -> () {\n            let need: types::Effects = needed(cx);\n            let missing: types::Effects = types::e_minus(need, cx.effect);\n            if types::is_pure(missing) || types::is_pure(cx.effect) && only_io(missing) {\n                return;\n            }\n            let mut k: usize = d.attrs.len();\n            for i in 0..d.attrs.len()\n                invariant 0 <= i && i <= d.attrs.len() && k <= d.attrs.len(),\n            {\n                if k == d.attrs.len() && d.attrs[i].name.name == \"effects\" {\n                    k = i;\n                }\n            }\n            {\n                {\n                    if k < d.attrs.len() {\n                        let mut why: String = String::new();\n                        let mut first: bool = true;\n                        for j in 0..cx.needs.len()\n                            invariant 0 <= j && j <= cx.needs.len(),\n                        {\n                            if types::e_contains(missing, cx.needs[j].e) {\n                                if !first {\n                                    why.push_str(\" and \");\n                                }\n                                first = false;\n                                why.push_str(\"`\");\n                                why.push_str(types::e_text(cx.needs[j].e).as_str());\n                                why.push_str(\"` (\");\n                                why.push_str(cx.needs[j].what.as_str());\n                                why.push_str(\")\");\n                            }\n                        }\n                        let want: String = types::e_text(types::e_union(cx.effect, need));\n                        let msg: String = types::cat7(\"`\", d.name.name.as_str(), \"` needs \", why.as_str(), \" but declares `#[effects(\", types::e_text(cx.effect).as_str(), \")]`\");\n                        let fix: String = types::cat3(\"declare `#[effects(\", want.as_str(), \")]`\");\n                        let to: String = types::cat3(\"#[effects(\", want.as_str(), \")]\");\n                        self.c.fixed(\"E0606\", d.attrs[k].span, msg.as_str(), fix.as_str(), to.as_str());\n                    }\n                }\n            }\n        }\n\n        #[effects(alloc)]\n        fn check_fn(self: &mut Body, d: &ast::FnDef, mp: &str, path: &str) -> () {\n            let at: usize = match self.c.fns.find(path) {\n                None => { return; },\n                Some(i) => i,\n            };\n            let sig: types::FnSig = self.c.fns.items[at].clone();\n            self.c.tparams = sig.generics.clone();\n            let mut cx: FnCtx = new_ctx(path, mp, sig.effect, is_proof(d.kind));\n            if !self.calls.has(path) {\n                let none: Vec<String> = Vec::new();\n                self.calls.insert(path, none);\n            }\n            for i in 0..d.attrs.len()\n                invariant 0 <= i && i <= d.attrs.len(),\n            {\n                if d.attrs[i].name.name == \"uses\" {\n                    self.check_uses(&d.attrs[i], mp);\n                }\n            }\n            for i in 0..d.params.len()\n                invariant 0 <= i && i <= d.params.len(),\n            {\n                let ty: ast::TypeKind = self.c.canon(&d.params[i].ty, mp, true, 1000000000);\n                self.check_param_type(&d.params[i].ty, d.kind, !ty_has_error(&ty, 1000000000));\n                self.declare(&mut cx, &d.params[i].name, ty, false, true);\n            }\n            self.check_value_type(&d.ret.ty, \"return type\");\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"Vec\") {\n                self.spec_vec(d.ret.ty.span);\n            }\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"String\") {\n                self.spec_string(d.ret.ty.span);\n            }\n            let ret_ty: ast::TypeKind = self.c.canon(&d.ret.ty, mp, true, 1000000000);\n            cx.ret = ret_ty.clone();\n            if is_spec(d.kind) {\n                if d.pre.len() > 0 {\n                    self.c.err(\"E0207\", d.pre[0].span, \"spec functions take no `requires` / `ensures` in milestone 1\");\n                } else if d.post.len() > 0 {\n                    self.c.err(\"E0207\", d.post[0].span, \"spec functions take no `requires` / `ensures` in milestone 1\");\n                }\n            }\n            for i in 0..d.pre.len()\n                invariant 0 <= i && i <= d.pre.len(),\n            {\n                self.check_contract(&mut cx, &d.pre[i], false);\n            }\n            if d.post.len() > 0 {\n                let scope: Vec<Local> = Vec::new();\n                cx.scopes.push(scope);\n                match &d.ret.name {\n                    None => {},\n                    Some(n) => self.declare(&mut cx, n, ret_ty.clone(), false, false),\n                }\n                for i in 0..d.post.len()\n                    invariant 0 <= i && i <= d.post.len(),\n                {\n                    self.check_contract(&mut cx, &d.post[i], true);\n                }\n                cx.scopes.pop();\n            }\n            match &d.ret.name {\n                None => {},\n                Some(n) => { types::add(&mut cx.reserved, n.name.as_str()); },\n            }\n            match &d.measure {\n                None => {},\n                Some(m) => { let no: Option<ast::TypeKind> = None; let t: ast::TypeKind = self.expr(&mut cx, m, &no, Mode::Spec(false), 1000000000); self.measure_type(&t, m.span); },\n            }\n            if is_some(&sig.trait_of) && !sig.default {\n                self.c.tparams = Vec::new();\n                return;\n            }\n            let mode: Mode = match d.kind {\n                ast::FnKind::Exec => Mode::Exec,\n                ast::FnKind::Spec => Mode::Spec(false),\n                ast::FnKind::Proof => Mode::Ghost,\n            };\n            let want: Option<ast::TypeKind> = Some(ret_ty.clone());\n            self.open_lets = Vec::new();\n            self.typed_uses = Vec::new();\n            self.spec_at = Vec::new();\n            let t: ast::TypeKind = self.block(&mut cx, &d.body, &want, mode, 1000000000);\n            self.spec_widen = !is_exec(d.kind);\n            let end: source::Span = match &d.body.tail {\n                None => d.body.span,\n                Some(e) => e.span,\n            };\n            self.expect_ty(&t, &ret_ty, end);\n            self.spec_widen = false;\n            self.settle_lets(d, mp);\n            if is_exec(d.kind) {\n                if has_attr(d.attrs.as_slice(), \"external_body\") {\n                    need_own(&mut cx, panic_effect(), \"`#[external_body]`\");\n                    types::add(&mut self.external, path);\n                }\n                self.check_effects(&cx, d);\n                let info: moves::MoveInfo = self.check_moves(d, path);\n                self.needs.insert(path, Needs { own: cx.own, body: needed(&cx), moves: info });\n            }\n            self.c.tparams = Vec::new();\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "            self.check_effects(f, &cx);",
+      "new": "            self.check_effects(&cx, f);"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "    fn check_effects(&mut self, f: &FnDef, cx: &FnCtx) {",
+      "new": "    fn check_effects(&mut self, cx: &FnCtx, f: &FnDef) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "done",
+   "bmb": [],
+   "rust": []
+  }
+ ]
+}

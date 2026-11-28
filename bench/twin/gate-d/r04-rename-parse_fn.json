@@ -1,0 +1,305 @@
+{
+ "id": "r04-rename-parse_fn",
+ "kind": "change",
+ "family": "rename",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Rename the function `parser::Parser::parse_fn` to `parse_fn_renamed` and update every use of it. The program's behaviour must not change; change nothing else.",
+  "rust": "Rename the function `parser::Parser::parse_fn` to `parse_fn_renamed` and update every use of it. The program's behaviour must not change; change nothing else."
+ },
+ "scope": {
+  "rust": [
+   "parser::Parser::impl_body",
+   "parser::Parser::parse_fn",
+   "parser::Parser::parse_fn_renamed",
+   "parser::Parser::parse_mod_inner",
+   "parser::Parser::parse_trait"
+  ],
+  "bmb": [
+   "parser::Parser::impl_body",
+   "parser::Parser::parse_fn",
+   "parser::Parser::parse_fn_renamed",
+   "parser::Parser::parse_mod_inner",
+   "parser::Parser::parse_trait"
+  ]
+ },
+ "must_change": {
+  "rust": [
+   "parser::Parser::impl_body",
+   "parser::Parser::parse_fn",
+   "parser::Parser::parse_fn_renamed",
+   "parser::Parser::parse_mod_inner",
+   "parser::Parser::parse_trait"
+  ],
+  "bmb": [
+   "parser::Parser::impl_body",
+   "parser::Parser::parse_fn",
+   "parser::Parser::parse_fn_renamed",
+   "parser::Parser::parse_mod_inner",
+   "parser::Parser::parse_trait"
+  ]
+ },
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "                match self.parse_fn(attrs) {\n                    Ok(f) => fns.push(f),\n                    Err(_) => self.recover_item(),\n                }\n            } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {",
+     "new": "                match self.parse_fn_renamed(attrs) {\n                    Ok(f) => fns.push(f),\n                    Err(_) => self.recover_item(),\n                }\n            } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "                match self.parse_fn(attrs) {",
+     "new": "                match self.parse_fn_renamed(attrs) {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "                let r = self.parse_fn(attrs);",
+     "new": "                let r = self.parse_fn_renamed(attrs);"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "    fn parse_fn(&mut self, attrs: Vec<Attr>) -> PResult<FnDef> {",
+     "new": "    fn parse_fn_renamed(&mut self, attrs: Vec<Attr>) -> PResult<FnDef> {"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "parser",
+     "code": "    impl Parser {\n        #[effects(alloc)]\n        fn impl_body(self: &mut Parser, impl_ty: Option<String>, d: usize) -> Option<Body>\n            requires d <= 256,\n        {\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::FnDef> = Vec::new();\n            let outer: Option<String> = std::mem::replace(&mut self.impl_ty, impl_ty);\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let attrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"fn\") || self.is_kw(\"spec\") && self.t.is_kw(1, \"fn\") {\n                    match self.parse_fn_renamed(attrs, d) {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(f),\n                    }\n                } else {\n                    self.err_expected(\"`fn` or `spec fn`\");\n                    self.bump();\n                    self.recover_item();\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            self.impl_ty = outer;\n            let hi: source::Span = self.expect_p(\"}\")?;\n            Some(Body { fns: fns, hi: hi })\n        }\n\n        #[effects(alloc)]\n        fn parse_fn_renamed(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::FnDef>\n            requires d <= 256,\n        {\n            let lo: source::Span = self.span();\n            let kind: ast::FnKind = if self.eat_kw(\"spec\") {\n                ast::FnKind::Spec\n            } else if self.eat_kw(\"proof\") {\n                ast::FnKind::Proof\n            } else {\n                ast::FnKind::Exec\n            };\n            let is_proof: bool = match &kind {\n                ast::FnKind::Exec => false,\n                ast::FnKind::Spec => false,\n                ast::FnKind::Proof => true,\n            };\n            self.bump();\n            let name: ast::Ident = self.ident(\"function name\")?;\n            let mut generics: Vec<ast::TypeParam> = self.parse_generics(d);\n            self.expect_p(\"(\")?;\n            let mut params: Vec<ast::Param> = Vec::new();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\")\")\n                decreases n,\n            {\n                n = n - 1;\n                if self.is_kw(\"mut\") {\n                    let msp: source::Span = self.bump();\n                    self.err_rep(\"E0210\", msp, \"`mut` parameters are not allowed\", \"copy into a `let mut` local inside the body\", \"\");\n                }\n                let amp: bool = self.is_p(\"&\");\n                let short: bool = amp && self.t.is_kw(1, \"self\") || amp && self.t.is_kw(1, \"mut\") && self.t.is_kw(2, \"self\") || self.is_kw(\"self\") && !self.t.is_p(1, \":\");\n                if short {\n                    let slo: source::Span = self.span();\n                    let form: u8 = if amp && self.t.is_kw(1, \"mut\") {\n                        2\n                    } else if amp {\n                        1\n                    } else {\n                        0\n                    };\n                    let mut k: usize = self.left();\n                    while k > 0 && !self.is_kw(\"self\")\n                        decreases k,\n                    {\n                        k = k - 1;\n                        self.bump();\n                    }\n                    let sp: source::Span = slo.to(self.bump());\n                    let d0: diag::Diag = diag::new(\"E0228\", sp, \"the receiver needs its type\");\n                    let mut pkind: ast::TypeKind = ast::TypeKind::Error;\n                    match &self.impl_ty {\n                        None => self.diags.push(diag::fix(d0, \"write `self: &T`, `self: &mut T` or `self: T` with the `impl` type\", None)),\n                        Some(t) => { let mut one: Vec<String> = Vec::new(); one.push(t.clone()); let named: ast::Type = ast::Type { kind: ast::TypeKind::Named(one, Vec::new()), span: sp }; let mut r: String = String::from(\"self: \"); if form == 2 { r.push_str(\"&mut \"); } else if form == 1 { r.push_str(\"&\"); } r.push_str(t.as_str()); if form == 0 { pkind = named.kind; } else { pkind = ast::TypeKind::Ref(form == 2, Box::new(named)); } self.diags.push(diag::fix(d0, tick_write(r.as_str()).as_str(), Some(r))); },\n                    }\n                    params.push(ast::Param { name: ast::Ident { name: String::from(\"self\"), span: sp }, ty: ast::Type { kind: pkind, span: sp } });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                } else {\n                    let pname: ast::Ident = if self.is_kw(\"self\") {\n                        ast::Ident { name: String::from(\"self\"), span: self.bump() }\n                    } else {\n                        self.ident(\"parameter name\")?\n                    };\n                    self.expect_p(\":\")?;\n                    let pty: ast::Type = self.parse_type(d);\n                    params.push(ast::Param { name: pname, ty: pty });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n            }\n            self.expect_p(\")\")?;\n            let gspan2: Option<source::Span> = self.generics_span;\n            let mut ret: ast::Ret = ast::Ret { name: None, ty: ast::Type { kind: ast::TypeKind::Unit, span: self.prev_span() } };\n            if is_proof {\n                if self.is_p(\"->\") {\n                    let alo: source::Span = self.span();\n                    self.bump();\n                    self.parse_ret(d)?;\n                    self.err_rep_to(\"E0256\", alo, \"a `proof fn` has no return type: what it proves is its `ensures`\", \"remove the return type\", \"\");\n                }\n            } else if self.eat_p(\"->\") {\n                ret = self.parse_ret(d)?;\n            } else {\n                let nsp: source::Span = self.prev_span();\n                self.err_rep(\"E0209\", nsp, \"function return type is required\", \"add `-> ()`\", \") -> ()\");\n            }\n            self.parse_where(&mut generics, gspan2, d);\n            let cl: Clauses = self.parse_clauses(d)?;\n            let mut body: ast::Block = ast::Block { stmts: Vec::new(), tail: None, span: self.span() };\n            if self.decl_ok && self.is_p(\";\") {\n                self.bump();\n            } else {\n                self.decl_ok = false;\n                body = self.parse_block(d)?;\n            }\n            let span: source::Span = lo.to(body.span);\n            Some(ast::FnDef { kind: kind, name: name, generics: generics, attrs: attrs, params: params, ret: ret, pre: cl.pre, post: cl.post, measure: cl.measure, body: body, span: span })\n        }\n\n        #[effects(alloc)]\n        fn parse_mod_inner(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::Mod>\n            requires d <= 256,\n            decreases (256 - d) * 64 + 60,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"module name\")?;\n            self.units.push(name.name.clone());\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::FnDef> = Vec::new();\n            let mut mods: Vec<ast::Mod> = Vec::new();\n            let mut types: Vec<ast::TypeDef> = Vec::new();\n            let mut impls: Vec<ast::Impl> = Vec::new();\n            let mut traits: Vec<ast::TraitDef> = Vec::new();\n            let mut trait_impls: Vec<ast::TraitImpl> = Vec::new();\n            let mut uses: Vec<ast::UseItem> = Vec::new();\n            let mut consts: Vec<ast::ConstDef> = Vec::new();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let item_attrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"const\") {\n                    match self.parse_const(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(c) => consts.push(c),\n                    }\n                } else if self.is_kw(\"mod\") {\n                    match self.parse_mod(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(m) => mods.push(m),\n                    }\n                } else if self.is_kw(\"fn\") || (self.is_kw(\"spec\") || self.is_kw(\"proof\")) && self.t.is_kw(1, \"fn\") {\n                    match self.parse_fn_renamed(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(f),\n                    }\n                } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {\n                    match self.parse_type_def(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(t) => types.push(t),\n                    }\n                } else if self.is_kw(\"impl\") {\n                    let mut k: usize = 0;\n                    while k < item_attrs.len()\n                        decreases item_attrs.len() - k,\n                    {\n                        self.err_rep(\"E0605\", item_attrs[k].span, cat3(\"unknown attribute `\", item_attrs[k].name.name.as_str(), \"` on an `impl` block\").as_str(), \"an `impl` block takes no attributes: write it on the functions inside\", \"\");\n                        k = k + 1;\n                    }\n                    match self.parse_impl(d) {\n                        None => self.recover_item(),\n                        Some(it) => { match it { ImplItem::Inherent(i) => impls.push(i), ImplItem::Trait(ti) => trait_impls.push(ti), } },\n                    }\n                } else if self.is_kw(\"trait\") {\n                    match self.parse_trait(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(tr) => traits.push(tr),\n                    }\n                } else if self.is_kw(\"use\") {\n                    match self.parse_use() {\n                        None => {},\n                        Some(u) => uses.push(u),\n                    }\n                } else if unsupported_item(text_of(self.t.ident(0)).as_str()) {\n                    let s: String = text_of(self.t.ident(0));\n                    let sp: source::Span = self.span();\n                    if s == \"unsafe\" {\n                        self.unsafe_habit(sp);\n                    } else if s == \"static\" {\n                        if self.t.is_kw(1, \"mut\") {\n                            self.err_fix(\"E0261\", sp, \"`static` items are not used\", \"global mutable state is passed as an argument (DESIGN §4.1 \\\"Effects\\\")\");\n                        } else {\n                            self.err_rep(\"E0261\", sp, \"`static` items are not used\", \"write `const`\", \"const\");\n                        }\n                    } else {\n                        self.err_fix(\"E0207\", sp, cat3(\"`\", s.as_str(), \"` items are not supported in milestone 1\").as_str(), \"units hold `fn`, `spec fn`, `const`, `struct`, `enum`, `trait` and `impl`\");\n                    }\n                    self.bump();\n                    self.recover_item();\n                } else {\n                    self.err_expected(\"`fn`, `spec fn` or `mod`\");\n                    if !self.is_p(\"}\") {\n                        self.bump();\n                        self.recover_item();\n                    }\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            let hi: source::Span = self.expect_p(\"}\")?;\n            let lens: Vec<ast::Len> = std::mem::replace(&mut self.lens, Vec::new());\n            Some(ast::Mod { name: name, attrs: attrs, fns: fns, mods: mods, types: types, impls: impls, traits: traits, trait_impls: trait_impls, uses: uses, consts: consts, lens: lens, span: lo.to(hi) })\n        }\n\n        #[effects(alloc)]\n        fn parse_trait(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::TraitDef>\n            requires d <= 256,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"trait name\")?;\n            if self.is_p(\"<\") {\n                self.err_fix_here(\"E0207\", \"generic traits are not supported (ADR-0046 §1)\", \"put the type parameters on the methods\");\n                self.skip_angle();\n            }\n            if self.is_p(\":\") {\n                self.err_fix_here(\"E0207\", \"supertraits are not supported (ADR-0046 §1)\", \"bound the type parameters by each trait: `T: A + B`\");\n                let mut k: usize = self.left();\n                while k > 0 && !self.is_p(\"{\") && !self.eof()\n                    decreases k,\n                {\n                    k = k - 1;\n                    self.bump();\n                }\n            }\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::TraitFn> = Vec::new();\n            let outer: Option<String> = std::mem::replace(&mut self.impl_ty, Some(String::from(\"Self\")));\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let fattrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"fn\") || self.is_kw(\"spec\") && self.t.is_kw(1, \"fn\") {\n                    self.decl_ok = true;\n                    let r: Option<ast::FnDef> = self.parse_fn_renamed(fattrs, d);\n                    let has_body: bool = !self.decl_ok;\n                    self.decl_ok = false;\n                    match r {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(ast::TraitFn { f: f, has_body: has_body }),\n                    }\n                } else {\n                    self.err_expected(\"`fn` or `spec fn`\");\n                    self.bump();\n                    self.recover_item();\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            self.impl_ty = outer;\n            let hi: source::Span = self.expect_p(\"}\")?;\n            Some(ast::TraitDef { name: name, attrs: attrs, fns: fns, span: lo.to(hi) })\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "parser",
+     "remove": [
+      "parser::Parser::parse_fn"
+     ]
+    }
+   ]
+  ],
+  "bmb:port-rename": [
+   [
+    "write",
+    {
+     "rename": [
+      {
+       "def": "parser::Parser::parse_fn",
+       "to": "parse_fn_renamed"
+      }
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "scope",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "parser",
+      "code": "    impl Parser {\n        #[effects(alloc)]\n        fn impl_body(self: &mut Parser, impl_ty: Option<String>, d: usize) -> Option<Body>\n            requires d <= 256,\n        {\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::FnDef> = Vec::new();\n            let outer: Option<String> = std::mem::replace(&mut self.impl_ty, impl_ty);\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let attrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"fn\") || self.is_kw(\"spec\") && self.t.is_kw(1, \"fn\") {\n                    match self.parse_fn_renamed(attrs, d) {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(f),\n                    }\n                } else {\n                    self.err_expected(\"`fn` or `spec fn`\");\n                    self.bump();\n                    self.recover_item();\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            self.impl_ty = outer;\n            let hi: source::Span = self.expect_p(\"}\")?;\n            Some(Body { fns: fns, hi: hi })\n        }\n\n        #[effects(alloc)]\n        fn parse_fn_renamed(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::FnDef>\n            requires d <= 256,\n        {\n            let lo: source::Span = self.span();\n            let kind: ast::FnKind = if self.eat_kw(\"spec\") {\n                ast::FnKind::Spec\n            } else if self.eat_kw(\"proof\") {\n                ast::FnKind::Proof\n            } else {\n                ast::FnKind::Exec\n            };\n            let is_proof: bool = match &kind {\n                ast::FnKind::Exec => false,\n                ast::FnKind::Spec => false,\n                ast::FnKind::Proof => true,\n            };\n            self.bump();\n            let name: ast::Ident = self.ident(\"function name\")?;\n            let mut generics: Vec<ast::TypeParam> = self.parse_generics(d);\n            self.expect_p(\"(\")?;\n            let mut params: Vec<ast::Param> = Vec::new();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\")\")\n                decreases n,\n            {\n                n = n - 1;\n                if self.is_kw(\"mut\") {\n                    let msp: source::Span = self.bump();\n                    self.err_rep(\"E0210\", msp, \"`mut` parameters are not allowed\", \"copy into a `let mut` local inside the body\", \"\");\n                }\n                let amp: bool = self.is_p(\"&\");\n                let short: bool = amp && self.t.is_kw(1, \"self\") || amp && self.t.is_kw(1, \"mut\") && self.t.is_kw(2, \"self\") || self.is_kw(\"self\") && !self.t.is_p(1, \":\");\n                if short {\n                    let slo: source::Span = self.span();\n                    let form: u8 = if amp && self.t.is_kw(1, \"mut\") {\n                        2\n                    } else if amp {\n                        1\n                    } else {\n                        0\n                    };\n                    let mut k: usize = self.left();\n                    while k > 0 && !self.is_kw(\"self\")\n                        decreases k,\n                    {\n                        k = k - 1;\n                        self.bump();\n                    }\n                    let sp: source::Span = slo.to(self.bump());\n                    let d0: diag::Diag = diag::new(\"E0228\", sp, \"the receiver needs its type\");\n                    let mut pkind: ast::TypeKind = ast::TypeKind::Error;\n                    match &self.impl_ty {\n                        None => self.diags.push(diag::fix(d0, \"write `self: &T`, `self: &mut T` or `self: T` with the `impl` type\", None)),\n                        Some(t) => { let mut one: Vec<String> = Vec::new(); one.push(t.clone()); let named: ast::Type = ast::Type { kind: ast::TypeKind::Named(one, Vec::new()), span: sp }; let mut r: String = String::from(\"self: \"); if form == 2 { r.push_str(\"&mut \"); } else if form == 1 { r.push_str(\"&\"); } r.push_str(t.as_str()); if form == 0 { pkind = named.kind; } else { pkind = ast::TypeKind::Ref(form == 2, Box::new(named)); } self.diags.push(diag::fix(d0, tick_write(r.as_str()).as_str(), Some(r))); },\n                    }\n                    params.push(ast::Param { name: ast::Ident { name: String::from(\"self\"), span: sp }, ty: ast::Type { kind: pkind, span: sp } });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                } else {\n                    let pname: ast::Ident = if self.is_kw(\"self\") {\n                        ast::Ident { name: String::from(\"self\"), span: self.bump() }\n                    } else {\n                        self.ident(\"parameter name\")?\n                    };\n                    self.expect_p(\":\")?;\n                    let pty: ast::Type = self.parse_type(d);\n                    params.push(ast::Param { name: pname, ty: pty });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n            }\n            self.expect_p(\")\")?;\n            let gspan2: Option<source::Span> = self.generics_span;\n            let mut ret: ast::Ret = ast::Ret { name: None, ty: ast::Type { kind: ast::TypeKind::Unit, span: self.prev_span() } };\n            if is_proof {\n                if self.is_p(\"->\") {\n                    let alo: source::Span = self.span();\n                    self.bump();\n                    self.parse_ret(d)?;\n                    self.err_rep_to(\"E0256\", alo, \"a `proof fn` has no return type: what it proves is its `ensures`\", \"remove the return type\", \"\");\n                }\n            } else if self.eat_p(\"->\") {\n                ret = self.parse_ret(d)?;\n            } else {\n                let nsp: source::Span = self.prev_span();\n                self.err_rep(\"E0209\", nsp, \"function return type is required\", \"add `-> ()`\", \") -> ()\");\n            }\n            self.parse_where(&mut generics, gspan2, d);\n            let cl: Clauses = self.parse_clauses(d)?;\n            let mut body: ast::Block = ast::Block { stmts: Vec::new(), tail: None, span: self.span() };\n            if self.decl_ok && self.is_p(\";\") {\n                self.bump();\n            } else {\n                self.decl_ok = false;\n                body = self.parse_block(d)?;\n            }\n            let span: source::Span = lo.to(body.span);\n            Some(ast::FnDef { kind: kind, name: name, generics: generics, attrs: attrs, params: params, ret: ret, pre: cl.pre, post: cl.post, measure: cl.measure, body: body, span: span })\n        }\n\n        #[effects(alloc)]\n        fn parse_mod_inner(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::Mod>\n            requires d <= 256,\n            decreases (256 - d) * 64 + 60,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"module name\")?;\n            self.units.push(name.name.clone());\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::FnDef> = Vec::new();\n            let mut mods: Vec<ast::Mod> = Vec::new();\n            let mut types: Vec<ast::TypeDef> = Vec::new();\n            let mut impls: Vec<ast::Impl> = Vec::new();\n            let mut traits: Vec<ast::TraitDef> = Vec::new();\n            let mut trait_impls: Vec<ast::TraitImpl> = Vec::new();\n            let mut uses: Vec<ast::UseItem> = Vec::new();\n            let mut consts: Vec<ast::ConstDef> = Vec::new();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let item_attrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"const\") {\n                    match self.parse_const(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(c) => consts.push(c),\n                    }\n                } else if self.is_kw(\"mod\") {\n                    match self.parse_mod(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(m) => mods.push(m),\n                    }\n                } else if self.is_kw(\"fn\") || (self.is_kw(\"spec\") || self.is_kw(\"proof\")) && self.t.is_kw(1, \"fn\") {\n                    match self.parse_fn_renamed(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(f),\n                    }\n                } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {\n                    match self.parse_type_def(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(t) => types.push(t),\n                    }\n                } else if self.is_kw(\"impl\") {\n                    let mut k: usize = 0;\n                    while k < item_attrs.len()\n                        decreases item_attrs.len() - k,\n                    {\n                        self.err_rep(\"E0605\", item_attrs[k].span, cat3(\"unknown attribute `\", item_attrs[k].name.name.as_str(), \"` on an `impl` block\").as_str(), \"an `impl` block takes no attributes: write it on the functions inside\", \"\");\n                        k = k + 1;\n                    }\n                    match self.parse_impl(d) {\n                        None => self.recover_item(),\n                        Some(it) => { match it { ImplItem::Inherent(i) => impls.push(i), ImplItem::Trait(ti) => trait_impls.push(ti), } },\n                    }\n                } else if self.is_kw(\"trait\") {\n                    match self.parse_trait(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(tr) => traits.push(tr),\n                    }\n                } else if self.is_kw(\"use\") {\n                    match self.parse_use() {\n                        None => {},\n                        Some(u) => uses.push(u),\n                    }\n                } else if unsupported_item(text_of(self.t.ident(0)).as_str()) {\n                    let s: String = text_of(self.t.ident(0));\n                    let sp: source::Span = self.span();\n                    if s == \"unsafe\" {\n                        self.unsafe_habit(sp);\n                    } else if s == \"static\" {\n                        if self.t.is_kw(1, \"mut\") {\n                            self.err_fix(\"E0261\", sp, \"`static` items are not used\", \"global mutable state is passed as an argument (DESIGN §4.1 \\\"Effects\\\")\");\n                        } else {\n                            self.err_rep(\"E0261\", sp, \"`static` items are not used\", \"write `const`\", \"const\");\n                        }\n                    } else {\n                        self.err_fix(\"E0207\", sp, cat3(\"`\", s.as_str(), \"` items are not supported in milestone 1\").as_str(), \"units hold `fn`, `spec fn`, `const`, `struct`, `enum`, `trait` and `impl`\");\n                    }\n                    self.bump();\n                    self.recover_item();\n                } else {\n                    self.err_expected(\"`fn`, `spec fn` or `mod`\");\n                    if !self.is_p(\"}\") {\n                        self.bump();\n                        self.recover_item();\n                    }\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            let hi: source::Span = self.expect_p(\"}\")?;\n            let lens: Vec<ast::Len> = std::mem::replace(&mut self.lens, Vec::new());\n            Some(ast::Mod { name: name, attrs: attrs, fns: fns, mods: mods, types: types, impls: impls, traits: traits, trait_impls: trait_impls, uses: uses, consts: consts, lens: lens, span: lo.to(hi) })\n        }\n\n        #[effects(alloc)]\n        fn parse_trait(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::TraitDef>\n            requires d <= 256,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"trait name\")?;\n            if self.is_p(\"<\") {\n                self.err_fix_here(\"E0207\", \"generic traits are not supported (ADR-0046 §1)\", \"put the type parameters on the methods\");\n                self.skip_angle();\n            }\n            if self.is_p(\":\") {\n                self.err_fix_here(\"E0207\", \"supertraits are not supported (ADR-0046 §1)\", \"bound the type parameters by each trait: `T: A + B`\");\n                let mut k: usize = self.left();\n                while k > 0 && !self.is_p(\"{\") && !self.eof()\n                    decreases k,\n                {\n                    k = k - 1;\n                    self.bump();\n                }\n            }\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::TraitFn> = Vec::new();\n            let outer: Option<String> = std::mem::replace(&mut self.impl_ty, Some(String::from(\"Self\")));\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let fattrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"fn\") || self.is_kw(\"spec\") && self.t.is_kw(1, \"fn\") {\n                    self.decl_ok = true;\n                    let r: Option<ast::FnDef> = self.parse_fn_renamed(fattrs, d);\n                    let has_body: bool = !self.decl_ok;\n                    self.decl_ok = false;\n                    match r {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(ast::TraitFn { f: f, has_body: has_body }),\n                    }\n                } else {\n                    self.err_expected(\"`fn` or `spec fn`\");\n                    self.bump();\n                    self.recover_item();\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            self.impl_ty = outer;\n            let hi: source::Span = self.expect_p(\"}\")?;\n            Some(ast::TraitDef { name: name, attrs: attrs, fns: fns, span: lo.to(hi) })\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "parser",
+      "remove": [
+       "parser::Parser::parse_fn"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/parser.rs",
+      "old": "                match self.parse_fn(attrs) {\n                    Ok(f) => fns.push(f),\n                    Err(_) => self.recover_item(),\n                }\n            } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {",
+      "new": "                match self.parse_fn_renamed(attrs) {\n                    Ok(f) => fns.push(f),\n                    Err(_) => self.recover_item(),\n                }\n            } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/parser.rs",
+      "old": "                match self.parse_fn(attrs) {",
+      "new": "                match self.parse_fn_renamed(attrs) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/parser.rs",
+      "old": "                let r = self.parse_fn(attrs);",
+      "new": "                let r = self.parse_fn_renamed(attrs);"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/parser.rs",
+      "old": "    fn parse_fn(&mut self, attrs: Vec<Attr>) -> PResult<FnDef> {",
+      "new": "    fn parse_fn_renamed(&mut self, attrs: Vec<Attr>) -> PResult<FnDef> {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/sha256.rs",
+      "old": "    let mut s = String::from(\"sha256:\");",
+      "new": "    let mut s = \"sha256:\".to_string();"
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "parser::Parser::parse_fn",
+        "to": "parse_fn_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "parser",
+      "code": "    impl Parser {\n        #[effects(alloc)]\n        fn impl_body(self: &mut Parser, impl_ty: Option<String>, d: usize) -> Option<Body>\n            requires d <= 256,\n        {\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::FnDef> = Vec::new();\n            let outer: Option<String> = std::mem::replace(&mut self.impl_ty, impl_ty);\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let attrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"fn\") || self.is_kw(\"spec\") && self.t.is_kw(1, \"fn\") {\n                    match self.parse_fn_renamed(attrs, d) {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(f),\n                    }\n                } else {\n                    self.err_expected(\"`fn` or `spec fn`\");\n                    self.bump();\n                    self.recover_item();\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            self.impl_ty = outer;\n            let hi: source::Span = self.expect_p(\"}\")?;\n            Some(Body { fns: fns, hi: hi })\n        }\n\n        #[effects(alloc)]\n        fn parse_fn_renamed(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::FnDef>\n            requires d <= 256,\n        {\n            let lo: source::Span = self.span();\n            let kind: ast::FnKind = if self.eat_kw(\"spec\") {\n                ast::FnKind::Spec\n            } else if self.eat_kw(\"proof\") {\n                ast::FnKind::Proof\n            } else {\n                ast::FnKind::Exec\n            };\n            let is_proof: bool = match &kind {\n                ast::FnKind::Exec => false,\n                ast::FnKind::Spec => false,\n                ast::FnKind::Proof => true,\n            };\n            self.bump();\n            let name: ast::Ident = self.ident(\"function name\")?;\n            let mut generics: Vec<ast::TypeParam> = self.parse_generics(d);\n            self.expect_p(\"(\")?;\n            let mut params: Vec<ast::Param> = Vec::new();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\")\")\n                decreases n,\n            {\n                n = n - 1;\n                if self.is_kw(\"mut\") {\n                    let msp: source::Span = self.bump();\n                    self.err_rep(\"E0210\", msp, \"`mut` parameters are not allowed\", \"copy into a `let mut` local inside the body\", \"\");\n                }\n                let amp: bool = self.is_p(\"&\");\n                let short: bool = amp && self.t.is_kw(1, \"self\") || amp && self.t.is_kw(1, \"mut\") && self.t.is_kw(2, \"self\") || self.is_kw(\"self\") && !self.t.is_p(1, \":\");\n                if short {\n                    let slo: source::Span = self.span();\n                    let form: u8 = if amp && self.t.is_kw(1, \"mut\") {\n                        2\n                    } else if amp {\n                        1\n                    } else {\n                        0\n                    };\n                    let mut k: usize = self.left();\n                    while k > 0 && !self.is_kw(\"self\")\n                        decreases k,\n                    {\n                        k = k - 1;\n                        self.bump();\n                    }\n                    let sp: source::Span = slo.to(self.bump());\n                    let d0: diag::Diag = diag::new(\"E0228\", sp, \"the receiver needs its type\");\n                    let mut pkind: ast::TypeKind = ast::TypeKind::Error;\n                    match &self.impl_ty {\n                        None => self.diags.push(diag::fix(d0, \"write `self: &T`, `self: &mut T` or `self: T` with the `impl` type\", None)),\n                        Some(t) => { let mut one: Vec<String> = Vec::new(); one.push(t.clone()); let named: ast::Type = ast::Type { kind: ast::TypeKind::Named(one, Vec::new()), span: sp }; let mut r: String = String::from(\"self: \"); if form == 2 { r.push_str(\"&mut \"); } else if form == 1 { r.push_str(\"&\"); } r.push_str(t.as_str()); if form == 0 { pkind = named.kind; } else { pkind = ast::TypeKind::Ref(form == 2, Box::new(named)); } self.diags.push(diag::fix(d0, tick_write(r.as_str()).as_str(), Some(r))); },\n                    }\n                    params.push(ast::Param { name: ast::Ident { name: String::from(\"self\"), span: sp }, ty: ast::Type { kind: pkind, span: sp } });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                } else {\n                    let pname: ast::Ident = if self.is_kw(\"self\") {\n                        ast::Ident { name: String::from(\"self\"), span: self.bump() }\n                    } else {\n                        self.ident(\"parameter name\")?\n                    };\n                    self.expect_p(\":\")?;\n                    let pty: ast::Type = self.parse_type(d);\n                    params.push(ast::Param { name: pname, ty: pty });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n            }\n            self.expect_p(\")\")?;\n            let gspan2: Option<source::Span> = self.generics_span;\n            let mut ret: ast::Ret = ast::Ret { name: None, ty: ast::Type { kind: ast::TypeKind::Unit, span: self.prev_span() } };\n            if is_proof {\n                if self.is_p(\"->\") {\n                    let alo: source::Span = self.span();\n                    self.bump();\n                    self.parse_ret(d)?;\n                    self.err_rep_to(\"E0256\", alo, \"a `proof fn` has no return type: what it proves is its `ensures`\", \"remove the return type\", \"\");\n                }\n            } else if self.eat_p(\"->\") {\n                ret = self.parse_ret(d)?;\n            } else {\n                let nsp: source::Span = self.prev_span();\n                self.err_rep(\"E0209\", nsp, \"function return type is required\", \"add `-> ()`\", \") -> ()\");\n            }\n            self.parse_where(&mut generics, gspan2, d);\n            let cl: Clauses = self.parse_clauses(d)?;\n            let mut body: ast::Block = ast::Block { stmts: Vec::new(), tail: None, span: self.span() };\n            if self.decl_ok && self.is_p(\";\") {\n                self.bump();\n            } else {\n                self.decl_ok = false;\n                body = self.parse_block(d)?;\n            }\n            let span: source::Span = lo.to(body.span);\n            Some(ast::FnDef { kind: kind, name: name, generics: generics, attrs: attrs, params: params, ret: ret, pre: cl.pre, post: cl.post, measure: cl.measure, body: body, span: span })\n        }\n\n        #[effects(alloc)]\n        fn parse_mod_inner(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::Mod>\n            requires d <= 256,\n            decreases (256 - d) * 64 + 60,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"module name\")?;\n            self.units.push(name.name.clone());\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::FnDef> = Vec::new();\n            let mut mods: Vec<ast::Mod> = Vec::new();\n            let mut types: Vec<ast::TypeDef> = Vec::new();\n            let mut impls: Vec<ast::Impl> = Vec::new();\n            let mut traits: Vec<ast::TraitDef> = Vec::new();\n            let mut trait_impls: Vec<ast::TraitImpl> = Vec::new();\n            let mut uses: Vec<ast::UseItem> = Vec::new();\n            let mut consts: Vec<ast::ConstDef> = Vec::new();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let item_attrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"const\") {\n                    match self.parse_const(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(c) => consts.push(c),\n                    }\n                } else if self.is_kw(\"mod\") {\n                    match self.parse_mod(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(m) => mods.push(m),\n                    }\n                } else if self.is_kw(\"fn\") || (self.is_kw(\"spec\") || self.is_kw(\"proof\")) && self.t.is_kw(1, \"fn\") {\n                    match self.parse_fn_renamed(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(f),\n                    }\n                } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {\n                    match self.parse_type_def(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(t) => types.push(t),\n                    }\n                } else if self.is_kw(\"impl\") {\n                    let mut k: usize = 0;\n                    while k < item_attrs.len()\n                        decreases item_attrs.len() - k,\n                    {\n                        self.err_rep(\"E0605\", item_attrs[k].span, cat3(\"unknown attribute `\", item_attrs[k].name.name.as_str(), \"` on an `impl` block\").as_str(), \"an `impl` block takes no attributes: write it on the functions inside\", \"\");\n                        k = k + 1;\n                    }\n                    match self.parse_impl(d) {\n                        None => self.recover_item(),\n                        Some(it) => { match it { ImplItem::Inherent(i) => impls.push(i), ImplItem::Trait(ti) => trait_impls.push(ti), } },\n                    }\n                } else if self.is_kw(\"trait\") {\n                    match self.parse_trait(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(tr) => traits.push(tr),\n                    }\n                } else if self.is_kw(\"use\") {\n                    match self.parse_use() {\n                        None => {},\n                        Some(u) => uses.push(u),\n                    }\n                } else if unsupported_item(text_of(self.t.ident(0)).as_str()) {\n                    let s: String = text_of(self.t.ident(0));\n                    let sp: source::Span = self.span();\n                    if s == \"unsafe\" {\n                        self.unsafe_habit(sp);\n                    } else if s == \"static\" {\n                        if self.t.is_kw(1, \"mut\") {\n                            self.err_fix(\"E0261\", sp, \"`static` items are not used\", \"global mutable state is passed as an argument (DESIGN §4.1 \\\"Effects\\\")\");\n                        } else {\n                            self.err_rep(\"E0261\", sp, \"`static` items are not used\", \"write `const`\", \"const\");\n                        }\n                    } else {\n                        self.err_fix(\"E0207\", sp, cat3(\"`\", s.as_str(), \"` items are not supported in milestone 1\").as_str(), \"units hold `fn`, `spec fn`, `const`, `struct`, `enum`, `trait` and `impl`\");\n                    }\n                    self.bump();\n                    self.recover_item();\n                } else {\n                    self.err_expected(\"`fn`, `spec fn` or `mod`\");\n                    if !self.is_p(\"}\") {\n                        self.bump();\n                        self.recover_item();\n                    }\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            let hi: source::Span = self.expect_p(\"}\")?;\n            let lens: Vec<ast::Len> = std::mem::replace(&mut self.lens, Vec::new());\n            Some(ast::Mod { name: name, attrs: attrs, fns: fns, mods: mods, types: types, impls: impls, traits: traits, trait_impls: trait_impls, uses: uses, consts: consts, lens: lens, span: lo.to(hi) })\n        }\n\n        #[effects(alloc)]\n        fn parse_trait(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::TraitDef>\n            requires d <= 256,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"trait name\")?;\n            if self.is_p(\"<\") {\n                self.err_fix_here(\"E0207\", \"generic traits are not supported (ADR-0046 §1)\", \"put the type parameters on the methods\");\n                self.skip_angle();\n            }\n            if self.is_p(\":\") {\n                self.err_fix_here(\"E0207\", \"supertraits are not supported (ADR-0046 §1)\", \"bound the type parameters by each trait: `T: A + B`\");\n                let mut k: usize = self.left();\n                while k > 0 && !self.is_p(\"{\") && !self.eof()\n                    decreases k,\n                {\n                    k = k - 1;\n                    self.bump();\n                }\n            }\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::TraitFn> = Vec::new();\n            let outer: Option<String> = std::mem::replace(&mut self.impl_ty, Some(String::from(\"Self\")));\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let fattrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"fn\") || self.is_kw(\"spec\") && self.t.is_kw(1, \"fn\") {\n                    self.decl_ok = true;\n                    let r: Option<ast::FnDef> = self.parse_fn_renamed(fattrs, d);\n                    let has_body: bool = !self.decl_ok;\n                    self.decl_ok = false;\n                    match r {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(ast::TraitFn { f: f, has_body: has_body }),\n                    }\n                } else {\n                    self.err_expected(\"`fn` or `spec fn`\");\n                    self.bump();\n                    self.recover_item();\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            self.impl_ty = outer;\n            let hi: source::Span = self.expect_p(\"}\")?;\n            Some(ast::TraitDef { name: name, attrs: attrs, fns: fns, span: lo.to(hi) })\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "parser",
+      "remove": [
+       "parser::Parser::parse_fn"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/parser.rs",
+      "old": "                match self.parse_fn(attrs) {\n                    Ok(f) => fns.push(f),\n                    Err(_) => self.recover_item(),\n                }\n            } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {",
+      "new": "                match self.parse_fn_renamed(attrs) {\n                    Ok(f) => fns.push(f),\n                    Err(_) => self.recover_item(),\n                }\n            } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/parser.rs",
+      "old": "                match self.parse_fn(attrs) {",
+      "new": "                match self.parse_fn_renamed(attrs) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/parser.rs",
+      "old": "                let r = self.parse_fn(attrs);",
+      "new": "                let r = self.parse_fn_renamed(attrs);"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/parser.rs",
+      "old": "    fn parse_fn(&mut self, attrs: Vec<Attr>) -> PResult<FnDef> {",
+      "new": "    fn parse_fn_renamed(&mut self, attrs: Vec<Attr>) -> PResult<FnDef> {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "parser::Parser::parse_fn",
+        "to": "parse_fn_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "done",
+   "bmb": [],
+   "rust": []
+  }
+ ]
+}

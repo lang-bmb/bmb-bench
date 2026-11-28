@@ -1,0 +1,517 @@
+{
+ "id": "h08-history-e0701",
+ "family": "history",
+ "kind": "change",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "scope": "any",
+ "setup": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "            self.diags.push(\n                Diag::new(\n                    \"E0315\",\n                    ti.self_ty.span,\n                    format!(\n                        \"`impl {name} for {head}` does not define `{}`\",\n                        missing.join(\"`, `\")\n                    ),\n                )\n                .fix(\n                    \"define every method of the trait, with the trait's signature for `Self`\",\n                    None,\n                ),\n            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.diags.push(\n                    Diag::new(\n                        \"E0315\",\n                        f.name.span,\n                        format!(\"`{}` is not a method of `{name}`\", f.name.name),\n                    )\n                    .fix(\n                        format!(\"remove it, or declare it in `{name}`; a function of the type alone goes in `impl {head} {{ .. }}`\"),\n                        None,\n                    ),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    self.diags.push(\n                        Diag::new(\"E0426\", a.pat.span, format!(\"a second arm for `{vt}`\"))\n                            .fix(\"one arm per variant: merge the two\", None),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.diags.push(\n                    Diag::new(\n                        \"E0426\",\n                        span,\n                        format!(\"`match` misses `{}`\", missing.join(\"`, `\")),\n                    )\n                    .fix(\n                        format!(\"add an arm for each: `{} => ..`\", missing.join(\" => .., \")),\n                        None,\n                    ),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.diags.push(\n                    Diag::new(\"E0426\", at, \"`match` arms are not in declaration order\").fix(\n                        format!(\"order the arms as declared: {}\", order.join(\", \")),\n                        None,\n                    ),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                        self.diags.push(\n                            Diag::new(\n                                \"E0517\",\n                                t.span,\n                                format!(\"`#[trigger]` marks the bound variable `{}` alone\", v.name),\n                            )\n                            .fix(\n                                format!(\n                                    \"mark a term that applies a function or an index to `{}`, e.g. `#[trigger] p({})` or `#[trigger] a[{}]`\",\n                                    v.name, v.name, v.name\n                                ),\n                                None,\n                            ),\n                        );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.diags.push(\n                    Diag::new(\n                        \"E0701\",\n                        f.name.span,\n                        \"`main` must be `#[effects(io)] fn main() -> ()`\",\n                    )\n                    .fix(\n                        \"write `#[effects(io)] fn main() -> ()`: no parameters, no result \\\n                         (other effects may be listed with `io`)\",\n                        None,\n                    ),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/lexer.rs",
+     "old": "                diags.push(Diag::new(\"E0102\", sp(lo, i), \"unterminated byte literal\"));",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/lexer.rs",
+     "old": "                diags.push(Diag::new(\"E0102\", sp(lo, i), \"unterminated string literal\"));",
+     "new": ""
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "body",
+     "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_main(self: &mut Body, p: &ast::Program) -> () {\n            let mut found: Vec<ast::FnDef> = Vec::new();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                mains_of(&p.mods[i], &mut found, 100000);\n            }\n            let mains: Vec<ast::FnDef> = by_place(found.as_slice());\n            for i in 0..mains.len()\n                invariant 0 <= i && i <= mains.len(),\n            {\n                if i > 0 {\n                    self.c.err(\"E0702\", mains[i].name.span, \"the program already has a `main`\");\n                }\n                if mains[i].params.len() != 0 || !decls::is_unit(&mains[i].ret.ty.kind) || !declares_io(mains[i].attrs.as_slice()) {\n                }\n            }\n        }\n\n        #[effects(alloc)]\n        fn match_cover(self: &mut Body, cx: &FnCtx, scrut: &ast::Expr, arms: &[ast::Arm], kinds: &[Option<usize>], tp: &str, vs: &[types::VariantSig], span: source::Span, wildcard: bool, unresolved: bool) -> () {\n            let mut seen: Vec<usize> = Vec::new();\n            let mut dup: bool = false;\n            let mut prev: Option<usize> = None;\n            let mut disorder: bool = false;\n            let mut at: source::Span = span;\n            for i in 0..arms.len()\n                invariant 0 <= i && i <= arms.len(),\n            {\n                if i < kinds.len() {\n                    match kinds[i] {\n                        None => {},\n                        Some(k) => { if has_usize(seen.as_slice(), k) { dup = true; if k < vs.len() { let vt: String = variant_text(tp, vs[k].name.as_str(), cx.mod_path.as_str()); } } else { seen.push(k); } match prev { None => {}, Some(p) => { if p > k && !disorder { disorder = true; at = arms[i].pat.span; } }, } prev = Some(k); },\n                    }\n                }\n            }\n            let mut missing: Vec<String> = Vec::new();\n            let mut order: Vec<String> = Vec::new();\n            for j in 0..vs.len()\n                invariant 0 <= j && j <= vs.len(),\n            {\n                let vt2: String = variant_text(tp, vs[j].name.as_str(), cx.mod_path.as_str());\n                if !has_usize(seen.as_slice(), j) {\n                    missing.push(variant_pat(vt2.as_str(), vs[j].tys.len()));\n                }\n                order.push(vt2);\n            }\n            self.wildcard_arms(cx, scrut, arms, kinds, tp, vs, span);\n            if !wildcard && !unresolved && missing.len() > 0 {\n            }\n            if !dup && disorder {\n            }\n        }\n\n        #[effects(alloc)]\n        fn quant_expr(self: &mut Body, cx: &mut FnCtx, e: &ast::Expr, q: &ast::Quant, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let kw: String = quant_kw(&q.q);\n            if exec_mode(mode) {\n                self.c.help(\"E0503\", e.span, types::cat3(\"`\", kw.as_str(), \"` is only allowed in specifications\").as_str(), \"state it in a `spec fn` used by a contract, or compute it in code with a loop\");\n                return ast::TypeKind::Error;\n            }\n            let scope: Vec<Local> = Vec::new();\n            cx.scopes.push(scope);\n            for i in 0..q.binders.len()\n                invariant 0 <= i && i <= q.binders.len(),\n            {\n                if !types::is_int(&q.binders[i].ty.kind) && !types::is_error(&q.binders[i].ty.kind) {\n                    self.c.help(\"E0402\", q.binders[i].ty.span, types::cat3(\"`\", kw.as_str(), \"` binders must be integers\").as_str(), \"bind an integer index (e.g. `i: usize`) and reach the value through it\");\n                }\n                self.declare(cx, &q.binders[i].name, q.binders[i].ty.kind.clone(), false, false);\n            }\n            let mut triggers: Vec<ast::Expr> = Vec::new();\n            collect_triggers(&*q.body, &mut triggers, 1000000000);\n            for k in 0..triggers.len()\n                invariant 0 <= k && k <= triggers.len(),\n            {\n                match ast::var_name(&triggers[k]) {\n                    None => {},\n                    Some(v) => { if binds(q.binders.as_slice(), v.as_str()) { let mut hint: String = types::cat5(\"mark a term that applies a function or an index to `\", v.as_str(), \"`, e.g. `#[trigger] p(\", v.as_str(), \")` or `#[trigger] a[\"); hint.push_str(v.as_str()); hint.push_str(\"]`\"); } },\n                }\n            }\n            if triggers.len() == 0 {\n                let first: Option<source::Span> = if q.binders.len() == 1 {\n                    first_index_on(&*q.body, q.binders[0].name.name.as_str())\n                } else {\n                    None\n                };\n                let msg: String = types::cat3(\"`\", kw.as_str(), \"` has no `#[trigger]`\");\n                match first {\n                    None => self.c.help(\"E0511\", e.span, msg.as_str(), \"mark a term that mentions every bound variable, e.g. `#[trigger] a[i]`\"),\n                    Some(at) => self.c.fixed(\"E0511\", source::Span { file: at.file, lo: at.lo, hi: at.lo }, msg.as_str(), \"mark the first term indexed by the bound variable\", \"#[trigger] \"),\n                }\n            } else {\n                for j in 0..q.binders.len()\n                    invariant 0 <= j && j <= q.binders.len(),\n                {\n                    if !any_mentions(triggers.as_slice(), q.binders[j].name.name.as_str(), true, 1000000000) {\n                        self.c.help(\"E0512\", q.binders[j].name.span, types::cat3(\"no trigger mentions bound variable `\", q.binders[j].name.name.as_str(), \"`\").as_str(), types::cat3(\"mark a term that mentions `\", q.binders[j].name.name.as_str(), \"` with `#[trigger]` as well (the triggers form one pattern)\").as_str());\n                    }\n                }\n            }\n            if cx.forall_depth < 4294967295 {\n                cx.forall_depth = cx.forall_depth + 1;\n            }\n            let wb: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &*q.body, &wb, mode, f - 1);\n            if cx.forall_depth > 0 {\n                cx.forall_depth = cx.forall_depth - 1;\n            }\n            cx.scopes.pop();\n            self.expect_ty(&t, &ast::TypeKind::Bool, q.body.span);\n            ast::TypeKind::Bool\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "decls",
+     "code": "    impl Checker {\n        #[effects(alloc)]\n        fn conform(self: &mut Checker, info: &types::TraitImplInfo, ti: &ast::TraitImpl, mp: &str) -> () {\n            let tr: String = info.trait_path.clone();\n            let name: String = path_text(ti.trait_path.as_slice());\n            let head: String = types::text_in(&info.head, mp);\n            let methods: Vec<String> = match self.traits.find(tr.as_str()) {\n                None => Vec::new(),\n                Some(at) => self.traits.items[at].methods.clone(),\n            };\n            let mut missing: Vec<String> = Vec::new();\n            for i in 0..methods.len()\n                invariant 0 <= i && i <= methods.len(),\n            {\n                let mut defined: bool = false;\n                for k in 0..ti.fns.len()\n                    invariant 0 <= k && k <= ti.fns.len(),\n                {\n                    if ti.fns[k].name.name.as_str() == methods[i].as_str() {\n                        defined = true;\n                    }\n                }\n                let has_default: bool = match self.fns.find(types::cat3(tr.as_str(), \"::\", methods[i].as_str()).as_str()) {\n                    None => false,\n                    Some(at) => self.fns.items[at].default,\n                };\n                if !defined && !has_default {\n                    missing.push(methods[i].clone());\n                }\n            }\n            if missing.len() > 0 {\n            }\n            for k in 0..ti.fns.len()\n                invariant 0 <= k && k <= ti.fns.len(),\n            {\n                let fname: String = ti.fns[k].name.name.clone();\n                if !types::has(methods.as_slice(), fname.as_str()) {\n                } else {\n                    let ts: Option<types::FnSig> = match self.fns.find(types::cat3(tr.as_str(), \"::\", fname.as_str()).as_str()) {\n                        None => None,\n                        Some(at) => Some(self.fns.items[at].clone()),\n                    };\n                    let is: Option<types::FnSig> = match self.fns.find(types::fn_path(info, fname.as_str()).as_str()) {\n                        None => None,\n                        Some(at) => Some(self.fns.items[at].clone()),\n                    };\n                    match ts {\n                        None => { let dropped: Option<types::FnSig> = is; },\n                        Some(tsig) => { match is { None => { let unused: types::FnSig = tsig; }, Some(isig) => self.conform_fn(info, &ti.fns[k], &tsig, &isig, name.as_str(), head.as_str(), mp), } },\n                    }\n                }\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "lexer",
+     "code": "    #[effects(alloc)]\n    fn byte_lit(file: u32, text: &str, start: usize, out: &mut Vec<Token>, diags: &mut diag::Diags) -> usize\n        requires start < text.len(),\n    {\n        let n: usize = text.len();\n        let q: u32 = at(text, start, 1);\n        if q == 256 {\n            return start;\n        }\n        let mut i: usize = start + 2;\n        let mut bytes: Vec<u8> = Vec::new();\n        let mut non_ascii: bool = false;\n        let mut bad_escape: bool = false;\n        while i < n && at(text, i, 0) != q && !(q == 39 && at(text, i, 0) == 10)\n            invariant i <= n, n == text.len(),\n            decreases n - i,\n        {\n            let c: u32 = at(text, i, 0);\n            if c == 92 {\n                let e: Esc = escape(text, i);\n                if e.ok {\n                    bytes.push((e.ch % 256) as u8);\n                    i = fwd(i, e.n, n);\n                } else {\n                    let k: usize = char_len(text, i + 1).saturating_add(1);\n                    diags.push(diag::new(\"E0101\", span(file, i, i.saturating_add(k)), \"unknown escape: byte literals take \\\\n \\\\r \\\\t \\\\\\\\ \\\\' \\\\\\\" \\\\0 \\\\xHH\"));\n                    i = fwd(i, k, n);\n                    bad_escape = true;\n                }\n            } else {\n                if c >= 128 {\n                    non_ascii = true;\n                }\n                bytes.push((c % 256) as u8);\n                i = i + 1;\n            }\n        }\n        if i >= n || at(text, i, 0) != q {\n            return i;\n        }\n        i = i + 1;\n        let s: source::Span = span(file, start, i);\n        if non_ascii {\n            let d: diag::Diag = diag::new(\"E0101\", s, \"a byte literal holds ASCII characters and escapes\");\n            if q == 34 {\n                diags.push(diag::fix(d, \"write the other bytes as `\\\\xHH`\", Some(byte_text(bytes.as_slice(), 34))));\n            } else {\n                diags.push(diag::fix(d, \"write one byte as `b'\\\\xHH'`, or the character's bytes as `b\\\"...\\\"`\", None));\n            }\n        }\n        if q == 34 {\n            out.push(Token { tok: Tok::Bytes(bytes), span: s });\n        } else {\n            if bytes.len() != 1 && !non_ascii && !bad_escape {\n                diags.push(diag::new(\"E0101\", s, \"a byte literal holds one byte; use `b\\\"...\\\"` for several\"));\n            }\n            let mut v: u8 = 0;\n            if bytes.len() > 0 {\n                v = bytes[0];\n            }\n            out.push(Token { tok: Tok::Byte(v), span: s });\n        }\n        i\n    }\n\n    #[effects(alloc)]\n    fn string_lit(file: u32, text: &str, start: usize, out: &mut Vec<Token>, diags: &mut diag::Diags) -> usize\n        requires start < text.len(),\n    {\n        let n: usize = text.len();\n        let mut i: usize = start + 1;\n        let mut s: String = String::new();\n        while i < n && at(text, i, 0) != 34\n            invariant i <= n, n == text.len(),\n            decreases n - i,\n        {\n            if at(text, i, 0) == 92 {\n                let e: Esc = char_escape(text, i);\n                if e.ok {\n                    push_code(&mut s, e.ch);\n                } else {\n                    diags.push(bad_escape(span(file, i, i.saturating_add(e.n))));\n                }\n                i = fwd(i, e.n, n);\n            } else {\n                push_code(&mut s, char_code(text, i));\n                i = fwd(i, char_len(text, i), n);\n            }\n        }\n        if i >= n {\n            return n;\n        }\n        i = i + 1;\n        out.push(Token { tok: Tok::Str(s), span: span(file, start, i) });\n        i\n    }\n"
+    }
+   ]
+  ]
+ },
+ "steps": [
+  {
+   "source": {
+    "code": "E0701",
+    "commit": "d3949466e",
+    "subject": "compiler: M1 front end (parse, check, JSONL diagnostics)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0701 yet: `main` must be `#[effects(io)] fn main() -> ()`. It came with the commit \"compiler: M1 front end (parse, check, JSONL diagnostics)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    fn main(x: i64) -> () {}\n    {\"code\": \"E0701\", \"severity\": \"error\", \"message\": \"`main` must be `#[effects(io)] fn main() -> ()`\", \"file\": \"err/effects.bmb\", \"line\": 16, \"col\": 8, \"end_line\": 16, \"end_col\": 12, \"fix\": {\"message\": \"write `#[effects(io)] fn main() -> ()`: no parameters, no result (other effects may be listed with `io`)\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-effects",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/effects.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n    }\n}",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0701\",\n                        f.name.span,\n                        \"`main` must be `#[effects(io)] fn main() -> ()`\",\n                    )\n                    .fix(\n                        \"write `#[effects(io)] fn main() -> ()`: no parameters, no result \\\n                         (other effects may be listed with `io`)\",\n                        None,\n                    ),\n                );\n            }\n        }\n    }\n}"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_main(self: &mut Body, p: &ast::Program) -> () {\n            let mut found: Vec<ast::FnDef> = Vec::new();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                mains_of(&p.mods[i], &mut found, 100000);\n            }\n            let mains: Vec<ast::FnDef> = by_place(found.as_slice());\n            for i in 0..mains.len()\n                invariant 0 <= i && i <= mains.len(),\n            {\n                if i > 0 {\n                    self.c.err(\"E0702\", mains[i].name.span, \"the program already has a `main`\");\n                }\n                if mains[i].params.len() != 0 || !decls::is_unit(&mains[i].ret.ty.kind) || !declares_io(mains[i].attrs.as_slice()) {\n                    self.c.help(\"E0701\", mains[i].name.span, \"`main` must be `#[effects(io)] fn main() -> ()`\", \"write `#[effects(io)] fn main() -> ()`: no parameters, no result (other effects may be listed with `io`)\");\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0517",
+    "commit": "50a08ccd3",
+    "subject": "Reject a trigger that is a bound variable alone"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0517 yet: a `#[trigger]` is a term that applies a function or an index to a bound variable, not the variable alone. It came with the commit \"Reject a trigger that is a bound variable alone\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    forall|i: usize| i < n ==> p(#[trigger] i)\n    {\"code\": \"E0517\", \"severity\": \"error\", \"message\": \"`#[trigger]` marks the bound variable `i` alone\", \"file\": \"err/triggers.bmb\", \"line\": 12, \"col\": 49, \"end_line\": 12, \"end_col\": 50, \"fix\": {\"message\": \"mark a term that applies a function or an index to `i`, e.g. `#[trigger] p(i)` or `#[trigger] a[i]`\"}}\n\n    forall|i: usize, j: usize| i < j && j < n ==> #[trigger] p(i) && q(i, #[trigger] j)\n    {\"code\": \"E0517\", \"severity\": \"error\", \"message\": \"`#[trigger]` marks the bound variable `j` alone\", \"file\": \"err/triggers.bmb\", \"line\": 21, \"col\": 90, \"end_line\": 21, \"end_col\": 91, \"fix\": {\"message\": \"mark a term that applies a function or an index to `j`, e.g. `#[trigger] p(j)` or `#[trigger] a[j]`\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-triggers",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/triggers.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    }\n                }\n                if !triggers.is_empty() {",
+       "new": "                        self.diags.push(\n                            Diag::new(\n                                \"E0517\",\n                                t.span,\n                                format!(\"`#[trigger]` marks the bound variable `{}` alone\", v.name),\n                            )\n                            .fix(\n                                format!(\n                                    \"mark a term that applies a function or an index to `{}`, e.g. `#[trigger] p({})` or `#[trigger] a[{}]`\",\n                                    v.name, v.name, v.name\n                                ),\n                                None,\n                            ),\n                        );\n                    }\n                }\n                if !triggers.is_empty() {"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn quant_expr(self: &mut Body, cx: &mut FnCtx, e: &ast::Expr, q: &ast::Quant, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let kw: String = quant_kw(&q.q);\n            if exec_mode(mode) {\n                self.c.help(\"E0503\", e.span, types::cat3(\"`\", kw.as_str(), \"` is only allowed in specifications\").as_str(), \"state it in a `spec fn` used by a contract, or compute it in code with a loop\");\n                return ast::TypeKind::Error;\n            }\n            let scope: Vec<Local> = Vec::new();\n            cx.scopes.push(scope);\n            for i in 0..q.binders.len()\n                invariant 0 <= i && i <= q.binders.len(),\n            {\n                if !types::is_int(&q.binders[i].ty.kind) && !types::is_error(&q.binders[i].ty.kind) {\n                    self.c.help(\"E0402\", q.binders[i].ty.span, types::cat3(\"`\", kw.as_str(), \"` binders must be integers\").as_str(), \"bind an integer index (e.g. `i: usize`) and reach the value through it\");\n                }\n                self.declare(cx, &q.binders[i].name, q.binders[i].ty.kind.clone(), false, false);\n            }\n            let mut triggers: Vec<ast::Expr> = Vec::new();\n            collect_triggers(&*q.body, &mut triggers, 1000000000);\n            for k in 0..triggers.len()\n                invariant 0 <= k && k <= triggers.len(),\n            {\n                match ast::var_name(&triggers[k]) {\n                    None => {},\n                    Some(v) => { if binds(q.binders.as_slice(), v.as_str()) { let mut hint: String = types::cat5(\"mark a term that applies a function or an index to `\", v.as_str(), \"`, e.g. `#[trigger] p(\", v.as_str(), \")` or `#[trigger] a[\"); hint.push_str(v.as_str()); hint.push_str(\"]`\"); self.c.help(\"E0517\", triggers[k].span, types::cat3(\"`#[trigger]` marks the bound variable `\", v.as_str(), \"` alone\").as_str(), hint.as_str()); } },\n                }\n            }\n            if triggers.len() == 0 {\n                let first: Option<source::Span> = if q.binders.len() == 1 {\n                    first_index_on(&*q.body, q.binders[0].name.name.as_str())\n                } else {\n                    None\n                };\n                let msg: String = types::cat3(\"`\", kw.as_str(), \"` has no `#[trigger]`\");\n                match first {\n                    None => self.c.help(\"E0511\", e.span, msg.as_str(), \"mark a term that mentions every bound variable, e.g. `#[trigger] a[i]`\"),\n                    Some(at) => self.c.fixed(\"E0511\", source::Span { file: at.file, lo: at.lo, hi: at.lo }, msg.as_str(), \"mark the first term indexed by the bound variable\", \"#[trigger] \"),\n                }\n            } else {\n                for j in 0..q.binders.len()\n                    invariant 0 <= j && j <= q.binders.len(),\n                {\n                    if !any_mentions(triggers.as_slice(), q.binders[j].name.name.as_str(), true, 1000000000) {\n                        self.c.help(\"E0512\", q.binders[j].name.span, types::cat3(\"no trigger mentions bound variable `\", q.binders[j].name.name.as_str(), \"`\").as_str(), types::cat3(\"mark a term that mentions `\", q.binders[j].name.name.as_str(), \"` with `#[trigger]` as well (the triggers form one pattern)\").as_str());\n                    }\n                }\n            }\n            if cx.forall_depth < 4294967295 {\n                cx.forall_depth = cx.forall_depth + 1;\n            }\n            let wb: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &*q.body, &wb, mode, f - 1);\n            if cx.forall_depth > 0 {\n                cx.forall_depth = cx.forall_depth - 1;\n            }\n            cx.scopes.pop();\n            self.expect_ty(&t, &ast::TypeKind::Bool, q.body.span);\n            ast::TypeKind::Bool\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0426",
+    "commit": "ec96f3abc",
+    "subject": "2B-04c: check match (one arm per variant, declaration order, payload bindings)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0426 yet: `match` arms: one per variant, in declaration order. It came with the commit \"2B-04c: check match (one arm per variant, declaration order, payload bindings)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    match s {\n    {\"code\": \"E0426\", \"severity\": \"error\", \"message\": \"`match` misses `Shape::Square(_)`, `Shape::Rect(_, _)`\", \"file\": \"err/match.bmb\", \"line\": 26, \"col\": 9, \"end_line\": 28, \"end_col\": 10, \"fix\": {\"message\": \"add an arm for each: `Shape::Square(_) => .., Shape::Rect(_, _) => ..`\"}}\n\n    Shape::Dot => 1,\n    {\"code\": \"E0426\", \"severity\": \"error\", \"message\": \"a second arm for `Shape::Dot`\", \"file\": \"err/match.bmb\", \"line\": 35, \"col\": 13, \"end_line\": 35, \"end_col\": 23, \"fix\": {\"message\": \"one arm per variant: merge the two\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-match",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/match.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                }\n            }\n            let missing: Vec<String> = (0..vs.len())",
+       "new": "                    self.diags.push(\n                        Diag::new(\"E0426\", a.pat.span, format!(\"a second arm for `{vt}`\"))\n                            .fix(\"one arm per variant: merge the two\", None),\n                    );\n                }\n            }\n            let missing: Vec<String> = (0..vs.len())"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n            let ks: Vec<usize> = kinds.iter().flatten().copied().collect();",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0426\",\n                        span,\n                        format!(\"`match` misses `{}`\", missing.join(\"`, `\")),\n                    )\n                    .fix(\n                        format!(\"add an arm for each: `{} => ..`\", missing.join(\" => .., \")),\n                        None,\n                    ),\n                );\n            }\n            let ks: Vec<usize> = kinds.iter().flatten().copied().collect();"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n        let first = if expected.is_none() {",
+       "new": "                self.diags.push(\n                    Diag::new(\"E0426\", at, \"`match` arms are not in declaration order\").fix(\n                        format!(\"order the arms as declared: {}\", order.join(\", \")),\n                        None,\n                    ),\n                );\n            }\n        }\n        let first = if expected.is_none() {"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn match_cover(self: &mut Body, cx: &FnCtx, scrut: &ast::Expr, arms: &[ast::Arm], kinds: &[Option<usize>], tp: &str, vs: &[types::VariantSig], span: source::Span, wildcard: bool, unresolved: bool) -> () {\n            let mut seen: Vec<usize> = Vec::new();\n            let mut dup: bool = false;\n            let mut prev: Option<usize> = None;\n            let mut disorder: bool = false;\n            let mut at: source::Span = span;\n            for i in 0..arms.len()\n                invariant 0 <= i && i <= arms.len(),\n            {\n                if i < kinds.len() {\n                    match kinds[i] {\n                        None => {},\n                        Some(k) => { if has_usize(seen.as_slice(), k) { dup = true; if k < vs.len() { let vt: String = variant_text(tp, vs[k].name.as_str(), cx.mod_path.as_str()); self.c.help(\"E0426\", arms[i].pat.span, types::cat3(\"a second arm for `\", vt.as_str(), \"`\").as_str(), \"one arm per variant: merge the two\"); } } else { seen.push(k); } match prev { None => {}, Some(p) => { if p > k && !disorder { disorder = true; at = arms[i].pat.span; } }, } prev = Some(k); },\n                    }\n                }\n            }\n            let mut missing: Vec<String> = Vec::new();\n            let mut order: Vec<String> = Vec::new();\n            for j in 0..vs.len()\n                invariant 0 <= j && j <= vs.len(),\n            {\n                let vt2: String = variant_text(tp, vs[j].name.as_str(), cx.mod_path.as_str());\n                if !has_usize(seen.as_slice(), j) {\n                    missing.push(variant_pat(vt2.as_str(), vs[j].tys.len()));\n                }\n                order.push(vt2);\n            }\n            self.wildcard_arms(cx, scrut, arms, kinds, tp, vs, span);\n            if !wildcard && !unresolved && missing.len() > 0 {\n                self.c.help(\"E0426\", span, types::cat3(\"`match` misses `\", types::join(missing.as_slice(), \"`, `\").as_str(), \"`\").as_str(), types::cat3(\"add an arm for each: `\", types::join(missing.as_slice(), \" => .., \").as_str(), \" => ..`\").as_str());\n            }\n            if !dup && disorder {\n                self.c.help(\"E0426\", at, \"`match` arms are not in declaration order\", types::cat2(\"order the arms as declared: \", types::join(order.as_slice(), \", \").as_str()).as_str());\n            }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0315",
+    "commit": "61304be45",
+    "subject": "2T-07a: user traits, impls, bounds and static trait calls"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0315 yet: a trait impl misses a method of the trait, or has one the trait lacks. It came with the commit \"2T-07a: user traits, impls, bounds and static trait calls\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    fn extra(self: &Sq) -> i64 {\n    {\"code\": \"E0315\", \"severity\": \"error\", \"message\": \"`extra` is not a method of `Shape`\", \"file\": \"err/traits.bmb\", \"line\": 41, \"col\": 12, \"end_line\": 41, \"end_col\": 17, \"fix\": {\"message\": \"remove it, or declare it in `Shape`; a function of the type alone goes in `impl Sq { .. }`\"}}\n\n    impl Shape for Hex {}\n    {\"code\": \"E0315\", \"severity\": \"error\", \"message\": \"`impl Shape for Hex` does not define `area`\", \"file\": \"err/traits.bmb\", \"line\": 103, \"col\": 20, \"end_line\": 103, \"end_col\": 23, \"fix\": {\"message\": \"define every method of the trait, with the trait's signature for `Self`\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-traits",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/traits.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        }\n        for f in &ti.fns {",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E0315\",\n                    ti.self_ty.span,\n                    format!(\n                        \"`impl {name} for {head}` does not define `{}`\",\n                        missing.join(\"`, `\")\n                    ),\n                )\n                .fix(\n                    \"define every method of the trait, with the trait's signature for `Self`\",\n                    None,\n                ),\n            );\n        }\n        for f in &ti.fns {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                continue;\n            }\n            let Some(tsig) = self.fns.get(&format!(\"{tr}::{}\", f.name.name)).cloned() else {",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0315\",\n                        f.name.span,\n                        format!(\"`{}` is not a method of `{name}`\", f.name.name),\n                    )\n                    .fix(\n                        format!(\"remove it, or declare it in `{name}`; a function of the type alone goes in `impl {head} {{ .. }}`\"),\n                        None,\n                    ),\n                );\n                continue;\n            }\n            let Some(tsig) = self.fns.get(&format!(\"{tr}::{}\", f.name.name)).cloned() else {"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "decls",
+       "code": "    impl Checker {\n        #[effects(alloc)]\n        fn conform(self: &mut Checker, info: &types::TraitImplInfo, ti: &ast::TraitImpl, mp: &str) -> () {\n            let tr: String = info.trait_path.clone();\n            let name: String = path_text(ti.trait_path.as_slice());\n            let head: String = types::text_in(&info.head, mp);\n            let methods: Vec<String> = match self.traits.find(tr.as_str()) {\n                None => Vec::new(),\n                Some(at) => self.traits.items[at].methods.clone(),\n            };\n            let mut missing: Vec<String> = Vec::new();\n            for i in 0..methods.len()\n                invariant 0 <= i && i <= methods.len(),\n            {\n                let mut defined: bool = false;\n                for k in 0..ti.fns.len()\n                    invariant 0 <= k && k <= ti.fns.len(),\n                {\n                    if ti.fns[k].name.name.as_str() == methods[i].as_str() {\n                        defined = true;\n                    }\n                }\n                let has_default: bool = match self.fns.find(types::cat3(tr.as_str(), \"::\", methods[i].as_str()).as_str()) {\n                    None => false,\n                    Some(at) => self.fns.items[at].default,\n                };\n                if !defined && !has_default {\n                    missing.push(methods[i].clone());\n                }\n            }\n            if missing.len() > 0 {\n                self.help(\"E0315\", ti.self_ty.span, types::cat7(\"`impl \", name.as_str(), \" for \", head.as_str(), \"` does not define `\", types::join(missing.as_slice(), \"`, `\").as_str(), \"`\").as_str(), \"define every method of the trait, with the trait's signature for `Self`\");\n            }\n            for k in 0..ti.fns.len()\n                invariant 0 <= k && k <= ti.fns.len(),\n            {\n                let fname: String = ti.fns[k].name.name.clone();\n                if !types::has(methods.as_slice(), fname.as_str()) {\n                    self.help(\"E0315\", ti.fns[k].name.span, types::cat5(\"`\", fname.as_str(), \"` is not a method of `\", name.as_str(), \"`\").as_str(), types::cat5(\"remove it, or declare it in `\", name.as_str(), \"`; a function of the type alone goes in `impl \", head.as_str(), \" { .. }`\").as_str());\n                } else {\n                    let ts: Option<types::FnSig> = match self.fns.find(types::cat3(tr.as_str(), \"::\", fname.as_str()).as_str()) {\n                        None => None,\n                        Some(at) => Some(self.fns.items[at].clone()),\n                    };\n                    let is: Option<types::FnSig> = match self.fns.find(types::fn_path(info, fname.as_str()).as_str()) {\n                        None => None,\n                        Some(at) => Some(self.fns.items[at].clone()),\n                    };\n                    match ts {\n                        None => { let dropped: Option<types::FnSig> = is; },\n                        Some(tsig) => { match is { None => { let unused: types::FnSig = tsig; }, Some(isig) => self.conform_fn(info, &ti.fns[k], &tsig, &isig, name.as_str(), head.as_str(), mp), } },\n                    }\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0102",
+    "commit": "d3949466e",
+    "subject": "compiler: M1 front end (parse, check, JSONL diagnostics)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0102 yet: unterminated string literal. It came with the commit \"compiler: M1 front end (parse, check, JSONL diagnostics)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    fn h() -> () { let s: i64 = \"open; }\n    {\"code\": \"E0102\", \"severity\": \"error\", \"message\": \"unterminated string literal\", \"file\": \"err/lexing.bmb\", \"line\": 10, \"col\": 33, \"end_line\": 12, \"end_col\": 1}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-lexing",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/lexing.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/lexer.rs",
+       "old": "                continue;\n            }\n            i += 1;",
+       "new": "                diags.push(Diag::new(\"E0102\", sp(lo, i), \"unterminated byte literal\"));\n                continue;\n            }\n            i += 1;"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/lexer.rs",
+       "old": "                break;\n            }",
+       "new": "                diags.push(Diag::new(\"E0102\", sp(lo, i), \"unterminated string literal\"));\n                break;\n            }"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "lexer",
+       "code": "    #[effects(alloc)]\n    fn byte_lit(file: u32, text: &str, start: usize, out: &mut Vec<Token>, diags: &mut diag::Diags) -> usize\n        requires start < text.len(),\n    {\n        let n: usize = text.len();\n        let q: u32 = at(text, start, 1);\n        if q == 256 {\n            return start;\n        }\n        let mut i: usize = start + 2;\n        let mut bytes: Vec<u8> = Vec::new();\n        let mut non_ascii: bool = false;\n        let mut bad_escape: bool = false;\n        while i < n && at(text, i, 0) != q && !(q == 39 && at(text, i, 0) == 10)\n            invariant i <= n, n == text.len(),\n            decreases n - i,\n        {\n            let c: u32 = at(text, i, 0);\n            if c == 92 {\n                let e: Esc = escape(text, i);\n                if e.ok {\n                    bytes.push((e.ch % 256) as u8);\n                    i = fwd(i, e.n, n);\n                } else {\n                    let k: usize = char_len(text, i + 1).saturating_add(1);\n                    diags.push(diag::new(\"E0101\", span(file, i, i.saturating_add(k)), \"unknown escape: byte literals take \\\\n \\\\r \\\\t \\\\\\\\ \\\\' \\\\\\\" \\\\0 \\\\xHH\"));\n                    i = fwd(i, k, n);\n                    bad_escape = true;\n                }\n            } else {\n                if c >= 128 {\n                    non_ascii = true;\n                }\n                bytes.push((c % 256) as u8);\n                i = i + 1;\n            }\n        }\n        if i >= n || at(text, i, 0) != q {\n            diags.push(diag::new(\"E0102\", span(file, start, i), \"unterminated byte literal\"));\n            return i;\n        }\n        i = i + 1;\n        let s: source::Span = span(file, start, i);\n        if non_ascii {\n            let d: diag::Diag = diag::new(\"E0101\", s, \"a byte literal holds ASCII characters and escapes\");\n            if q == 34 {\n                diags.push(diag::fix(d, \"write the other bytes as `\\\\xHH`\", Some(byte_text(bytes.as_slice(), 34))));\n            } else {\n                diags.push(diag::fix(d, \"write one byte as `b'\\\\xHH'`, or the character's bytes as `b\\\"...\\\"`\", None));\n            }\n        }\n        if q == 34 {\n            out.push(Token { tok: Tok::Bytes(bytes), span: s });\n        } else {\n            if bytes.len() != 1 && !non_ascii && !bad_escape {\n                diags.push(diag::new(\"E0101\", s, \"a byte literal holds one byte; use `b\\\"...\\\"` for several\"));\n            }\n            let mut v: u8 = 0;\n            if bytes.len() > 0 {\n                v = bytes[0];\n            }\n            out.push(Token { tok: Tok::Byte(v), span: s });\n        }\n        i\n    }\n\n    #[effects(alloc)]\n    fn string_lit(file: u32, text: &str, start: usize, out: &mut Vec<Token>, diags: &mut diag::Diags) -> usize\n        requires start < text.len(),\n    {\n        let n: usize = text.len();\n        let mut i: usize = start + 1;\n        let mut s: String = String::new();\n        while i < n && at(text, i, 0) != 34\n            invariant i <= n, n == text.len(),\n            decreases n - i,\n        {\n            if at(text, i, 0) == 92 {\n                let e: Esc = char_escape(text, i);\n                if e.ok {\n                    push_code(&mut s, e.ch);\n                } else {\n                    diags.push(bad_escape(span(file, i, i.saturating_add(e.n))));\n                }\n                i = fwd(i, e.n, n);\n            } else {\n                push_code(&mut s, char_code(text, i));\n                i = fwd(i, char_len(text, i), n);\n            }\n        }\n        if i >= n {\n            diags.push(diag::new(\"E0102\", span(file, start, i), \"unterminated string literal\"));\n            return n;\n        }\n        i = i + 1;\n        out.push(Token { tok: Tok::Str(s), span: span(file, start, i) });\n        i\n    }\n"
+      }
+     ]
+    ]
+   }
+  }
+ ],
+ "weak": [
+  {
+   "fails": "corpus",
+   "bmb": [
+    [],
+    [],
+    [],
+    [],
+    []
+   ],
+   "rust": [
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_main(self: &mut Body, p: &ast::Program) -> () {\n            let mut found: Vec<ast::FnDef> = Vec::new();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                mains_of(&p.mods[i], &mut found, 100000);\n            }\n            let mains: Vec<ast::FnDef> = by_place(found.as_slice());\n            for i in 0..mains.len()\n                invariant 0 <= i && i <= mains.len(),\n            {\n                if i > 0 {\n                    self.c.err(\"E0702\", mains[i].name.span, \"the program already has a `main`\");\n                }\n                if mains[i].params.len() != 0 || !decls::is_unit(&mains[i].ret.ty.kind) || !declares_io(mains[i].attrs.as_slice()) {\n                    self.c.help(\"E0701\", mains[i].name.span, \"`main` must be `#[effects(io)] fn main() -> ()`\", \"write `#[effects(io)] fn main() -> ()`: no parameters, no result (other effects may be listed with `io`)\");\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn quant_expr(self: &mut Body, cx: &mut FnCtx, e: &ast::Expr, q: &ast::Quant, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let kw: String = quant_kw(&q.q);\n            if exec_mode(mode) {\n                self.c.help(\"E0503\", e.span, types::cat3(\"`\", kw.as_str(), \"` is only allowed in specifications\").as_str(), \"state it in a `spec fn` used by a contract, or compute it in code with a loop\");\n                return ast::TypeKind::Error;\n            }\n            let scope: Vec<Local> = Vec::new();\n            cx.scopes.push(scope);\n            for i in 0..q.binders.len()\n                invariant 0 <= i && i <= q.binders.len(),\n            {\n                if !types::is_int(&q.binders[i].ty.kind) && !types::is_error(&q.binders[i].ty.kind) {\n                    self.c.help(\"E0402\", q.binders[i].ty.span, types::cat3(\"`\", kw.as_str(), \"` binders must be integers\").as_str(), \"bind an integer index (e.g. `i: usize`) and reach the value through it\");\n                }\n                self.declare(cx, &q.binders[i].name, q.binders[i].ty.kind.clone(), false, false);\n            }\n            let mut triggers: Vec<ast::Expr> = Vec::new();\n            collect_triggers(&*q.body, &mut triggers, 1000000000);\n            for k in 0..triggers.len()\n                invariant 0 <= k && k <= triggers.len(),\n            {\n                match ast::var_name(&triggers[k]) {\n                    None => {},\n                    Some(v) => { if binds(q.binders.as_slice(), v.as_str()) { let mut hint: String = types::cat5(\"mark a term that applies a function or an index to `\", v.as_str(), \"`, e.g. `#[trigger] p(\", v.as_str(), \")` or `#[trigger] a[\"); hint.push_str(v.as_str()); hint.push_str(\"]`\"); self.c.help(\"E0517\", triggers[k].span, types::cat3(\"`#[trigger]` marks the bound variable `\", v.as_str(), \"` alone\").as_str(), hint.as_str()); } },\n                }\n            }\n            if triggers.len() == 0 {\n                let first: Option<source::Span> = if q.binders.len() == 1 {\n                    first_index_on(&*q.body, q.binders[0].name.name.as_str())\n                } else {\n                    None\n                };\n                let msg: String = types::cat3(\"`\", kw.as_str(), \"` has no `#[trigger]`\");\n                match first {\n                    None => self.c.help(\"E0511\", e.span, msg.as_str(), \"mark a term that mentions every bound variable, e.g. `#[trigger] a[i]`\"),\n                    Some(at) => self.c.fixed(\"E0511\", source::Span { file: at.file, lo: at.lo, hi: at.lo }, msg.as_str(), \"mark the first term indexed by the bound variable\", \"#[trigger] \"),\n                }\n            } else {\n                for j in 0..q.binders.len()\n                    invariant 0 <= j && j <= q.binders.len(),\n                {\n                    if !any_mentions(triggers.as_slice(), q.binders[j].name.name.as_str(), true, 1000000000) {\n                        self.c.help(\"E0512\", q.binders[j].name.span, types::cat3(\"no trigger mentions bound variable `\", q.binders[j].name.name.as_str(), \"`\").as_str(), types::cat3(\"mark a term that mentions `\", q.binders[j].name.name.as_str(), \"` with `#[trigger]` as well (the triggers form one pattern)\").as_str());\n                    }\n                }\n            }\n            if cx.forall_depth < 4294967295 {\n                cx.forall_depth = cx.forall_depth + 1;\n            }\n            let wb: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &*q.body, &wb, mode, f - 1);\n            if cx.forall_depth > 0 {\n                cx.forall_depth = cx.forall_depth - 1;\n            }\n            cx.scopes.pop();\n            self.expect_ty(&t, &ast::TypeKind::Bool, q.body.span);\n            ast::TypeKind::Bool\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn match_cover(self: &mut Body, cx: &FnCtx, scrut: &ast::Expr, arms: &[ast::Arm], kinds: &[Option<usize>], tp: &str, vs: &[types::VariantSig], span: source::Span, wildcard: bool, unresolved: bool) -> () {\n            let mut seen: Vec<usize> = Vec::new();\n            let mut dup: bool = false;\n            let mut prev: Option<usize> = None;\n            let mut disorder: bool = false;\n            let mut at: source::Span = span;\n            for i in 0..arms.len()\n                invariant 0 <= i && i <= arms.len(),\n            {\n                if i < kinds.len() {\n                    match kinds[i] {\n                        None => {},\n                        Some(k) => { if has_usize(seen.as_slice(), k) { dup = true; if k < vs.len() { let vt: String = variant_text(tp, vs[k].name.as_str(), cx.mod_path.as_str()); self.c.help(\"E0426\", arms[i].pat.span, types::cat3(\"a second arm for `\", vt.as_str(), \"`\").as_str(), \"one arm per variant: merge the two\"); } } else { seen.push(k); } match prev { None => {}, Some(p) => { if p > k && !disorder { disorder = true; at = arms[i].pat.span; } }, } prev = Some(k); },\n                    }\n                }\n            }\n            let mut missing: Vec<String> = Vec::new();\n            let mut order: Vec<String> = Vec::new();\n            for j in 0..vs.len()\n                invariant 0 <= j && j <= vs.len(),\n            {\n                let vt2: String = variant_text(tp, vs[j].name.as_str(), cx.mod_path.as_str());\n                if !has_usize(seen.as_slice(), j) {\n                    missing.push(variant_pat(vt2.as_str(), vs[j].tys.len()));\n                }\n                order.push(vt2);\n            }\n            self.wildcard_arms(cx, scrut, arms, kinds, tp, vs, span);\n            if !wildcard && !unresolved && missing.len() > 0 {\n                self.c.help(\"E0426\", span, types::cat3(\"`match` misses `\", types::join(missing.as_slice(), \"`, `\").as_str(), \"`\").as_str(), types::cat3(\"add an arm for each: `\", types::join(missing.as_slice(), \" => .., \").as_str(), \" => ..`\").as_str());\n            }\n            if !dup && disorder {\n                self.c.help(\"E0426\", at, \"`match` arms are not in declaration order\", types::cat2(\"order the arms as declared: \", types::join(order.as_slice(), \", \").as_str()).as_str());\n            }\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "decls",
+       "code": "    impl Checker {\n        #[effects(alloc)]\n        fn conform(self: &mut Checker, info: &types::TraitImplInfo, ti: &ast::TraitImpl, mp: &str) -> () {\n            let tr: String = info.trait_path.clone();\n            let name: String = path_text(ti.trait_path.as_slice());\n            let head: String = types::text_in(&info.head, mp);\n            let methods: Vec<String> = match self.traits.find(tr.as_str()) {\n                None => Vec::new(),\n                Some(at) => self.traits.items[at].methods.clone(),\n            };\n            let mut missing: Vec<String> = Vec::new();\n            for i in 0..methods.len()\n                invariant 0 <= i && i <= methods.len(),\n            {\n                let mut defined: bool = false;\n                for k in 0..ti.fns.len()\n                    invariant 0 <= k && k <= ti.fns.len(),\n                {\n                    if ti.fns[k].name.name.as_str() == methods[i].as_str() {\n                        defined = true;\n                    }\n                }\n                let has_default: bool = match self.fns.find(types::cat3(tr.as_str(), \"::\", methods[i].as_str()).as_str()) {\n                    None => false,\n                    Some(at) => self.fns.items[at].default,\n                };\n                if !defined && !has_default {\n                    missing.push(methods[i].clone());\n                }\n            }\n            if missing.len() > 0 {\n                self.help(\"E0315\", ti.self_ty.span, types::cat7(\"`impl \", name.as_str(), \" for \", head.as_str(), \"` does not define `\", types::join(missing.as_slice(), \"`, `\").as_str(), \"`\").as_str(), \"define every method of the trait, with the trait's signature for `Self`\");\n            }\n            for k in 0..ti.fns.len()\n                invariant 0 <= k && k <= ti.fns.len(),\n            {\n                let fname: String = ti.fns[k].name.name.clone();\n                if !types::has(methods.as_slice(), fname.as_str()) {\n                    self.help(\"E0315\", ti.fns[k].name.span, types::cat5(\"`\", fname.as_str(), \"` is not a method of `\", name.as_str(), \"`\").as_str(), types::cat5(\"remove it, or declare it in `\", name.as_str(), \"`; a function of the type alone goes in `impl \", head.as_str(), \" { .. }`\").as_str());\n                } else {\n                    let ts: Option<types::FnSig> = match self.fns.find(types::cat3(tr.as_str(), \"::\", fname.as_str()).as_str()) {\n                        None => None,\n                        Some(at) => Some(self.fns.items[at].clone()),\n                    };\n                    let is: Option<types::FnSig> = match self.fns.find(types::fn_path(info, fname.as_str()).as_str()) {\n                        None => None,\n                        Some(at) => Some(self.fns.items[at].clone()),\n                    };\n                    match ts {\n                        None => { let dropped: Option<types::FnSig> = is; },\n                        Some(tsig) => { match is { None => { let unused: types::FnSig = tsig; }, Some(isig) => self.conform_fn(info, &ti.fns[k], &tsig, &isig, name.as_str(), head.as_str(), mp), } },\n                    }\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "lexer",
+       "code": "    #[effects(alloc)]\n    fn byte_lit(file: u32, text: &str, start: usize, out: &mut Vec<Token>, diags: &mut diag::Diags) -> usize\n        requires start < text.len(),\n    {\n        let n: usize = text.len();\n        let q: u32 = at(text, start, 1);\n        if q == 256 {\n            return start;\n        }\n        let mut i: usize = start + 2;\n        let mut bytes: Vec<u8> = Vec::new();\n        let mut non_ascii: bool = false;\n        let mut bad_escape: bool = false;\n        while i < n && at(text, i, 0) != q && !(q == 39 && at(text, i, 0) == 10)\n            invariant i <= n, n == text.len(),\n            decreases n - i,\n        {\n            let c: u32 = at(text, i, 0);\n            if c == 92 {\n                let e: Esc = escape(text, i);\n                if e.ok {\n                    bytes.push((e.ch % 256) as u8);\n                    i = fwd(i, e.n, n);\n                } else {\n                    let k: usize = char_len(text, i + 1).saturating_add(1);\n                    diags.push(diag::new(\"E0101\", span(file, i, i.saturating_add(k)), \"unknown escape: byte literals take \\\\n \\\\r \\\\t \\\\\\\\ \\\\' \\\\\\\" \\\\0 \\\\xHH\"));\n                    i = fwd(i, k, n);\n                    bad_escape = true;\n                }\n            } else {\n                if c >= 128 {\n                    non_ascii = true;\n                }\n                bytes.push((c % 256) as u8);\n                i = i + 1;\n            }\n        }\n        if i >= n || at(text, i, 0) != q {\n            diags.push(diag::new(\"E0102\", span(file, start, i), \"unterminated byte literal\"));\n            return i;\n        }\n        i = i + 1;\n        let s: source::Span = span(file, start, i);\n        if non_ascii {\n            let d: diag::Diag = diag::new(\"E0101\", s, \"a byte literal holds ASCII characters and escapes\");\n            if q == 34 {\n                diags.push(diag::fix(d, \"write the other bytes as `\\\\xHH`\", Some(byte_text(bytes.as_slice(), 34))));\n            } else {\n                diags.push(diag::fix(d, \"write one byte as `b'\\\\xHH'`, or the character's bytes as `b\\\"...\\\"`\", None));\n            }\n        }\n        if q == 34 {\n            out.push(Token { tok: Tok::Bytes(bytes), span: s });\n        } else {\n            if bytes.len() != 1 && !non_ascii && !bad_escape {\n                diags.push(diag::new(\"E0101\", s, \"a byte literal holds one byte; use `b\\\"...\\\"` for several\"));\n            }\n            let mut v: u8 = 0;\n            if bytes.len() > 0 {\n                v = bytes[0];\n            }\n            out.push(Token { tok: Tok::Byte(v), span: s });\n        }\n        i\n    }\n\n    #[effects(alloc)]\n    fn string_lit(file: u32, text: &str, start: usize, out: &mut Vec<Token>, diags: &mut diag::Diags) -> usize\n        requires start < text.len(),\n    {\n        let n: usize = text.len();\n        let mut i: usize = start + 1;\n        let mut s: String = String::new();\n        while i < n && at(text, i, 0) != 34\n            invariant i <= n, n == text.len(),\n            decreases n - i,\n        {\n            if at(text, i, 0) == 92 {\n                let e: Esc = char_escape(text, i);\n                if e.ok {\n                    push_code(&mut s, e.ch);\n                } else {\n                    diags.push(bad_escape(span(file, i, i.saturating_add(e.n))));\n                }\n                i = fwd(i, e.n, n);\n            } else {\n                push_code(&mut s, char_code(text, i));\n                i = fwd(i, char_len(text, i), n);\n            }\n        }\n        if i >= n {\n            diags.push(diag::new(\"E0102\", span(file, start, i), \"unterminated string literal\"));\n            return n;\n        }\n        i = i + 1;\n        out.push(Token { tok: Tok::Str(s), span: span(file, start, i) });\n        i\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ]
+   ],
+   "rust": [
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n    }\n}",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0701\",\n                        f.name.span,\n                        \"`main` must be `#[effects(io)] fn main() -> ()`\",\n                    )\n                    .fix(\n                        \"write `#[effects(io)] fn main() -> ()`: no parameters, no result \\\n                         (other effects may be listed with `io`)\",\n                        None,\n                    ),\n                );\n            }\n        }\n    }\n}"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    }\n                }\n                if !triggers.is_empty() {",
+       "new": "                        self.diags.push(\n                            Diag::new(\n                                \"E0517\",\n                                t.span,\n                                format!(\"`#[trigger]` marks the bound variable `{}` alone\", v.name),\n                            )\n                            .fix(\n                                format!(\n                                    \"mark a term that applies a function or an index to `{}`, e.g. `#[trigger] p({})` or `#[trigger] a[{}]`\",\n                                    v.name, v.name, v.name\n                                ),\n                                None,\n                            ),\n                        );\n                    }\n                }\n                if !triggers.is_empty() {"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                }\n            }\n            let missing: Vec<String> = (0..vs.len())",
+       "new": "                    self.diags.push(\n                        Diag::new(\"E0426\", a.pat.span, format!(\"a second arm for `{vt}`\"))\n                            .fix(\"one arm per variant: merge the two\", None),\n                    );\n                }\n            }\n            let missing: Vec<String> = (0..vs.len())"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n            let ks: Vec<usize> = kinds.iter().flatten().copied().collect();",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0426\",\n                        span,\n                        format!(\"`match` misses `{}`\", missing.join(\"`, `\")),\n                    )\n                    .fix(\n                        format!(\"add an arm for each: `{} => ..`\", missing.join(\" => .., \")),\n                        None,\n                    ),\n                );\n            }\n            let ks: Vec<usize> = kinds.iter().flatten().copied().collect();"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n        let first = if expected.is_none() {",
+       "new": "                self.diags.push(\n                    Diag::new(\"E0426\", at, \"`match` arms are not in declaration order\").fix(\n                        format!(\"order the arms as declared: {}\", order.join(\", \")),\n                        None,\n                    ),\n                );\n            }\n        }\n        let first = if expected.is_none() {"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        }\n        for f in &ti.fns {",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E0315\",\n                    ti.self_ty.span,\n                    format!(\n                        \"`impl {name} for {head}` does not define `{}`\",\n                        missing.join(\"`, `\")\n                    ),\n                )\n                .fix(\n                    \"define every method of the trait, with the trait's signature for `Self`\",\n                    None,\n                ),\n            );\n        }\n        for f in &ti.fns {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                continue;\n            }\n            let Some(tsig) = self.fns.get(&format!(\"{tr}::{}\", f.name.name)).cloned() else {",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0315\",\n                        f.name.span,\n                        format!(\"`{}` is not a method of `{name}`\", f.name.name),\n                    )\n                    .fix(\n                        format!(\"remove it, or declare it in `{name}`; a function of the type alone goes in `impl {head} {{ .. }}`\"),\n                        None,\n                    ),\n                );\n                continue;\n            }\n            let Some(tsig) = self.fns.get(&format!(\"{tr}::{}\", f.name.name)).cloned() else {"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/lexer.rs",
+       "old": "                continue;\n            }\n            i += 1;",
+       "new": "                diags.push(Diag::new(\"E0102\", sp(lo, i), \"unterminated byte literal\"));\n                continue;\n            }\n            i += 1;"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/lexer.rs",
+       "old": "                break;\n            }",
+       "new": "                diags.push(Diag::new(\"E0102\", sp(lo, i), \"unterminated string literal\"));\n                break;\n            }"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   ]
+  }
+ ]
+}

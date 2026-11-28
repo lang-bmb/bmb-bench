@@ -1,0 +1,161 @@
+{
+ "id": "t02-replay-e0263",
+ "family": "replay",
+ "kind": "change",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "scope": "any",
+ "source": {
+  "code": "E0263",
+  "commit": "4f81bfbe9",
+  "subject": "Closures without captures (ADR-0053, 2V-20b)"
+ },
+ "prompt": "`bmb check` does not report the diagnostic E0263 yet: a closure's parameters and result have their types written (ADR-0053 §2). It came with the commit \"Closures without captures (ADR-0053, 2V-20b)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    apply::<_>(|x| -> i64 { x }, 1)\n    {\"code\": \"E0263\", \"severity\": \"error\", \"message\": \"closure parameter `x` needs its type\", \"file\": \"err/fn_values.bmb\", \"line\": 29, \"col\": 21, \"end_line\": 29, \"end_col\": 22, \"fix\": {\"message\": \"write `x: T` (types are written, DESIGN §4.1)\"}}\n\n    let add = |y: i64| y + 1;\n    {\"code\": \"E0263\", \"severity\": \"error\", \"message\": \"a closure needs its result type\", \"file\": \"err/rust_paths.bmb\", \"line\": 20, \"col\": 19, \"end_line\": 20, \"end_col\": 27, \"fix\": {\"message\": \"write `-> T` or `-> (r: T)` after the parameters\"}}\n\nEverything else the program prints must stay as it is.",
+ "setup": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "                    self.diags.push(\n                        Diag::new(\n                            \"E0263\",\n                            name.span,\n                            format!(\"closure parameter `{}` needs its type\", name.name),\n                        )\n                        .fix(\"write `x: T` (types are written, DESIGN §4.1)\", None),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "            self.diags.push(\n                Diag::new(\n                    \"E0263\",\n                    lo.to(self.prev_span()),\n                    \"a closure needs its result type\",\n                )\n                .fix(\"write `-> T` or `-> (r: T)` after the parameters\", None),\n            );",
+     "new": ""
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "parser",
+     "code": "    impl Parser {\n        #[effects(alloc)]\n        fn parse_closure(self: &mut Parser, is_move: bool, lo: source::Span, d: usize) -> Option<ast::Expr>\n            requires d <= 256,\n            decreases (256 - d) * 64 + 40,\n        {\n            let mut params: Vec<ast::Param> = Vec::new();\n            if !self.eat_p(\"||\") {\n                self.expect_p(\"|\")?;\n                let mut n: usize = self.left();\n                while n > 0 && !self.is_p(\"|\") && !self.eof()\n                    decreases n,\n                {\n                    n = n - 1;\n                    let name: ast::Ident = self.ident(\"closure parameter\")?;\n                    if !self.eat_p(\":\") {\n                        return None;\n                    }\n                    let ty: ast::Type = self.parse_type(d);\n                    params.push(ast::Param { name: name, ty: ty });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n                self.expect_p(\"|\")?;\n            }\n            if !self.eat_p(\"->\") {\n                return None;\n            }\n            let ret: ast::Ret = self.parse_ret(d)?;\n            let cl: Clauses = self.parse_clauses(d)?;\n            let body: ast::Block = self.parse_block(d)?;\n            let span: source::Span = lo.to(self.prev_span());\n            Some(ast::Expr { kind: ast::ExprKind::Closure(Box::new(ast::Closure { is_move: is_move, params: params, ret: ret, pre: cl.pre, post: cl.post, body: body, span: span })), span: span })\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "cases": [
+  {
+   "name": "replay-fn_values",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/fn_values.bmb"
+   ]
+  },
+  {
+   "name": "replay-rust_paths",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/rust_paths.bmb"
+   ]
+  },
+  {
+   "name": "replay-unsupported",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/unsupported.bmb"
+   ]
+  }
+ ],
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "                    return Err(());\n                }\n                let ty = self.parse_type();",
+     "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0263\",\n                            name.span,\n                            format!(\"closure parameter `{}` needs its type\", name.name),\n                        )\n                        .fix(\"write `x: T` (types are written, DESIGN §4.1)\", None),\n                    );\n                    return Err(());\n                }\n                let ty = self.parse_type();"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "            return Err(());\n        }\n        let ret = self.parse_ret()?;",
+     "new": "            self.diags.push(\n                Diag::new(\n                    \"E0263\",\n                    lo.to(self.prev_span()),\n                    \"a closure needs its result type\",\n                )\n                .fix(\"write `-> T` or `-> (r: T)` after the parameters\", None),\n            );\n            return Err(());\n        }\n        let ret = self.parse_ret()?;"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "parser",
+     "code": "    impl Parser {\n        #[effects(alloc)]\n        fn parse_closure(self: &mut Parser, is_move: bool, lo: source::Span, d: usize) -> Option<ast::Expr>\n            requires d <= 256,\n            decreases (256 - d) * 64 + 40,\n        {\n            let mut params: Vec<ast::Param> = Vec::new();\n            if !self.eat_p(\"||\") {\n                self.expect_p(\"|\")?;\n                let mut n: usize = self.left();\n                while n > 0 && !self.is_p(\"|\") && !self.eof()\n                    decreases n,\n                {\n                    n = n - 1;\n                    let name: ast::Ident = self.ident(\"closure parameter\")?;\n                    if !self.eat_p(\":\") {\n                        self.err_fix(\"E0263\", name.span, cat3(\"closure parameter `\", name.name.as_str(), \"` needs its type\").as_str(), \"write `x: T` (types are written, DESIGN §4.1)\");\n                        return None;\n                    }\n                    let ty: ast::Type = self.parse_type(d);\n                    params.push(ast::Param { name: name, ty: ty });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n                self.expect_p(\"|\")?;\n            }\n            if !self.eat_p(\"->\") {\n                self.err_fix_to(\"E0263\", lo, \"a closure needs its result type\", \"write `-> T` or `-> (r: T)` after the parameters\");\n                return None;\n            }\n            let ret: ast::Ret = self.parse_ret(d)?;\n            let cl: Clauses = self.parse_clauses(d)?;\n            let body: ast::Block = self.parse_block(d)?;\n            let span: source::Span = lo.to(self.prev_span());\n            Some(ast::Expr { kind: ast::ExprKind::Closure(Box::new(ast::Closure { is_move: is_move, params: params, ret: ret, pre: cl.pre, post: cl.post, body: body, span: span })), span: span })\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "corpus",
+   "bmb": [],
+   "rust": []
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "parser",
+      "code": "    impl Parser {\n        #[effects(alloc)]\n        fn parse_closure(self: &mut Parser, is_move: bool, lo: source::Span, d: usize) -> Option<ast::Expr>\n            requires d <= 256,\n            decreases (256 - d) * 64 + 40,\n        {\n            let mut params: Vec<ast::Param> = Vec::new();\n            if !self.eat_p(\"||\") {\n                self.expect_p(\"|\")?;\n                let mut n: usize = self.left();\n                while n > 0 && !self.is_p(\"|\") && !self.eof()\n                    decreases n,\n                {\n                    n = n - 1;\n                    let name: ast::Ident = self.ident(\"closure parameter\")?;\n                    if !self.eat_p(\":\") {\n                        self.err_fix(\"E0263\", name.span, cat3(\"closure parameter `\", name.name.as_str(), \"` needs its type\").as_str(), \"write `x: T` (types are written, DESIGN §4.1)\");\n                        return None;\n                    }\n                    let ty: ast::Type = self.parse_type(d);\n                    params.push(ast::Param { name: name, ty: ty });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n                self.expect_p(\"|\")?;\n            }\n            if !self.eat_p(\"->\") {\n                self.err_fix_to(\"E0263\", lo, \"a closure needs its result type\", \"write `-> T` or `-> (r: T)` after the parameters\");\n                return None;\n            }\n            let ret: ast::Ret = self.parse_ret(d)?;\n            let cl: Clauses = self.parse_clauses(d)?;\n            let body: ast::Block = self.parse_block(d)?;\n            let span: source::Span = lo.to(self.prev_span());\n            Some(ast::Expr { kind: ast::ExprKind::Closure(Box::new(ast::Closure { is_move: is_move, params: params, ret: ret, pre: cl.pre, post: cl.post, body: body, span: span })), span: span })\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/parser.rs",
+      "old": "                    return Err(());\n                }\n                let ty = self.parse_type();",
+      "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0263\",\n                            name.span,\n                            format!(\"closure parameter `{}` needs its type\", name.name),\n                        )\n                        .fix(\"write `x: T` (types are written, DESIGN §4.1)\", None),\n                    );\n                    return Err(());\n                }\n                let ty = self.parse_type();"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/parser.rs",
+      "old": "            return Err(());\n        }\n        let ret = self.parse_ret()?;",
+      "new": "            self.diags.push(\n                Diag::new(\n                    \"E0263\",\n                    lo.to(self.prev_span()),\n                    \"a closure needs its result type\",\n                )\n                .fix(\"write `-> T` or `-> (r: T)` after the parameters\", None),\n            );\n            return Err(());\n        }\n        let ret = self.parse_ret()?;"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ]
+  }
+ ]
+}

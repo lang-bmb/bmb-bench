@@ -1,0 +1,76 @@
+{
+ "id": "c32-state-spec_widen",
+ "kind": "comprehend",
+ "family": "state",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions change the field `spec_widen` of `body::Body`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions change the field `spec_widen` of `check::Checker`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "check::Checker::check_fn",
+   "check::Checker::expr"
+  ],
+  "bmb": [
+   "body::Body::check_fn",
+   "body::Body::expr"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "body::Body::check_fn",
+      "body::Body::expr"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\\.spec_widen\\b"
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "check::Checker::check_fn",
+      "check::Checker::expr"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "body::Body::expr"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "check::Checker::expr"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

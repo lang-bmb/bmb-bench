@@ -1,0 +1,326 @@
+{
+ "id": "r06-rename-has_array",
+ "kind": "change",
+ "family": "rename",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Rename the function `encode_decls::has_array` to `has_array_renamed` and update every use of it. The program's behaviour must not change; change nothing else.",
+  "rust": "Rename the function `verify::has_array` to `has_array_renamed` and update every use of it. The program's behaviour must not change; change nothing else."
+ },
+ "scope": {
+  "rust": [
+   "verify::Enc::ext_eq",
+   "verify::Enc::spec",
+   "verify::dump_smt",
+   "verify::has_array",
+   "verify::has_array_renamed"
+  ],
+  "bmb": [
+   "encode_decls::has_array",
+   "encode_decls::has_array_renamed",
+   "encode_spec::Enc::ext_eq",
+   "encode_spec::Enc::spec_binary",
+   "encode_spec::dump_def"
+  ]
+ },
+ "must_change": {
+  "rust": [
+   "verify::Enc::ext_eq",
+   "verify::Enc::spec",
+   "verify::dump_smt",
+   "verify::has_array",
+   "verify::has_array_renamed"
+  ],
+  "bmb": [
+   "encode_decls::has_array",
+   "encode_decls::has_array_renamed",
+   "encode_spec::Enc::ext_eq",
+   "encode_spec::Enc::spec_binary",
+   "encode_spec::dump_def"
+  ]
+ },
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/verify.rs",
+     "old": "        let arrays = raw(arrays.map(|x| has_array(x, t).to_string()).collect());",
+     "new": "        let arrays = raw(arrays.map(|x| has_array_renamed(x, t).to_string()).collect());"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/verify.rs",
+     "old": "fn has_array(t: &TypeKind, tb: &Tables) -> bool {",
+     "new": "fn has_array_renamed(t: &TypeKind, tb: &Tables) -> bool {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/verify.rs",
+     "old": "                    || has_array(&self.ty(l), self.prog.t) =>",
+     "new": "                    || has_array_renamed(&self.ty(l), self.prog.t) =>"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/verify.rs",
+     "old": "            && has_array(t, tb)",
+     "new": "            && has_array_renamed(t, tb)"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "encode_decls",
+     "code": "    #[effects(alloc)]\n    fn has_array_renamed(t: &ast::TypeKind, tb: &lowered::Tables) -> bool {\n        let mut seen: table::Table<bool> = table::new::<bool>();\n        has_array_in(t, tb, &mut seen, 100000)\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "encode_spec",
+     "code": "    #[effects(alloc)]\n    fn dump_def(out: &mut String, pg: &Prog, rows: &[encode_decls::Row], path: &str, def: &Def, sig: &types::FnSig, external: &[String]) -> () {\n        let is_sp: bool = body::is_spec(def.d.kind);\n        let is_pf: bool = body::is_proof(def.d.kind);\n        let is_ex: bool = !is_sp && !def.inst && !types::has(external, path);\n        out.push_str(\"{\\\"def\\\":\");\n        std::json::push_string(out, path);\n        out.push_str(\",\\\"kind\\\":\");\n        if is_sp {\n            out.push_str(\"\\\"spec fn\\\"\");\n        } else if is_pf {\n            out.push_str(\"\\\"proof fn\\\"\");\n        } else {\n            out.push_str(\"\\\"fn\\\"\");\n        }\n        out.push_str(\",\\\"inst\\\":\");\n        decls::push_bool(out, def.inst);\n        out.push_str(\",\\\"unit\\\":\");\n        std::json::push_string(out, def.unit.as_str());\n        out.push_str(\",\\\"sub\\\":[\");\n        for i in 0..def.tsub.names.len()\n            invariant 0 <= i && i <= def.tsub.names.len(),\n        {\n            if i < def.tsub.tys.len() {\n                if i > 0 {\n                    out.push_str(\",\");\n                }\n                out.push_str(\"[\");\n                std::json::push_string(out, def.tsub.names[i].as_str());\n                out.push_str(\",\");\n                std::json::push_string(out, types::text(&def.tsub.tys[i]).as_str());\n                out.push_str(\"]\");\n            }\n        }\n        out.push_str(\"],\\\"uses\\\":\");\n        encode_decls::push_list(out, encode_decls::uses_of(&def.d, def.unit.as_str(), &pg.pr.t.fns).as_slice());\n        out.push_str(\",\\\"context\\\":\");\n        encode_decls::push_list(out, encode_decls::context_of(path, &def.d, def.unit.as_str(), &pg.pr).as_slice());\n        out.push_str(\",\\\"contract\\\":\");\n        let contract: Vec<String> = if def.inst || def.d.pre.len() == 0 && def.d.post.len() == 0 {\n            Vec::new()\n        } else {\n            encode_decls::contract_specs_in(rows, &pg.pr.t, path)\n        };\n        encode_decls::push_list(out, contract.as_slice());\n        out.push_str(\",\\\"revealed\\\":\");\n        encode_decls::push_list(out, revealed(pg, path, &def.d, def.unit.as_str()).as_slice());\n        out.push_str(\",\\\"arrays\\\":[\");\n        for i in 0..sig.params.len()\n            invariant 0 <= i && i <= sig.params.len(),\n        {\n            decls::push_bool(out, encode_decls::has_array_renamed(&sig.params[i], &pg.pr.t));\n            out.push_str(\",\");\n        }\n        decls::push_bool(out, encode_decls::has_array_renamed(&sig.ret, &pg.pr.t));\n        out.push_str(\"],\\\"fields\\\":[\");\n        for i in 0..sig.params.len()\n            invariant 0 <= i && i <= sig.params.len(),\n        {\n            if i > 0 {\n                out.push_str(\",\");\n            }\n            out.push_str(\"[\");\n            match lowered::struct_fields(&sig.params[i], &pg.pr.t) {\n                None => {},\n                Some(fs) => { for k in 0..fs.len() invariant 0 <= k && k <= fs.len(), { if k > 0 { out.push_str(\",\"); } std::num::push_u64(out, encode_decls::field_index(&sig.params[i], &pg.pr.t, fs[k].name.as_str()) as u64); } },\n            }\n            out.push_str(\"]\");\n        }\n        out.push_str(\"],\\\"encoded\\\":\");\n        decls::push_bool(out, is_sp || is_ex);\n        out.push_str(\"}\\n\");\n        if is_sp && sig.generics.len() == 0 {\n            let ax: Axiom = axiom(pg, path);\n            out.push_str(\"{\\\"axiom\\\":\");\n            std::json::push_string(out, path);\n            out.push_str(\",\\\"text\\\":\");\n            std::json::push_string(out, ax.text.as_str());\n            out.push_str(\",\\\"facts\\\":\");\n            std::json::push_string(out, struct_facts(pg, ax.text.as_str()).as_str());\n            out.push_str(\",\\\"parts\\\":[\");\n            for i in 0..ax.parts.len()\n                invariant 0 <= i && i <= ax.parts.len(),\n            {\n                if i > 0 {\n                    out.push_str(\",\");\n                }\n                push_part(out, &ax.parts[i]);\n            }\n            out.push_str(\"]}\\n\");\n        }\n        let mut enc: Enc = new_enc(pg, path, def.unit.as_str());\n        if is_pf {\n            for i in 0..def.d.params.len()\n                invariant 0 <= i && i <= def.d.params.len(),\n            {\n                enc.proof_param(def.d.params[i].name.name.as_str(), pg);\n            }\n            out.push_str(\"{\\\"proof_params\\\":\");\n            std::json::push_string(out, path);\n            out.push_str(\",\\\"decls\\\":\");\n            encode_decls::push_list(out, enc.fr.decls.as_slice());\n            out.push_str(\",\\\"facts\\\":\");\n            encode_decls::push_list(out, enc.pc.as_slice());\n            out.push_str(\"}\\n\");\n        }\n        if is_ex {\n            encode_exec::dump_body(out, pg, path, &def.d, def.unit.as_str());\n            return;\n        }\n        if !is_sp || def.inst {\n            return;\n        }\n        let comp: usize = match pg.recursive.find(path) {\n            None => { return; },\n            Some(c) => pg.recursive.items[c],\n        };\n        match &def.d.measure {\n            None => {},\n            Some(dec) => { enc.termination(&def.d, comp, dec, pg); push_row_head(out, \"termination\", path, &enc); out.push_str(\"}\\n\"); push_obls(out, pg, path, enc.obls.as_slice()); },\n        }\n    }\n\n    impl Enc {\n        #[effects(alloc)]\n        fn ext_eq(self: &mut Enc, a: &encode_terms::Val, b: &encode_terms::Val, t: &ast::TypeKind, pg: &Prog, f: usize) -> String\n            decreases f,\n        {\n            if f == 0 {\n                return String::from(\"true\");\n            }\n            let arr: bool = encode_decls::is_array(t);\n            if !arr {\n                match body::ref_inner(t) {\n                    None => {},\n                    Some(inner) => { return self.ext_eq(a, b, &inner, pg, f - 1); },\n                }\n            }\n            match encode_decls::flat_fields(t, &pg.pr.t) {\n                None => {},\n                Some(fs) => { let xs: Vec<encode_terms::Val> = fields_of(a); let ys: Vec<encode_terms::Val> = fields_of(b); let mut parts: Vec<String> = Vec::new(); for i in 0..fs.len() invariant 0 <= i && i <= fs.len(), { if i < xs.len() && i < ys.len() { parts.push(self.ext_eq(&xs[i], &ys[i], &fs[i].ty, pg, f - 1)); } } return encode_terms::and(parts.as_slice()); },\n            }\n            if encode_decls::has_array_renamed(t, &pg.pr.t) {\n                match encode_decls::variants(t, &pg.pr.t) {\n                    None => {},\n                    Some(vs) => { return self.ext_eq_enum(a, b, t, vs.as_slice(), pg, f - 1); },\n                }\n            }\n            if arr {\n                return self.ext_eq_array(a, b, t, pg, f - 1);\n            }\n            if decls::is_unit(t) {\n                return String::from(\"true\");\n            }\n            types::cat5(\"(= \", encode_terms::scalar_of(a).as_str(), \" \", encode_terms::scalar_of(b).as_str(), \")\")\n        }\n\n        #[effects(alloc)]\n        fn spec_binary(self: &mut Enc, e: &ast::Expr, op: ast::BinOp, l: &ast::Expr, r: &ast::Expr, env: &table::Table<encode_terms::Val>, was: &table::Table<encode_terms::Val>, pg: &Prog, f: usize) -> encode_terms::Val\n            decreases f,\n        {\n            if f == 0 {\n                return encode_terms::Val::Unit;\n            }\n            let k: u8 = op_code(op);\n            let lty: ast::TypeKind = self.ty(l, pg);\n            if body::is_cmp(op) && (self.is_text_expr(l, pg) || self.is_text_expr(r, pg)) {\n                let ta: encode_terms::Val = self.spec_expr(l, env, was, pg, f - 1);\n                let tb: encode_terms::Val = self.spec_expr(r, env, was, pg, f - 1);\n                return encode_terms::Val::S(self.text_cmp_spec(k, &ta, &tb, pg, f - 1));\n            }\n            if (k == 5 || k == 6) && (is_flat(&lty, pg) || encode_decls::has_array_renamed(&lty, &pg.pr.t)) {\n                let sa: encode_terms::Val = self.spec_expr(l, env, was, pg, f - 1);\n                let sb: encode_terms::Val = self.spec_expr(r, env, was, pg, f - 1);\n                let q: String = self.ext_eq(&sa, &sb, &lty, pg, f - 1);\n                if k == 5 {\n                    return encode_terms::Val::S(q);\n                }\n                return encode_terms::Val::S(types::cat3(\"(not \", q.as_str(), \")\"));\n            }\n            let lt: String = encode_terms::scalar_of(&self.spec_expr(l, env, was, pg, f - 1));\n            let guarded: bool = k == 11 || k == 12 || k == 13;\n            if k == 11 || k == 13 {\n                self.spec_pc.push(lt.clone());\n            } else if k == 12 {\n                self.spec_pc.push(types::cat3(\"(not \", lt.as_str(), \")\"));\n            }\n            let rt: String = encode_terms::scalar_of(&self.spec_expr(r, env, was, pg, f - 1));\n            if guarded {\n                self.spec_pc.pop();\n            }\n            if body::is_f64(&lty) {\n                match encode_terms::f64_binary(op, lt.as_str(), rt.as_str()) {\n                    None => {},\n                    Some(ft) => { return encode_terms::Val::S(ft); },\n                }\n            }\n            if k == 14 {\n                return match body::int_of(&self.ty(e, pg)) { None => encode_terms::Val::S(encode_terms::bool_bit(op, lt.as_str(), rt.as_str())), Some(i) => { if codegen::is_shr(op) && is_num(rt.as_str()) { encode_terms::Val::S(encode_terms::bit_op(op, i, image(i, l, lt.as_str()).as_str(), rt.as_str()).t.clone()) } else { encode_terms::Val::S(encode_terms::bit_op(op, i, lt.as_str(), rt.as_str()).t.clone()) } }, };\n            }\n            let signed: bool = codegen::is_signed(&lty);\n            if k >= 7 && k <= 10 {\n                return encode_terms::Val::S(encode_terms::ord_term(op, &lty, lt.as_str(), rt.as_str()));\n            }\n            if k == 6 {\n                return encode_terms::Val::S(types::cat5(\"(not (= \", lt.as_str(), \" \", rt.as_str(), \"))\"));\n            }\n            let head: String = if k == 0 {\n                String::from(\"(+ \")\n            } else if k == 1 {\n                String::from(\"(- \")\n            } else if k == 2 {\n                String::from(\"(* \")\n            } else if k == 3 {\n                if signed {\n                    String::from(\"(bmb_tdiv \")\n                } else {\n                    String::from(\"(div \")\n                }\n            } else if k == 4 {\n                if signed {\n                    String::from(\"(bmb_trem \")\n                } else {\n                    String::from(\"(mod \")\n                }\n            } else if k == 5 {\n                String::from(\"(= \")\n            } else if k == 11 {\n                String::from(\"(and \")\n            } else if k == 12 {\n                String::from(\"(or \")\n            } else {\n                String::from(\"(=> \")\n            };\n            encode_terms::Val::S(types::cat5(head.as_str(), lt.as_str(), \" \", rt.as_str(), \")\"))\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "encode_decls",
+     "remove": [
+      "encode_decls::has_array"
+     ]
+    }
+   ]
+  ],
+  "bmb:port-rename": [
+   [
+    "write",
+    {
+     "rename": [
+      {
+       "def": "encode_decls::has_array",
+       "to": "has_array_renamed"
+      }
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "scope",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "encode_decls",
+      "code": "    #[effects(alloc)]\n    fn has_array_renamed(t: &ast::TypeKind, tb: &lowered::Tables) -> bool {\n        let mut seen: table::Table<bool> = table::new::<bool>();\n        has_array_in(t, tb, &mut seen, 100000)\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_spec",
+      "code": "    #[effects(alloc)]\n    fn dump_def(out: &mut String, pg: &Prog, rows: &[encode_decls::Row], path: &str, def: &Def, sig: &types::FnSig, external: &[String]) -> () {\n        let is_sp: bool = body::is_spec(def.d.kind);\n        let is_pf: bool = body::is_proof(def.d.kind);\n        let is_ex: bool = !is_sp && !def.inst && !types::has(external, path);\n        out.push_str(\"{\\\"def\\\":\");\n        std::json::push_string(out, path);\n        out.push_str(\",\\\"kind\\\":\");\n        if is_sp {\n            out.push_str(\"\\\"spec fn\\\"\");\n        } else if is_pf {\n            out.push_str(\"\\\"proof fn\\\"\");\n        } else {\n            out.push_str(\"\\\"fn\\\"\");\n        }\n        out.push_str(\",\\\"inst\\\":\");\n        decls::push_bool(out, def.inst);\n        out.push_str(\",\\\"unit\\\":\");\n        std::json::push_string(out, def.unit.as_str());\n        out.push_str(\",\\\"sub\\\":[\");\n        for i in 0..def.tsub.names.len()\n            invariant 0 <= i && i <= def.tsub.names.len(),\n        {\n            if i < def.tsub.tys.len() {\n                if i > 0 {\n                    out.push_str(\",\");\n                }\n                out.push_str(\"[\");\n                std::json::push_string(out, def.tsub.names[i].as_str());\n                out.push_str(\",\");\n                std::json::push_string(out, types::text(&def.tsub.tys[i]).as_str());\n                out.push_str(\"]\");\n            }\n        }\n        out.push_str(\"],\\\"uses\\\":\");\n        encode_decls::push_list(out, encode_decls::uses_of(&def.d, def.unit.as_str(), &pg.pr.t.fns).as_slice());\n        out.push_str(\",\\\"context\\\":\");\n        encode_decls::push_list(out, encode_decls::context_of(path, &def.d, def.unit.as_str(), &pg.pr).as_slice());\n        out.push_str(\",\\\"contract\\\":\");\n        let contract: Vec<String> = if def.inst || def.d.pre.len() == 0 && def.d.post.len() == 0 {\n            Vec::new()\n        } else {\n            encode_decls::contract_specs_in(rows, &pg.pr.t, path)\n        };\n        encode_decls::push_list(out, contract.as_slice());\n        out.push_str(\",\\\"revealed\\\":\");\n        encode_decls::push_list(out, revealed(pg, path, &def.d, def.unit.as_str()).as_slice());\n        out.push_str(\",\\\"arrays\\\":[\");\n        for i in 0..sig.params.len()\n            invariant 0 <= i && i <= sig.params.len(),\n        {\n            decls::push_bool(out, encode_decls::has_array_renamed(&sig.params[i], &pg.pr.t));\n            out.push_str(\",\");\n        }\n        decls::push_bool(out, encode_decls::has_array_renamed(&sig.ret, &pg.pr.t));\n        out.push_str(\"],\\\"fields\\\":[\");\n        for i in 0..sig.params.len()\n            invariant 0 <= i && i <= sig.params.len(),\n        {\n            if i > 0 {\n                out.push_str(\",\");\n            }\n            out.push_str(\"[\");\n            match lowered::struct_fields(&sig.params[i], &pg.pr.t) {\n                None => {},\n                Some(fs) => { for k in 0..fs.len() invariant 0 <= k && k <= fs.len(), { if k > 0 { out.push_str(\",\"); } std::num::push_u64(out, encode_decls::field_index(&sig.params[i], &pg.pr.t, fs[k].name.as_str()) as u64); } },\n            }\n            out.push_str(\"]\");\n        }\n        out.push_str(\"],\\\"encoded\\\":\");\n        decls::push_bool(out, is_sp || is_ex);\n        out.push_str(\"}\\n\");\n        if is_sp && sig.generics.len() == 0 {\n            let ax: Axiom = axiom(pg, path);\n            out.push_str(\"{\\\"axiom\\\":\");\n            std::json::push_string(out, path);\n            out.push_str(\",\\\"text\\\":\");\n            std::json::push_string(out, ax.text.as_str());\n            out.push_str(\",\\\"facts\\\":\");\n            std::json::push_string(out, struct_facts(pg, ax.text.as_str()).as_str());\n            out.push_str(\",\\\"parts\\\":[\");\n            for i in 0..ax.parts.len()\n                invariant 0 <= i && i <= ax.parts.len(),\n            {\n                if i > 0 {\n                    out.push_str(\",\");\n                }\n                push_part(out, &ax.parts[i]);\n            }\n            out.push_str(\"]}\\n\");\n        }\n        let mut enc: Enc = new_enc(pg, path, def.unit.as_str());\n        if is_pf {\n            for i in 0..def.d.params.len()\n                invariant 0 <= i && i <= def.d.params.len(),\n            {\n                enc.proof_param(def.d.params[i].name.name.as_str(), pg);\n            }\n            out.push_str(\"{\\\"proof_params\\\":\");\n            std::json::push_string(out, path);\n            out.push_str(\",\\\"decls\\\":\");\n            encode_decls::push_list(out, enc.fr.decls.as_slice());\n            out.push_str(\",\\\"facts\\\":\");\n            encode_decls::push_list(out, enc.pc.as_slice());\n            out.push_str(\"}\\n\");\n        }\n        if is_ex {\n            encode_exec::dump_body(out, pg, path, &def.d, def.unit.as_str());\n            return;\n        }\n        if !is_sp || def.inst {\n            return;\n        }\n        let comp: usize = match pg.recursive.find(path) {\n            None => { return; },\n            Some(c) => pg.recursive.items[c],\n        };\n        match &def.d.measure {\n            None => {},\n            Some(dec) => { enc.termination(&def.d, comp, dec, pg); push_row_head(out, \"termination\", path, &enc); out.push_str(\"}\\n\"); push_obls(out, pg, path, enc.obls.as_slice()); },\n        }\n    }\n\n    impl Enc {\n        #[effects(alloc)]\n        fn ext_eq(self: &mut Enc, a: &encode_terms::Val, b: &encode_terms::Val, t: &ast::TypeKind, pg: &Prog, f: usize) -> String\n            decreases f,\n        {\n            if f == 0 {\n                return String::from(\"true\");\n            }\n            let arr: bool = encode_decls::is_array(t);\n            if !arr {\n                match body::ref_inner(t) {\n                    None => {},\n                    Some(inner) => { return self.ext_eq(a, b, &inner, pg, f - 1); },\n                }\n            }\n            match encode_decls::flat_fields(t, &pg.pr.t) {\n                None => {},\n                Some(fs) => { let xs: Vec<encode_terms::Val> = fields_of(a); let ys: Vec<encode_terms::Val> = fields_of(b); let mut parts: Vec<String> = Vec::new(); for i in 0..fs.len() invariant 0 <= i && i <= fs.len(), { if i < xs.len() && i < ys.len() { parts.push(self.ext_eq(&xs[i], &ys[i], &fs[i].ty, pg, f - 1)); } } return encode_terms::and(parts.as_slice()); },\n            }\n            if encode_decls::has_array_renamed(t, &pg.pr.t) {\n                match encode_decls::variants(t, &pg.pr.t) {\n                    None => {},\n                    Some(vs) => { return self.ext_eq_enum(a, b, t, vs.as_slice(), pg, f - 1); },\n                }\n            }\n            if arr {\n                return self.ext_eq_array(a, b, t, pg, f - 1);\n            }\n            if decls::is_unit(t) {\n                return String::from(\"true\");\n            }\n            types::cat5(\"(= \", encode_terms::scalar_of(a).as_str(), \" \", encode_terms::scalar_of(b).as_str(), \")\")\n        }\n\n        #[effects(alloc)]\n        fn spec_binary(self: &mut Enc, e: &ast::Expr, op: ast::BinOp, l: &ast::Expr, r: &ast::Expr, env: &table::Table<encode_terms::Val>, was: &table::Table<encode_terms::Val>, pg: &Prog, f: usize) -> encode_terms::Val\n            decreases f,\n        {\n            if f == 0 {\n                return encode_terms::Val::Unit;\n            }\n            let k: u8 = op_code(op);\n            let lty: ast::TypeKind = self.ty(l, pg);\n            if body::is_cmp(op) && (self.is_text_expr(l, pg) || self.is_text_expr(r, pg)) {\n                let ta: encode_terms::Val = self.spec_expr(l, env, was, pg, f - 1);\n                let tb: encode_terms::Val = self.spec_expr(r, env, was, pg, f - 1);\n                return encode_terms::Val::S(self.text_cmp_spec(k, &ta, &tb, pg, f - 1));\n            }\n            if (k == 5 || k == 6) && (is_flat(&lty, pg) || encode_decls::has_array_renamed(&lty, &pg.pr.t)) {\n                let sa: encode_terms::Val = self.spec_expr(l, env, was, pg, f - 1);\n                let sb: encode_terms::Val = self.spec_expr(r, env, was, pg, f - 1);\n                let q: String = self.ext_eq(&sa, &sb, &lty, pg, f - 1);\n                if k == 5 {\n                    return encode_terms::Val::S(q);\n                }\n                return encode_terms::Val::S(types::cat3(\"(not \", q.as_str(), \")\"));\n            }\n            let lt: String = encode_terms::scalar_of(&self.spec_expr(l, env, was, pg, f - 1));\n            let guarded: bool = k == 11 || k == 12 || k == 13;\n            if k == 11 || k == 13 {\n                self.spec_pc.push(lt.clone());\n            } else if k == 12 {\n                self.spec_pc.push(types::cat3(\"(not \", lt.as_str(), \")\"));\n            }\n            let rt: String = encode_terms::scalar_of(&self.spec_expr(r, env, was, pg, f - 1));\n            if guarded {\n                self.spec_pc.pop();\n            }\n            if body::is_f64(&lty) {\n                match encode_terms::f64_binary(op, lt.as_str(), rt.as_str()) {\n                    None => {},\n                    Some(ft) => { return encode_terms::Val::S(ft); },\n                }\n            }\n            if k == 14 {\n                return match body::int_of(&self.ty(e, pg)) { None => encode_terms::Val::S(encode_terms::bool_bit(op, lt.as_str(), rt.as_str())), Some(i) => { if codegen::is_shr(op) && is_num(rt.as_str()) { encode_terms::Val::S(encode_terms::bit_op(op, i, image(i, l, lt.as_str()).as_str(), rt.as_str()).t.clone()) } else { encode_terms::Val::S(encode_terms::bit_op(op, i, lt.as_str(), rt.as_str()).t.clone()) } }, };\n            }\n            let signed: bool = codegen::is_signed(&lty);\n            if k >= 7 && k <= 10 {\n                return encode_terms::Val::S(encode_terms::ord_term(op, &lty, lt.as_str(), rt.as_str()));\n            }\n            if k == 6 {\n                return encode_terms::Val::S(types::cat5(\"(not (= \", lt.as_str(), \" \", rt.as_str(), \"))\"));\n            }\n            let head: String = if k == 0 {\n                String::from(\"(+ \")\n            } else if k == 1 {\n                String::from(\"(- \")\n            } else if k == 2 {\n                String::from(\"(* \")\n            } else if k == 3 {\n                if signed {\n                    String::from(\"(bmb_tdiv \")\n                } else {\n                    String::from(\"(div \")\n                }\n            } else if k == 4 {\n                if signed {\n                    String::from(\"(bmb_trem \")\n                } else {\n                    String::from(\"(mod \")\n                }\n            } else if k == 5 {\n                String::from(\"(= \")\n            } else if k == 11 {\n                String::from(\"(and \")\n            } else if k == 12 {\n                String::from(\"(or \")\n            } else {\n                String::from(\"(=> \")\n            };\n            encode_terms::Val::S(types::cat5(head.as_str(), lt.as_str(), \" \", rt.as_str(), \")\"))\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_decls",
+      "remove": [
+       "encode_decls::has_array"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "        let arrays = raw(arrays.map(|x| has_array(x, t).to_string()).collect());",
+      "new": "        let arrays = raw(arrays.map(|x| has_array_renamed(x, t).to_string()).collect());"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "fn has_array(t: &TypeKind, tb: &Tables) -> bool {",
+      "new": "fn has_array_renamed(t: &TypeKind, tb: &Tables) -> bool {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "                    || has_array(&self.ty(l), self.prog.t) =>",
+      "new": "                    || has_array_renamed(&self.ty(l), self.prog.t) =>"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "            && has_array(t, tb)",
+      "new": "            && has_array_renamed(t, tb)"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/sha256.rs",
+      "old": "    let mut s = String::from(\"sha256:\");",
+      "new": "    let mut s = \"sha256:\".to_string();"
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "encode_decls::has_array",
+        "to": "has_array_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "encode_decls",
+      "code": "    #[effects(alloc)]\n    fn has_array_renamed(t: &ast::TypeKind, tb: &lowered::Tables) -> bool {\n        let mut seen: table::Table<bool> = table::new::<bool>();\n        has_array_in(t, tb, &mut seen, 100000)\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_spec",
+      "code": "    #[effects(alloc)]\n    fn dump_def(out: &mut String, pg: &Prog, rows: &[encode_decls::Row], path: &str, def: &Def, sig: &types::FnSig, external: &[String]) -> () {\n        let is_sp: bool = body::is_spec(def.d.kind);\n        let is_pf: bool = body::is_proof(def.d.kind);\n        let is_ex: bool = !is_sp && !def.inst && !types::has(external, path);\n        out.push_str(\"{\\\"def\\\":\");\n        std::json::push_string(out, path);\n        out.push_str(\",\\\"kind\\\":\");\n        if is_sp {\n            out.push_str(\"\\\"spec fn\\\"\");\n        } else if is_pf {\n            out.push_str(\"\\\"proof fn\\\"\");\n        } else {\n            out.push_str(\"\\\"fn\\\"\");\n        }\n        out.push_str(\",\\\"inst\\\":\");\n        decls::push_bool(out, def.inst);\n        out.push_str(\",\\\"unit\\\":\");\n        std::json::push_string(out, def.unit.as_str());\n        out.push_str(\",\\\"sub\\\":[\");\n        for i in 0..def.tsub.names.len()\n            invariant 0 <= i && i <= def.tsub.names.len(),\n        {\n            if i < def.tsub.tys.len() {\n                if i > 0 {\n                    out.push_str(\",\");\n                }\n                out.push_str(\"[\");\n                std::json::push_string(out, def.tsub.names[i].as_str());\n                out.push_str(\",\");\n                std::json::push_string(out, types::text(&def.tsub.tys[i]).as_str());\n                out.push_str(\"]\");\n            }\n        }\n        out.push_str(\"],\\\"uses\\\":\");\n        encode_decls::push_list(out, encode_decls::uses_of(&def.d, def.unit.as_str(), &pg.pr.t.fns).as_slice());\n        out.push_str(\",\\\"context\\\":\");\n        encode_decls::push_list(out, encode_decls::context_of(path, &def.d, def.unit.as_str(), &pg.pr).as_slice());\n        out.push_str(\",\\\"contract\\\":\");\n        let contract: Vec<String> = if def.inst || def.d.pre.len() == 0 && def.d.post.len() == 0 {\n            Vec::new()\n        } else {\n            encode_decls::contract_specs_in(rows, &pg.pr.t, path)\n        };\n        encode_decls::push_list(out, contract.as_slice());\n        out.push_str(\",\\\"revealed\\\":\");\n        encode_decls::push_list(out, revealed(pg, path, &def.d, def.unit.as_str()).as_slice());\n        out.push_str(\",\\\"arrays\\\":[\");\n        for i in 0..sig.params.len()\n            invariant 0 <= i && i <= sig.params.len(),\n        {\n            decls::push_bool(out, encode_decls::has_array_renamed(&sig.params[i], &pg.pr.t));\n            out.push_str(\",\");\n        }\n        decls::push_bool(out, encode_decls::has_array_renamed(&sig.ret, &pg.pr.t));\n        out.push_str(\"],\\\"fields\\\":[\");\n        for i in 0..sig.params.len()\n            invariant 0 <= i && i <= sig.params.len(),\n        {\n            if i > 0 {\n                out.push_str(\",\");\n            }\n            out.push_str(\"[\");\n            match lowered::struct_fields(&sig.params[i], &pg.pr.t) {\n                None => {},\n                Some(fs) => { for k in 0..fs.len() invariant 0 <= k && k <= fs.len(), { if k > 0 { out.push_str(\",\"); } std::num::push_u64(out, encode_decls::field_index(&sig.params[i], &pg.pr.t, fs[k].name.as_str()) as u64); } },\n            }\n            out.push_str(\"]\");\n        }\n        out.push_str(\"],\\\"encoded\\\":\");\n        decls::push_bool(out, is_sp || is_ex);\n        out.push_str(\"}\\n\");\n        if is_sp && sig.generics.len() == 0 {\n            let ax: Axiom = axiom(pg, path);\n            out.push_str(\"{\\\"axiom\\\":\");\n            std::json::push_string(out, path);\n            out.push_str(\",\\\"text\\\":\");\n            std::json::push_string(out, ax.text.as_str());\n            out.push_str(\",\\\"facts\\\":\");\n            std::json::push_string(out, struct_facts(pg, ax.text.as_str()).as_str());\n            out.push_str(\",\\\"parts\\\":[\");\n            for i in 0..ax.parts.len()\n                invariant 0 <= i && i <= ax.parts.len(),\n            {\n                if i > 0 {\n                    out.push_str(\",\");\n                }\n                push_part(out, &ax.parts[i]);\n            }\n            out.push_str(\"]}\\n\");\n        }\n        let mut enc: Enc = new_enc(pg, path, def.unit.as_str());\n        if is_pf {\n            for i in 0..def.d.params.len()\n                invariant 0 <= i && i <= def.d.params.len(),\n            {\n                enc.proof_param(def.d.params[i].name.name.as_str(), pg);\n            }\n            out.push_str(\"{\\\"proof_params\\\":\");\n            std::json::push_string(out, path);\n            out.push_str(\",\\\"decls\\\":\");\n            encode_decls::push_list(out, enc.fr.decls.as_slice());\n            out.push_str(\",\\\"facts\\\":\");\n            encode_decls::push_list(out, enc.pc.as_slice());\n            out.push_str(\"}\\n\");\n        }\n        if is_ex {\n            encode_exec::dump_body(out, pg, path, &def.d, def.unit.as_str());\n            return;\n        }\n        if !is_sp || def.inst {\n            return;\n        }\n        let comp: usize = match pg.recursive.find(path) {\n            None => { return; },\n            Some(c) => pg.recursive.items[c],\n        };\n        match &def.d.measure {\n            None => {},\n            Some(dec) => { enc.termination(&def.d, comp, dec, pg); push_row_head(out, \"termination\", path, &enc); out.push_str(\"}\\n\"); push_obls(out, pg, path, enc.obls.as_slice()); },\n        }\n    }\n\n    impl Enc {\n        #[effects(alloc)]\n        fn ext_eq(self: &mut Enc, a: &encode_terms::Val, b: &encode_terms::Val, t: &ast::TypeKind, pg: &Prog, f: usize) -> String\n            decreases f,\n        {\n            if f == 0 {\n                return String::from(\"true\");\n            }\n            let arr: bool = encode_decls::is_array(t);\n            if !arr {\n                match body::ref_inner(t) {\n                    None => {},\n                    Some(inner) => { return self.ext_eq(a, b, &inner, pg, f - 1); },\n                }\n            }\n            match encode_decls::flat_fields(t, &pg.pr.t) {\n                None => {},\n                Some(fs) => { let xs: Vec<encode_terms::Val> = fields_of(a); let ys: Vec<encode_terms::Val> = fields_of(b); let mut parts: Vec<String> = Vec::new(); for i in 0..fs.len() invariant 0 <= i && i <= fs.len(), { if i < xs.len() && i < ys.len() { parts.push(self.ext_eq(&xs[i], &ys[i], &fs[i].ty, pg, f - 1)); } } return encode_terms::and(parts.as_slice()); },\n            }\n            if encode_decls::has_array_renamed(t, &pg.pr.t) {\n                match encode_decls::variants(t, &pg.pr.t) {\n                    None => {},\n                    Some(vs) => { return self.ext_eq_enum(a, b, t, vs.as_slice(), pg, f - 1); },\n                }\n            }\n            if arr {\n                return self.ext_eq_array(a, b, t, pg, f - 1);\n            }\n            if decls::is_unit(t) {\n                return String::from(\"true\");\n            }\n            types::cat5(\"(= \", encode_terms::scalar_of(a).as_str(), \" \", encode_terms::scalar_of(b).as_str(), \")\")\n        }\n\n        #[effects(alloc)]\n        fn spec_binary(self: &mut Enc, e: &ast::Expr, op: ast::BinOp, l: &ast::Expr, r: &ast::Expr, env: &table::Table<encode_terms::Val>, was: &table::Table<encode_terms::Val>, pg: &Prog, f: usize) -> encode_terms::Val\n            decreases f,\n        {\n            if f == 0 {\n                return encode_terms::Val::Unit;\n            }\n            let k: u8 = op_code(op);\n            let lty: ast::TypeKind = self.ty(l, pg);\n            if body::is_cmp(op) && (self.is_text_expr(l, pg) || self.is_text_expr(r, pg)) {\n                let ta: encode_terms::Val = self.spec_expr(l, env, was, pg, f - 1);\n                let tb: encode_terms::Val = self.spec_expr(r, env, was, pg, f - 1);\n                return encode_terms::Val::S(self.text_cmp_spec(k, &ta, &tb, pg, f - 1));\n            }\n            if (k == 5 || k == 6) && (is_flat(&lty, pg) || encode_decls::has_array_renamed(&lty, &pg.pr.t)) {\n                let sa: encode_terms::Val = self.spec_expr(l, env, was, pg, f - 1);\n                let sb: encode_terms::Val = self.spec_expr(r, env, was, pg, f - 1);\n                let q: String = self.ext_eq(&sa, &sb, &lty, pg, f - 1);\n                if k == 5 {\n                    return encode_terms::Val::S(q);\n                }\n                return encode_terms::Val::S(types::cat3(\"(not \", q.as_str(), \")\"));\n            }\n            let lt: String = encode_terms::scalar_of(&self.spec_expr(l, env, was, pg, f - 1));\n            let guarded: bool = k == 11 || k == 12 || k == 13;\n            if k == 11 || k == 13 {\n                self.spec_pc.push(lt.clone());\n            } else if k == 12 {\n                self.spec_pc.push(types::cat3(\"(not \", lt.as_str(), \")\"));\n            }\n            let rt: String = encode_terms::scalar_of(&self.spec_expr(r, env, was, pg, f - 1));\n            if guarded {\n                self.spec_pc.pop();\n            }\n            if body::is_f64(&lty) {\n                match encode_terms::f64_binary(op, lt.as_str(), rt.as_str()) {\n                    None => {},\n                    Some(ft) => { return encode_terms::Val::S(ft); },\n                }\n            }\n            if k == 14 {\n                return match body::int_of(&self.ty(e, pg)) { None => encode_terms::Val::S(encode_terms::bool_bit(op, lt.as_str(), rt.as_str())), Some(i) => { if codegen::is_shr(op) && is_num(rt.as_str()) { encode_terms::Val::S(encode_terms::bit_op(op, i, image(i, l, lt.as_str()).as_str(), rt.as_str()).t.clone()) } else { encode_terms::Val::S(encode_terms::bit_op(op, i, lt.as_str(), rt.as_str()).t.clone()) } }, };\n            }\n            let signed: bool = codegen::is_signed(&lty);\n            if k >= 7 && k <= 10 {\n                return encode_terms::Val::S(encode_terms::ord_term(op, &lty, lt.as_str(), rt.as_str()));\n            }\n            if k == 6 {\n                return encode_terms::Val::S(types::cat5(\"(not (= \", lt.as_str(), \" \", rt.as_str(), \"))\"));\n            }\n            let head: String = if k == 0 {\n                String::from(\"(+ \")\n            } else if k == 1 {\n                String::from(\"(- \")\n            } else if k == 2 {\n                String::from(\"(* \")\n            } else if k == 3 {\n                if signed {\n                    String::from(\"(bmb_tdiv \")\n                } else {\n                    String::from(\"(div \")\n                }\n            } else if k == 4 {\n                if signed {\n                    String::from(\"(bmb_trem \")\n                } else {\n                    String::from(\"(mod \")\n                }\n            } else if k == 5 {\n                String::from(\"(= \")\n            } else if k == 11 {\n                String::from(\"(and \")\n            } else if k == 12 {\n                String::from(\"(or \")\n            } else {\n                String::from(\"(=> \")\n            };\n            encode_terms::Val::S(types::cat5(head.as_str(), lt.as_str(), \" \", rt.as_str(), \")\"))\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_decls",
+      "remove": [
+       "encode_decls::has_array"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "        let arrays = raw(arrays.map(|x| has_array(x, t).to_string()).collect());",
+      "new": "        let arrays = raw(arrays.map(|x| has_array_renamed(x, t).to_string()).collect());"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "fn has_array(t: &TypeKind, tb: &Tables) -> bool {",
+      "new": "fn has_array_renamed(t: &TypeKind, tb: &Tables) -> bool {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "                    || has_array(&self.ty(l), self.prog.t) =>",
+      "new": "                    || has_array_renamed(&self.ty(l), self.prog.t) =>"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "            && has_array(t, tb)",
+      "new": "            && has_array_renamed(t, tb)"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "encode_decls::has_array",
+        "to": "has_array_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "done",
+   "bmb": [],
+   "rust": []
+  }
+ ]
+}

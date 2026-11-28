@@ -1,0 +1,249 @@
+{
+ "id": "r12-rename-shift_obligation",
+ "kind": "change",
+ "family": "rename",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Rename the function `encode_exec::Exec::shift_obligation` to `shift_obligation_renamed` and update every use of it. The program's behaviour must not change; change nothing else.",
+  "rust": "Rename the function `verify::Enc::shift_obligation` to `shift_obligation_renamed` and update every use of it. The program's behaviour must not change; change nothing else."
+ },
+ "scope": {
+  "rust": [
+   "verify::Enc::eval",
+   "verify::Enc::shift_obligation",
+   "verify::Enc::shift_obligation_renamed"
+  ],
+  "bmb": [
+   "encode_exec::Exec::eval_bits",
+   "encode_exec::Exec::shift_obligation",
+   "encode_exec::Exec::shift_obligation_renamed"
+  ]
+ },
+ "must_change": {
+  "rust": [
+   "verify::Enc::eval",
+   "verify::Enc::shift_obligation",
+   "verify::Enc::shift_obligation_renamed"
+  ],
+  "bmb": [
+   "encode_exec::Exec::eval_bits",
+   "encode_exec::Exec::shift_obligation",
+   "encode_exec::Exec::shift_obligation_renamed"
+  ]
+ },
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/verify.rs",
+     "old": "    fn shift_obligation(&mut self, e: &Expr, op: BinOp, i: IntTy, amount: &Expr, s: &str) {",
+     "new": "    fn shift_obligation_renamed(&mut self, e: &Expr, op: BinOp, i: IntTy, amount: &Expr, s: &str) {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/verify.rs",
+     "old": "                        self.shift_obligation(e, *op, i, r, &rt);",
+     "new": "                        self.shift_obligation_renamed(e, *op, i, r, &rt);"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "encode_exec",
+     "code": "    impl Exec {\n        #[effects(alloc)]\n        fn eval_bits(self: &mut Exec, e: &ast::Expr, op: ast::BinOp, amount: &ast::Expr, ty: &ast::TypeKind, a: &str, b: &str, pg: &encode_spec::Prog) -> encode_terms::Val {\n            let i: ast::IntTy = match body::int_of(ty) {\n                None => { return encode_terms::Val::S(encode_terms::bool_bit(op, a, b)); },\n                Some(found) => found,\n            };\n            if body::is_shift(op) {\n                self.shift_obligation_renamed(e, op, i, amount, b, pg);\n            }\n            match encode_terms::linear_bit(op, i, a, b) {\n                None => {},\n                Some(lin) => { return encode_terms::Val::S(lin); },\n            }\n            let xa: String = self.operand_bv(i, a);\n            let xb: String = self.operand_bv(i, b);\n            let t: String = encode_terms::bv_term(op, i, xa.as_str(), xb.as_str());\n            let facts: Vec<String> = encode_terms::bit_facts(op, i, a, b, t.as_str());\n            extend(&mut self.enc.pc, facts.as_slice());\n            encode_terms::Val::S(t)\n        }\n\n        #[effects(alloc)]\n        fn shift_obligation_renamed(self: &mut Exec, e: &ast::Expr, op: ast::BinOp, i: ast::IntTy, amount: &ast::Expr, s: &str, pg: &encode_spec::Prog) -> () {\n            let w: u32 = encode_terms::width(i);\n            let ws: String = encode_terms::dec(w as u64);\n            let goal: String = match encode_terms::numeral(s) {\n                None => { if codegen::is_signed(&self.enc.ty(amount, pg)) { types::cat7(\"(and (<= 0 \", s, \") (< \", s, \" \", ws.as_str(), \"))\") } else { types::cat5(\"(< \", s, \" \", ws.as_str(), \")\") } },\n                Some(k) => { let zero: bool = k.mag.hi == 0 && k.mag.lo == 0; if (zero || !k.neg) && k.mag.hi == 0 && k.mag.lo < w as u64 { String::from(\"true\") } else { String::from(\"false\") } },\n            };\n            self.oblige(\"E0803\", e.span, types::cat5(\"`\", body::op_symbol(op).as_str(), \"` may overflow `\", body::int_text(i).as_str(), types::cat2(\"`: the shift amount may be outside 0..\", ws.as_str()).as_str()).as_str(), goal.as_str());\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "encode_exec",
+     "remove": [
+      "encode_exec::Exec::shift_obligation"
+     ]
+    }
+   ]
+  ],
+  "bmb:port-rename": [
+   [
+    "write",
+    {
+     "rename": [
+      {
+       "def": "encode_exec::Exec::shift_obligation",
+       "to": "shift_obligation_renamed"
+      }
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "scope",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "code": "    impl Exec {\n        #[effects(alloc)]\n        fn eval_bits(self: &mut Exec, e: &ast::Expr, op: ast::BinOp, amount: &ast::Expr, ty: &ast::TypeKind, a: &str, b: &str, pg: &encode_spec::Prog) -> encode_terms::Val {\n            let i: ast::IntTy = match body::int_of(ty) {\n                None => { return encode_terms::Val::S(encode_terms::bool_bit(op, a, b)); },\n                Some(found) => found,\n            };\n            if body::is_shift(op) {\n                self.shift_obligation_renamed(e, op, i, amount, b, pg);\n            }\n            match encode_terms::linear_bit(op, i, a, b) {\n                None => {},\n                Some(lin) => { return encode_terms::Val::S(lin); },\n            }\n            let xa: String = self.operand_bv(i, a);\n            let xb: String = self.operand_bv(i, b);\n            let t: String = encode_terms::bv_term(op, i, xa.as_str(), xb.as_str());\n            let facts: Vec<String> = encode_terms::bit_facts(op, i, a, b, t.as_str());\n            extend(&mut self.enc.pc, facts.as_slice());\n            encode_terms::Val::S(t)\n        }\n\n        #[effects(alloc)]\n        fn shift_obligation_renamed(self: &mut Exec, e: &ast::Expr, op: ast::BinOp, i: ast::IntTy, amount: &ast::Expr, s: &str, pg: &encode_spec::Prog) -> () {\n            let w: u32 = encode_terms::width(i);\n            let ws: String = encode_terms::dec(w as u64);\n            let goal: String = match encode_terms::numeral(s) {\n                None => { if codegen::is_signed(&self.enc.ty(amount, pg)) { types::cat7(\"(and (<= 0 \", s, \") (< \", s, \" \", ws.as_str(), \"))\") } else { types::cat5(\"(< \", s, \" \", ws.as_str(), \")\") } },\n                Some(k) => { let zero: bool = k.mag.hi == 0 && k.mag.lo == 0; if (zero || !k.neg) && k.mag.hi == 0 && k.mag.lo < w as u64 { String::from(\"true\") } else { String::from(\"false\") } },\n            };\n            self.oblige(\"E0803\", e.span, types::cat5(\"`\", body::op_symbol(op).as_str(), \"` may overflow `\", body::int_text(i).as_str(), types::cat2(\"`: the shift amount may be outside 0..\", ws.as_str()).as_str()).as_str(), goal.as_str());\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "remove": [
+       "encode_exec::Exec::shift_obligation"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "    fn shift_obligation(&mut self, e: &Expr, op: BinOp, i: IntTy, amount: &Expr, s: &str) {",
+      "new": "    fn shift_obligation_renamed(&mut self, e: &Expr, op: BinOp, i: IntTy, amount: &Expr, s: &str) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "                        self.shift_obligation(e, *op, i, r, &rt);",
+      "new": "                        self.shift_obligation_renamed(e, *op, i, r, &rt);"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/sha256.rs",
+      "old": "    let mut s = String::from(\"sha256:\");",
+      "new": "    let mut s = \"sha256:\".to_string();"
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "encode_exec::Exec::shift_obligation",
+        "to": "shift_obligation_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "code": "    impl Exec {\n        #[effects(alloc)]\n        fn eval_bits(self: &mut Exec, e: &ast::Expr, op: ast::BinOp, amount: &ast::Expr, ty: &ast::TypeKind, a: &str, b: &str, pg: &encode_spec::Prog) -> encode_terms::Val {\n            let i: ast::IntTy = match body::int_of(ty) {\n                None => { return encode_terms::Val::S(encode_terms::bool_bit(op, a, b)); },\n                Some(found) => found,\n            };\n            if body::is_shift(op) {\n                self.shift_obligation_renamed(e, op, i, amount, b, pg);\n            }\n            match encode_terms::linear_bit(op, i, a, b) {\n                None => {},\n                Some(lin) => { return encode_terms::Val::S(lin); },\n            }\n            let xa: String = self.operand_bv(i, a);\n            let xb: String = self.operand_bv(i, b);\n            let t: String = encode_terms::bv_term(op, i, xa.as_str(), xb.as_str());\n            let facts: Vec<String> = encode_terms::bit_facts(op, i, a, b, t.as_str());\n            extend(&mut self.enc.pc, facts.as_slice());\n            encode_terms::Val::S(t)\n        }\n\n        #[effects(alloc)]\n        fn shift_obligation_renamed(self: &mut Exec, e: &ast::Expr, op: ast::BinOp, i: ast::IntTy, amount: &ast::Expr, s: &str, pg: &encode_spec::Prog) -> () {\n            let w: u32 = encode_terms::width(i);\n            let ws: String = encode_terms::dec(w as u64);\n            let goal: String = match encode_terms::numeral(s) {\n                None => { if codegen::is_signed(&self.enc.ty(amount, pg)) { types::cat7(\"(and (<= 0 \", s, \") (< \", s, \" \", ws.as_str(), \"))\") } else { types::cat5(\"(< \", s, \" \", ws.as_str(), \")\") } },\n                Some(k) => { let zero: bool = k.mag.hi == 0 && k.mag.lo == 0; if (zero || !k.neg) && k.mag.hi == 0 && k.mag.lo < w as u64 { String::from(\"true\") } else { String::from(\"false\") } },\n            };\n            self.oblige(\"E0803\", e.span, types::cat5(\"`\", body::op_symbol(op).as_str(), \"` may overflow `\", body::int_text(i).as_str(), types::cat2(\"`: the shift amount may be outside 0..\", ws.as_str()).as_str()).as_str(), goal.as_str());\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "remove": [
+       "encode_exec::Exec::shift_obligation"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "    fn shift_obligation(&mut self, e: &Expr, op: BinOp, i: IntTy, amount: &Expr, s: &str) {",
+      "new": "    fn shift_obligation_renamed(&mut self, e: &Expr, op: BinOp, i: IntTy, amount: &Expr, s: &str) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "                        self.shift_obligation(e, *op, i, r, &rt);",
+      "new": "                        self.shift_obligation_renamed(e, *op, i, r, &rt);"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "encode_exec::Exec::shift_obligation",
+        "to": "shift_obligation_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "done",
+   "bmb": [],
+   "rust": []
+  }
+ ]
+}

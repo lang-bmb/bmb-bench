@@ -1,0 +1,1732 @@
+{
+ "about": "The port twin at full size (ADR-0104, ADR-0149 decision 5): all of stage0 and the whole port, taken from the repository at the task's commit. A comprehension task shows the Rust arm the files of `rust.files` (every file of `compiler/src`; a question builds nothing). A change task gives it the whole crate, which must build, with what its build reads from outside it (`rust.beside`). `corpus`: command lines both programs answer with the same bytes (the port's differential tests); the expected output is the Rust side's at the task's commit. Written by `port_corpus.py make` for `commit`; do not edit.",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "bmb": {
+  "dir": "selfhost"
+ },
+ "rust": {
+  "dir": "compiler",
+  "files": [
+   "src/ast.rs",
+   "src/ast_json.rs",
+   "src/cache.rs",
+   "src/check.rs",
+   "src/check/text.rs",
+   "src/closures.rs",
+   "src/codegen.rs",
+   "src/codegen/sys.rs",
+   "src/codegen/text.rs",
+   "src/consts.rs",
+   "src/diag.rs",
+   "src/escape.rs",
+   "src/fmt.rs",
+   "src/identity.rs",
+   "src/incremental.rs",
+   "src/induct.rs",
+   "src/json.rs",
+   "src/lexer.rs",
+   "src/lib.rs",
+   "src/lint.rs",
+   "src/main.rs",
+   "src/map.rs",
+   "src/mcp.rs",
+   "src/moves.rs",
+   "src/parser.rs",
+   "src/probe.rs",
+   "src/refs.rs",
+   "src/sha256.rs",
+   "src/smt.rs",
+   "src/source.rs",
+   "src/stdlib.rs",
+   "src/subproof.rs",
+   "src/toolchain.rs",
+   "src/udiff.rs",
+   "src/uses_fill.rs",
+   "src/verify.rs",
+   "src/verify/examples.rs",
+   "src/verify/invariants.rs",
+   "src/verify/text.rs",
+   "src/view.rs",
+   "src/weaken.rs",
+   "src/workspace.rs"
+  ],
+  "bin": "bmb",
+  "beside": [
+   "scripts/toolchain.env",
+   "lib/std",
+   "tests/port/edit_ref.rs",
+   "tests/port/smt_answers_ref.rs",
+   "tests/port/smt_terms_ref.rs"
+  ]
+ },
+ "corpus": [
+  {
+   "name": "check-g00",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/gen/g00.txt"
+   ]
+  },
+  {
+   "name": "fmt-g00",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/port/gen/g00.txt"
+   ]
+  },
+  {
+   "name": "hash-g00",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/port/gen/g00.txt"
+   ]
+  },
+  {
+   "name": "texts-g00",
+   "args": [
+    "dump",
+    "texts"
+   ],
+   "files": [
+    "tests/port/gen/g00.txt"
+   ]
+  },
+  {
+   "name": "check-g01",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/gen/g01.txt"
+   ]
+  },
+  {
+   "name": "fmt-g01",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/port/gen/g01.txt"
+   ]
+  },
+  {
+   "name": "hash-g01",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/port/gen/g01.txt"
+   ]
+  },
+  {
+   "name": "texts-g01",
+   "args": [
+    "dump",
+    "texts"
+   ],
+   "files": [
+    "tests/port/gen/g01.txt"
+   ]
+  },
+  {
+   "name": "check-g02",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/gen/g02.txt"
+   ]
+  },
+  {
+   "name": "fmt-g02",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/port/gen/g02.txt"
+   ]
+  },
+  {
+   "name": "hash-g02",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/port/gen/g02.txt"
+   ]
+  },
+  {
+   "name": "texts-g02",
+   "args": [
+    "dump",
+    "texts"
+   ],
+   "files": [
+    "tests/port/gen/g02.txt"
+   ]
+  },
+  {
+   "name": "check-g03",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/gen/g03.txt"
+   ]
+  },
+  {
+   "name": "fmt-g03",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/port/gen/g03.txt"
+   ]
+  },
+  {
+   "name": "hash-g03",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/port/gen/g03.txt"
+   ]
+  },
+  {
+   "name": "texts-g03",
+   "args": [
+    "dump",
+    "texts"
+   ],
+   "files": [
+    "tests/port/gen/g03.txt"
+   ]
+  },
+  {
+   "name": "check-g04",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/gen/g04.txt"
+   ]
+  },
+  {
+   "name": "fmt-g04",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/port/gen/g04.txt"
+   ]
+  },
+  {
+   "name": "hash-g04",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/port/gen/g04.txt"
+   ]
+  },
+  {
+   "name": "texts-g04",
+   "args": [
+    "dump",
+    "texts"
+   ],
+   "files": [
+    "tests/port/gen/g04.txt"
+   ]
+  },
+  {
+   "name": "check-g05",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/gen/g05.txt"
+   ]
+  },
+  {
+   "name": "fmt-g05",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/port/gen/g05.txt"
+   ]
+  },
+  {
+   "name": "hash-g05",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/port/gen/g05.txt"
+   ]
+  },
+  {
+   "name": "texts-g05",
+   "args": [
+    "dump",
+    "texts"
+   ],
+   "files": [
+    "tests/port/gen/g05.txt"
+   ]
+  },
+  {
+   "name": "check-g06",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/gen/g06.txt"
+   ]
+  },
+  {
+   "name": "fmt-g06",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/port/gen/g06.txt"
+   ]
+  },
+  {
+   "name": "hash-g06",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/port/gen/g06.txt"
+   ]
+  },
+  {
+   "name": "texts-g06",
+   "args": [
+    "dump",
+    "texts"
+   ],
+   "files": [
+    "tests/port/gen/g06.txt"
+   ]
+  },
+  {
+   "name": "check-g07",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/gen/g07.txt"
+   ]
+  },
+  {
+   "name": "fmt-g07",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/port/gen/g07.txt"
+   ]
+  },
+  {
+   "name": "hash-g07",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/port/gen/g07.txt"
+   ]
+  },
+  {
+   "name": "texts-g07",
+   "args": [
+    "dump",
+    "texts"
+   ],
+   "files": [
+    "tests/port/gen/g07.txt"
+   ]
+  },
+  {
+   "name": "check-calls",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/types/calls.txt"
+   ]
+  },
+  {
+   "name": "types-calls",
+   "args": [
+    "dump",
+    "types"
+   ],
+   "files": [
+    "tests/port/types/calls.txt"
+   ]
+  },
+  {
+   "name": "moves-calls",
+   "args": [
+    "dump",
+    "moves"
+   ],
+   "files": [
+    "tests/port/types/calls.txt"
+   ]
+  },
+  {
+   "name": "check-methods",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/types/methods.txt"
+   ]
+  },
+  {
+   "name": "types-methods",
+   "args": [
+    "dump",
+    "types"
+   ],
+   "files": [
+    "tests/port/types/methods.txt"
+   ]
+  },
+  {
+   "name": "moves-methods",
+   "args": [
+    "dump",
+    "moves"
+   ],
+   "files": [
+    "tests/port/types/methods.txt"
+   ]
+  },
+  {
+   "name": "check-text",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/types/text.txt"
+   ]
+  },
+  {
+   "name": "types-text",
+   "args": [
+    "dump",
+    "types"
+   ],
+   "files": [
+    "tests/port/types/text.txt"
+   ]
+  },
+  {
+   "name": "moves-text",
+   "args": [
+    "dump",
+    "moves"
+   ],
+   "files": [
+    "tests/port/types/text.txt"
+   ]
+  },
+  {
+   "name": "check-whole",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/types/whole.txt"
+   ]
+  },
+  {
+   "name": "types-whole",
+   "args": [
+    "dump",
+    "types"
+   ],
+   "files": [
+    "tests/port/types/whole.txt"
+   ]
+  },
+  {
+   "name": "moves-whole",
+   "args": [
+    "dump",
+    "moves"
+   ],
+   "files": [
+    "tests/port/types/whole.txt"
+   ]
+  },
+  {
+   "name": "check-moves",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/types/moves.txt"
+   ]
+  },
+  {
+   "name": "types-moves",
+   "args": [
+    "dump",
+    "types"
+   ],
+   "files": [
+    "tests/port/types/moves.txt"
+   ]
+  },
+  {
+   "name": "moves-moves",
+   "args": [
+    "dump",
+    "moves"
+   ],
+   "files": [
+    "tests/port/types/moves.txt"
+   ]
+  },
+  {
+   "name": "check-moves-ok",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/types/moves-ok.txt"
+   ]
+  },
+  {
+   "name": "types-moves-ok",
+   "args": [
+    "dump",
+    "types"
+   ],
+   "files": [
+    "tests/port/types/moves-ok.txt"
+   ]
+  },
+  {
+   "name": "moves-moves-ok",
+   "args": [
+    "dump",
+    "moves"
+   ],
+   "files": [
+    "tests/port/types/moves-ok.txt"
+   ]
+  },
+  {
+   "name": "check-identity",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/types/identity.txt"
+   ]
+  },
+  {
+   "name": "types-identity",
+   "args": [
+    "dump",
+    "types"
+   ],
+   "files": [
+    "tests/port/types/identity.txt"
+   ]
+  },
+  {
+   "name": "moves-identity",
+   "args": [
+    "dump",
+    "moves"
+   ],
+   "files": [
+    "tests/port/types/identity.txt"
+   ]
+  },
+  {
+   "name": "check-by-path",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/port/types/by-path.txt"
+   ]
+  },
+  {
+   "name": "types-by-path",
+   "args": [
+    "dump",
+    "types"
+   ],
+   "files": [
+    "tests/port/types/by-path.txt"
+   ]
+  },
+  {
+   "name": "moves-by-path",
+   "args": [
+    "dump",
+    "moves"
+   ],
+   "files": [
+    "tests/port/types/by-path.txt"
+   ]
+  },
+  {
+   "name": "check-run-basics",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/run/basics.bmb"
+   ]
+  },
+  {
+   "name": "fmt-run-basics",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/run/basics.bmb"
+   ]
+  },
+  {
+   "name": "hash-run-basics",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/run/basics.bmb"
+   ]
+  },
+  {
+   "name": "lower-run-basics",
+   "args": [
+    "dump",
+    "lower"
+   ],
+   "files": [
+    "tests/run/basics.bmb"
+   ]
+  },
+  {
+   "name": "decls-run-basics",
+   "args": [
+    "dump",
+    "decls"
+   ],
+   "files": [
+    "tests/run/basics.bmb"
+   ]
+  },
+  {
+   "name": "check-run-traits",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/run/traits.bmb"
+   ]
+  },
+  {
+   "name": "fmt-run-traits",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/run/traits.bmb"
+   ]
+  },
+  {
+   "name": "hash-run-traits",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/run/traits.bmb"
+   ]
+  },
+  {
+   "name": "lower-run-traits",
+   "args": [
+    "dump",
+    "lower"
+   ],
+   "files": [
+    "tests/run/traits.bmb"
+   ]
+  },
+  {
+   "name": "decls-run-traits",
+   "args": [
+    "dump",
+    "decls"
+   ],
+   "files": [
+    "tests/run/traits.bmb"
+   ]
+  },
+  {
+   "name": "check-run-methods",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/run/methods.bmb"
+   ]
+  },
+  {
+   "name": "fmt-run-methods",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/run/methods.bmb"
+   ]
+  },
+  {
+   "name": "hash-run-methods",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/run/methods.bmb"
+   ]
+  },
+  {
+   "name": "lower-run-methods",
+   "args": [
+    "dump",
+    "lower"
+   ],
+   "files": [
+    "tests/run/methods.bmb"
+   ]
+  },
+  {
+   "name": "decls-run-methods",
+   "args": [
+    "dump",
+    "decls"
+   ],
+   "files": [
+    "tests/run/methods.bmb"
+   ]
+  },
+  {
+   "name": "check-run-match_binding_partial_move",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/run/match_binding_partial_move.bmb"
+   ]
+  },
+  {
+   "name": "fmt-run-match_binding_partial_move",
+   "args": [
+    "fmt"
+   ],
+   "files": [
+    "tests/run/match_binding_partial_move.bmb"
+   ]
+  },
+  {
+   "name": "hash-run-match_binding_partial_move",
+   "args": [
+    "hash"
+   ],
+   "files": [
+    "tests/run/match_binding_partial_move.bmb"
+   ]
+  },
+  {
+   "name": "lower-run-match_binding_partial_move",
+   "args": [
+    "dump",
+    "lower"
+   ],
+   "files": [
+    "tests/run/match_binding_partial_move.bmb"
+   ]
+  },
+  {
+   "name": "decls-run-match_binding_partial_move",
+   "args": [
+    "dump",
+    "decls"
+   ],
+   "files": [
+    "tests/run/match_binding_partial_move.bmb"
+   ]
+  },
+  {
+   "name": "codes",
+   "args": [
+    "codes"
+   ]
+  },
+  {
+   "name": "codes-md",
+   "args": [
+    "codes",
+    "--md"
+   ]
+  },
+  {
+   "name": "tokens:check-err-lexing",
+   "args": [
+    "dump",
+    "tokens"
+   ],
+   "files": [
+    "tests/check/err/lexing.bmb"
+   ]
+  },
+  {
+   "name": "tokens:conformance-07-type_invariant_where_values_leave",
+   "args": [
+    "dump",
+    "tokens"
+   ],
+   "files": [
+    "tests/conformance/07/type_invariant_where_values_leave.bmb"
+   ]
+  },
+  {
+   "name": "tokens:conformance-08-rationale_several_faults",
+   "args": [
+    "dump",
+    "tokens"
+   ],
+   "files": [
+    "tests/conformance/08/rationale_several_faults.bmb"
+   ]
+  },
+  {
+   "name": "tokens:verify-fail-methods",
+   "args": [
+    "dump",
+    "tokens"
+   ],
+   "files": [
+    "tests/verify/fail/methods.bmb"
+   ]
+  },
+  {
+   "name": "tokens-edges:port-lexer-err-bytes",
+   "args": [
+    "dump",
+    "tokens"
+   ],
+   "files": [
+    "tests/port/lexer/err-bytes.txt"
+   ]
+  },
+  {
+   "name": "tokens-edges:port-lexer-mix-05",
+   "args": [
+    "dump",
+    "tokens"
+   ],
+   "files": [
+    "tests/port/lexer/mix-05.txt"
+   ]
+  },
+  {
+   "name": "tokens-edges:port-lexer-mix-10",
+   "args": [
+    "dump",
+    "tokens"
+   ],
+   "files": [
+    "tests/port/lexer/mix-10.txt"
+   ]
+  },
+  {
+   "name": "tokens-edges:port-lexer-mix-16",
+   "args": [
+    "dump",
+    "tokens"
+   ],
+   "files": [
+    "tests/port/lexer/mix-16.txt"
+   ]
+  },
+  {
+   "name": "parse:conformance-06-proof_fn_called_from_ghost_only",
+   "args": [
+    "dump",
+    "parse"
+   ],
+   "files": [
+    "tests/conformance/06/proof_fn_called_from_ghost_only.bmb"
+   ]
+  },
+  {
+   "name": "parse:conformance-08-no_escape_no_trust",
+   "args": [
+    "dump",
+    "parse"
+   ],
+   "files": [
+    "tests/conformance/08/no_escape_no_trust.bmb"
+   ]
+  },
+  {
+   "name": "parse:conformance-08-panic_source_is_an_escape",
+   "args": [
+    "dump",
+    "parse"
+   ],
+   "files": [
+    "tests/conformance/08/panic_source_is_an_escape.bmb"
+   ]
+  },
+  {
+   "name": "parse:verify-pass-arith",
+   "args": [
+    "dump",
+    "parse"
+   ],
+   "files": [
+    "tests/verify/pass/arith.bmb"
+   ]
+  },
+  {
+   "name": "parse-edges:port-parser-deep-block-256",
+   "args": [
+    "dump",
+    "parse"
+   ],
+   "files": [
+    "tests/port/parser/deep-block-256.txt"
+   ]
+  },
+  {
+   "name": "parse-edges:port-parser-deep-match-257",
+   "args": [
+    "dump",
+    "parse"
+   ],
+   "files": [
+    "tests/port/parser/deep-match-257.txt"
+   ]
+  },
+  {
+   "name": "parse-edges:port-parser-deep-or-257",
+   "args": [
+    "dump",
+    "parse"
+   ],
+   "files": [
+    "tests/port/parser/deep-or-257.txt"
+   ]
+  },
+  {
+   "name": "parse-edges:port-parser-deep-paren-257",
+   "args": [
+    "dump",
+    "parse"
+   ],
+   "files": [
+    "tests/port/parser/deep-paren-257.txt"
+   ]
+  },
+  {
+   "name": "fmt-check:conformance-01-doc_summary_split_by_blank_line",
+   "args": [
+    "fmt",
+    "--check"
+   ],
+   "files": [
+    "tests/conformance/01/doc_summary_split_by_blank_line.bmb"
+   ]
+  },
+  {
+   "name": "fmt-check:conformance-04-call_errors",
+   "args": [
+    "fmt",
+    "--check"
+   ],
+   "files": [
+    "tests/conformance/04/call_errors.bmb"
+   ]
+  },
+  {
+   "name": "fmt-check:conformance-07-string_range_boundaries",
+   "args": [
+    "fmt",
+    "--check"
+   ],
+   "files": [
+    "tests/conformance/07/string_range_boundaries.bmb"
+   ]
+  },
+  {
+   "name": "fmt-check:run-conversions",
+   "args": [
+    "fmt",
+    "--check"
+   ],
+   "files": [
+    "tests/run/conversions.bmb"
+   ]
+  },
+  {
+   "name": "std:conformance-02-for_variable_scope",
+   "args": [
+    "dump",
+    "std"
+   ],
+   "files": [
+    "tests/conformance/02/for_variable_scope.bmb"
+   ]
+  },
+  {
+   "name": "std:conformance-05-array_ref_and_mut_str",
+   "args": [
+    "dump",
+    "std"
+   ],
+   "files": [
+    "tests/conformance/05/array_ref_and_mut_str.bmb"
+   ]
+  },
+  {
+   "name": "std:verify-fail-bits",
+   "args": [
+    "dump",
+    "std"
+   ],
+   "files": [
+    "tests/verify/fail/bits.bmb"
+   ]
+  },
+  {
+   "name": "std:verify-fail-fn_values",
+   "args": [
+    "dump",
+    "std"
+   ],
+   "files": [
+    "tests/verify/fail/fn_values.bmb"
+   ]
+  },
+  {
+   "name": "lower-edges:port-lower-closures-errors",
+   "args": [
+    "dump",
+    "lower"
+   ],
+   "files": [
+    "tests/port/lower/closures-errors.txt"
+   ]
+  },
+  {
+   "name": "lower-edges:port-lower-closures",
+   "args": [
+    "dump",
+    "lower"
+   ],
+   "files": [
+    "tests/port/lower/closures.txt"
+   ]
+  },
+  {
+   "name": "lower-edges:port-lower-consts-errors",
+   "args": [
+    "dump",
+    "lower"
+   ],
+   "files": [
+    "tests/port/lower/consts-errors.txt"
+   ]
+  },
+  {
+   "name": "lower-edges:port-lower-consts-values",
+   "args": [
+    "dump",
+    "lower"
+   ],
+   "files": [
+    "tests/port/lower/consts-values.txt"
+   ]
+  },
+  {
+   "name": "decls-edges:port-decls-attrs",
+   "args": [
+    "dump",
+    "decls"
+   ],
+   "files": [
+    "tests/port/decls/attrs.txt"
+   ]
+  },
+  {
+   "name": "decls-edges:port-decls-dup_fns",
+   "args": [
+    "dump",
+    "decls"
+   ],
+   "files": [
+    "tests/port/decls/dup_fns.txt"
+   ]
+  },
+  {
+   "name": "decls-edges:port-decls-dup_units",
+   "args": [
+    "dump",
+    "decls"
+   ],
+   "files": [
+    "tests/port/decls/dup_units.txt"
+   ]
+  },
+  {
+   "name": "decls-edges:port-decls-types",
+   "args": [
+    "dump",
+    "decls"
+   ],
+   "files": [
+    "tests/port/decls/types.txt"
+   ]
+  },
+  {
+   "name": "map-l0:conformance-03-const_types_run",
+   "args": [
+    "map",
+    "L0"
+   ],
+   "files": [
+    "tests/conformance/03/const_types_run.bmb"
+   ]
+  },
+  {
+   "name": "map-l0:conformance-07-caller_sees_only_the_contract",
+   "args": [
+    "map",
+    "L0"
+   ],
+   "files": [
+    "tests/conformance/07/caller_sees_only_the_contract.bmb"
+   ]
+  },
+  {
+   "name": "map-l0:conformance-07-path_facts_are_assumed",
+   "args": [
+    "map",
+    "L0"
+   ],
+   "files": [
+    "tests/conformance/07/path_facts_are_assumed.bmb"
+   ]
+  },
+  {
+   "name": "map-l0:run-nested_vecs",
+   "args": [
+    "map",
+    "L0"
+   ],
+   "files": [
+    "tests/run/nested_vecs.bmb"
+   ]
+  },
+  {
+   "name": "map-l1:run-generic_stack",
+   "args": [
+    "map",
+    "L1"
+   ],
+   "files": [
+    "tests/run/generic_stack.bmb"
+   ]
+  },
+  {
+   "name": "map-l1:verify-fail-mem_moves",
+   "args": [
+    "map",
+    "L1"
+   ],
+   "files": [
+    "tests/verify/fail/mem_moves.bmb"
+   ]
+  },
+  {
+   "name": "map-l1:verify-fail-text_ord",
+   "args": [
+    "map",
+    "L1"
+   ],
+   "files": [
+    "tests/verify/fail/text_ord.bmb"
+   ]
+  },
+  {
+   "name": "map-l1:verify-pass-mut_match",
+   "args": [
+    "map",
+    "L1"
+   ],
+   "files": [
+    "tests/verify/pass/mut_match.bmb"
+   ]
+  },
+  {
+   "name": "map-l2:conformance-04-habits_replacements_ownership",
+   "args": [
+    "map",
+    "L2"
+   ],
+   "files": [
+    "tests/conformance/04/habits_replacements_ownership.bmb"
+   ]
+  },
+  {
+   "name": "map-l2:run-method_order",
+   "args": [
+    "map",
+    "L2"
+   ],
+   "files": [
+    "tests/run/method_order.bmb"
+   ]
+  },
+  {
+   "name": "map-l2:verify-pass-rec_structs",
+   "args": [
+    "map",
+    "L2"
+   ],
+   "files": [
+    "tests/verify/pass/rec_structs.bmb"
+   ]
+  },
+  {
+   "name": "map-l2:verify-pass-vec_recursion",
+   "args": [
+    "map",
+    "L2"
+   ],
+   "files": [
+    "tests/verify/pass/vec_recursion.bmb"
+   ]
+  },
+  {
+   "name": "map-all:port-gen-g00",
+   "args": [
+    "map"
+   ],
+   "files": [
+    "tests/port/gen/g00.txt"
+   ]
+  },
+  {
+   "name": "map-all:port-gen-g07",
+   "args": [
+    "map"
+   ],
+   "files": [
+    "tests/port/gen/g07.txt"
+   ]
+  },
+  {
+   "name": "map-all:port-gen-g25",
+   "args": [
+    "map"
+   ],
+   "files": [
+    "tests/port/gen/g25.txt"
+   ]
+  },
+  {
+   "name": "map-all:port-types-identity",
+   "args": [
+    "map"
+   ],
+   "files": [
+    "tests/port/types/identity.txt"
+   ]
+  },
+  {
+   "name": "map-window:run-basics",
+   "args": [
+    "map",
+    "--budget",
+    "2000",
+    "--offset",
+    "3",
+    "--limit",
+    "25",
+    "L2"
+   ],
+   "files": [
+    "tests/run/basics.bmb"
+   ]
+  },
+  {
+   "name": "map-window:run-bools",
+   "args": [
+    "map",
+    "--budget",
+    "2000",
+    "--offset",
+    "3",
+    "--limit",
+    "25",
+    "L2"
+   ],
+   "files": [
+    "tests/run/bools.bmb"
+   ]
+  },
+  {
+   "name": "map-window:run-escape",
+   "args": [
+    "map",
+    "--budget",
+    "2000",
+    "--offset",
+    "3",
+    "--limit",
+    "25",
+    "L2"
+   ],
+   "files": [
+    "tests/run/escape.bmb"
+   ]
+  },
+  {
+   "name": "map-window:run-mem_moves",
+   "args": [
+    "map",
+    "--budget",
+    "2000",
+    "--offset",
+    "3",
+    "--limit",
+    "25",
+    "L2"
+   ],
+   "files": [
+    "tests/run/mem_moves.bmb"
+   ]
+  },
+  {
+   "name": "smt-decls:conformance-02-method_resolution_order",
+   "args": [
+    "dump",
+    "smt-decls"
+   ],
+   "files": [
+    "tests/conformance/02/method_resolution_order.bmb"
+   ]
+  },
+  {
+   "name": "smt-decls:conformance-03-inclusive_range_outside_for",
+   "args": [
+    "dump",
+    "smt-decls"
+   ],
+   "files": [
+    "tests/conformance/03/inclusive_range_outside_for.bmb"
+   ]
+  },
+  {
+   "name": "smt-decls:run-escape",
+   "args": [
+    "dump",
+    "smt-decls"
+   ],
+   "files": [
+    "tests/run/escape.bmb"
+   ]
+  },
+  {
+   "name": "smt-decls:run-forest",
+   "args": [
+    "dump",
+    "smt-decls"
+   ],
+   "files": [
+    "tests/run/forest.bmb"
+   ]
+  },
+  {
+   "name": "smt:conformance-05-field_reassign_restores",
+   "args": [
+    "dump",
+    "smt"
+   ],
+   "files": [
+    "tests/conformance/05/field_reassign_restores.bmb"
+   ]
+  },
+  {
+   "name": "smt:conformance-06-quantifier_places",
+   "args": [
+    "dump",
+    "smt"
+   ],
+   "files": [
+    "tests/conformance/06/quantifier_places.bmb"
+   ]
+  },
+  {
+   "name": "smt:corpus-baseline-gather",
+   "args": [
+    "dump",
+    "smt"
+   ],
+   "files": [
+    "tests/corpus/baseline/gather.bmb"
+   ]
+  },
+  {
+   "name": "smt:verify-pass-proof_text_vecs",
+   "args": [
+    "dump",
+    "smt"
+   ],
+   "files": [
+    "tests/verify/pass/proof_text_vecs.bmb"
+   ]
+  },
+  {
+   "name": "smt-queries:compiler-data-std_num_diff",
+   "args": [
+    "dump",
+    "smt-queries"
+   ],
+   "files": [
+    "compiler/tests/data/std_num_diff.bmb"
+   ]
+  },
+  {
+   "name": "smt-queries:conformance-05-containers_of_owned_move",
+   "args": [
+    "dump",
+    "smt-queries"
+   ],
+   "files": [
+    "tests/conformance/05/containers_of_owned_move.bmb"
+   ]
+  },
+  {
+   "name": "smt-queries:conformance-08-missing_effects_one_diagnostic",
+   "args": [
+    "dump",
+    "smt-queries"
+   ],
+   "files": [
+    "tests/conformance/08/missing_effects_one_diagnostic.bmb"
+   ]
+  },
+  {
+   "name": "smt-queries:port-sat-lint",
+   "args": [
+    "dump",
+    "smt-queries"
+   ],
+   "files": [
+    "tests/port/sat/lint.bmb"
+   ]
+  },
+  {
+   "name": "lowered:check-err-clones",
+   "args": [
+    "dump",
+    "lowered"
+   ],
+   "files": [
+    "tests/check/err/clones.bmb"
+   ]
+  },
+  {
+   "name": "lowered:conformance-04-place_errors",
+   "args": [
+    "dump",
+    "lowered"
+   ],
+   "files": [
+    "tests/conformance/04/place_errors.bmb"
+   ]
+  },
+  {
+   "name": "lowered:conformance-05-ref_value_mismatch",
+   "args": [
+    "dump",
+    "lowered"
+   ],
+   "files": [
+    "tests/conformance/05/ref_value_mismatch.bmb"
+   ]
+  },
+  {
+   "name": "lowered:conformance-08-fn_value_effects_rejected",
+   "args": [
+    "dump",
+    "lowered"
+   ],
+   "files": [
+    "tests/conformance/08/fn_value_effects_rejected.bmb"
+   ]
+  },
+  {
+   "name": "layout:check-err-triggers",
+   "args": [
+    "dump",
+    "layout"
+   ],
+   "files": [
+    "tests/check/err/triggers.bmb"
+   ]
+  },
+  {
+   "name": "layout:conformance-02-builtin_names_reserved",
+   "args": [
+    "dump",
+    "layout"
+   ],
+   "files": [
+    "tests/conformance/02/builtin_names_reserved.bmb"
+   ]
+  },
+  {
+   "name": "layout:conformance-05-slice_arguments",
+   "args": [
+    "dump",
+    "layout"
+   ],
+   "files": [
+    "tests/conformance/05/slice_arguments.bmb"
+   ]
+  },
+  {
+   "name": "layout:conformance-06-old_of_receiver",
+   "args": [
+    "dump",
+    "layout"
+   ],
+   "files": [
+    "tests/conformance/06/old_of_receiver.bmb"
+   ]
+  },
+  {
+   "name": "dump-runtime",
+   "args": [
+    "dump",
+    "runtime"
+   ]
+  },
+  {
+   "name": "reads:conformance-02-self_type_only_in_trait",
+   "args": [
+    "reads"
+   ],
+   "files": [
+    "tests/conformance/02/self_type_only_in_trait.bmb"
+   ]
+  },
+  {
+   "name": "reads:conformance-02-std_unknown_names",
+   "args": [
+    "reads"
+   ],
+   "files": [
+    "tests/conformance/02/std_unknown_names.bmb"
+   ]
+  },
+  {
+   "name": "reads:conformance-05-closure_captures_typed_local",
+   "args": [
+    "reads"
+   ],
+   "files": [
+    "tests/conformance/05/closure_captures_typed_local.bmb"
+   ]
+  },
+  {
+   "name": "reads:port-gen-g35",
+   "args": [
+    "reads"
+   ],
+   "files": [
+    "tests/port/gen/g35.txt"
+   ]
+  },
+  {
+   "name": "lint-syntax:conformance-05-closure_capture_moves_owned",
+   "args": [
+    "lint",
+    "--select",
+    "W0906,W0907,W0909,W0910,W0911,W0912,W0913,W0914,W0915,W0916,W0917,W1001"
+   ],
+   "files": [
+    "tests/conformance/05/closure_capture_moves_owned.bmb"
+   ]
+  },
+  {
+   "name": "lint-syntax:port-lint-lint-10",
+   "args": [
+    "lint",
+    "--select",
+    "W0906,W0907,W0909,W0910,W0911,W0912,W0913,W0914,W0915,W0916,W0917,W1001"
+   ],
+   "files": [
+    "tests/port/lint/lint-10.txt"
+   ]
+  },
+  {
+   "name": "lint-syntax:port-lint-lint-15",
+   "args": [
+    "lint",
+    "--select",
+    "W0906,W0907,W0909,W0910,W0911,W0912,W0913,W0914,W0915,W0916,W0917,W1001"
+   ],
+   "files": [
+    "tests/port/lint/lint-15.txt"
+   ]
+  },
+  {
+   "name": "lint-syntax:run-fn_nested",
+   "args": [
+    "lint",
+    "--select",
+    "W0906,W0907,W0909,W0910,W0911,W0912,W0913,W0914,W0915,W0916,W0917,W1001"
+   ],
+   "files": [
+    "tests/run/fn_nested.bmb"
+   ]
+  },
+  {
+   "name": "fix-print:check-err-bytes",
+   "args": [
+    "fix",
+    "--print"
+   ],
+   "files": [
+    "tests/check/err/bytes.bmb"
+   ]
+  },
+  {
+   "name": "fix-print:check-err-methods",
+   "args": [
+    "fix",
+    "--print"
+   ],
+   "files": [
+    "tests/check/err/methods.bmb"
+   ]
+  },
+  {
+   "name": "fix-print:check-err-rust_paths",
+   "args": [
+    "fix",
+    "--print"
+   ],
+   "files": [
+    "tests/check/err/rust_paths.bmb"
+   ]
+  },
+  {
+   "name": "fix-print:port-lint-fix-02",
+   "args": [
+    "fix",
+    "--print"
+   ],
+   "files": [
+    "tests/port/lint/fix-02.txt"
+   ]
+  },
+  {
+   "name": "ast:check-err-unsupported",
+   "args": [
+    "ast"
+   ],
+   "files": [
+    "tests/check/err/unsupported.bmb"
+   ]
+  },
+  {
+   "name": "ast:port-gen-g26",
+   "args": [
+    "ast"
+   ],
+   "files": [
+    "tests/port/gen/g26.txt"
+   ]
+  },
+  {
+   "name": "ast:verify-fail-invariants",
+   "args": [
+    "ast"
+   ],
+   "files": [
+    "tests/verify/fail/invariants.bmb"
+   ]
+  },
+  {
+   "name": "ast:verify-pass-vecs",
+   "args": [
+    "ast"
+   ],
+   "files": [
+    "tests/verify/pass/vecs.bmb"
+   ]
+  },
+  {
+   "name": "uses:port-uses-uses-01",
+   "args": [
+    "uses"
+   ],
+   "files": [
+    "tests/port/uses/uses-01.txt"
+   ]
+  },
+  {
+   "name": "uses:verify-fail-contracts",
+   "args": [
+    "uses"
+   ],
+   "files": [
+    "tests/verify/fail/contracts.bmb"
+   ]
+  },
+  {
+   "name": "uses:verify-fail-proofs",
+   "args": [
+    "uses"
+   ],
+   "files": [
+    "tests/verify/fail/proofs.bmb"
+   ]
+  },
+  {
+   "name": "uses:verify-pass-traits",
+   "args": [
+    "uses"
+   ],
+   "files": [
+    "tests/verify/pass/traits.bmb"
+   ]
+  }
+ ]
+}

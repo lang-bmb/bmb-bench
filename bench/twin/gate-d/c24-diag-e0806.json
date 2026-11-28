@@ -1,0 +1,76 @@
+{
+ "id": "c24-diag-e0806",
+ "kind": "comprehend",
+ "family": "diag",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions report the diagnostic code `E0806`, that is, write the code in their own body? Leave out the table that lists every code. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions report the diagnostic code `E0806`, that is, write the code in their own body? Leave out the table that lists every code. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "probe::probe",
+   "verify::Enc::loop_core"
+  ],
+  "bmb": [
+   "encode_exec::Exec::loop_entry",
+   "probe::said"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "encode_exec::Exec::loop_entry",
+      "probe::said"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\"E0806\""
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "probe::probe",
+      "verify::Enc::loop_core"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "probe::said"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "verify::Enc::loop_core"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

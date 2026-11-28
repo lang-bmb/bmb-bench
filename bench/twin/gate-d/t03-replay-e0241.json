@@ -1,0 +1,119 @@
+{
+ "id": "t03-replay-e0241",
+ "family": "replay",
+ "kind": "change",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "scope": "any",
+ "source": {
+  "code": "E0241",
+  "commit": "76edfb6f6",
+  "subject": "2K-01e: the ? operator, encoded as its match expansion (ADR-0049 §1, §3)"
+ },
+ "prompt": "`bmb check` does not report the diagnostic E0241 yet: `?` whose `None`/`Err` the function cannot return (another error type, or not an `Option`/`Result` function). It came with the commit \"2K-01e: the ? operator, encoded as its match expansion (ADR-0049 §1, §3)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    let v: u64 = parse(x)?;\n    {\"code\": \"E0241\", \"severity\": \"error\", \"message\": \"the error type `bool` of `?` is not the function's `u64`\", \"file\": \"err/tries.bmb\", \"line\": 16, \"col\": 22, \"end_line\": 16, \"end_col\": 31, \"fix\": {\"message\": \"convert it explicitly: `match` the value and `return Err(..)` with a `u64`\"}}\n\n    let v: u64 = half(x)?;\n    {\"code\": \"E0241\", \"severity\": \"error\", \"message\": \"`?` on `Option<u64>` returns its `None` from a function returning `Result<u64, bool>`\", \"file\": \"err/tries.bmb\", \"line\": 22, \"col\": 22, \"end_line\": 22, \"end_col\": 30, \"fix\": {\"message\": \"`?` needs the function to return `Option<..>`; otherwise `match` the value\"}}\n\nEverything else the program prints must stay as it is.",
+ "setup": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "        self.diags\n            .push(Diag::new(\"E0241\", e.span, fix.0).fix(fix.1, None));",
+     "new": ""
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "body",
+     "code": "    impl Body {\n        #[effects(alloc)]\n        fn try_expr(self: &mut Body, cx: &mut FnCtx, e: &ast::Expr, x: &ast::Expr, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3 + 1,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            if !exec_mode(mode) {\n                self.c.help(\"E0503\", e.span, \"`?` is not allowed in a specification\", \"a specification is one expression: test the variant with `match`\");\n            }\n            let no: Option<ast::TypeKind> = None;\n            let xt: ast::TypeKind = self.expr(cx, x, &no, mode, f - 1);\n            let kind: u8 = try_variants(&xt);\n            if kind == 0 {\n                if !types::is_error(&xt) && !is_never(&xt) {\n                    let through: bool = match ref_inner(&xt) {\n                        None => false,\n                        Some(inner) => try_variants(&inner) != 0,\n                    };\n                    let msg: String = types::cat3(\"`?` applies to an `Option` or a `Result`, found `\", types::text(&xt).as_str(), \"`\");\n                    if through {\n                        self.c.help(\"E0401\", x.span, msg.as_str(), \"`?` takes the value itself: `(*x)?` when it is `Copy`, otherwise `match` the reference\");\n                    } else {\n                        self.c.help(\"E0401\", x.span, msg.as_str(), \"test the value with `if` or `match` instead\");\n                    }\n                }\n                return ast::TypeKind::Error;\n            }\n            let args: Vec<ast::TypeKind> = types::named_args(&xt);\n            if args.len() == 0 {\n                return ast::TypeKind::Error;\n            }\n            let payload: ast::TypeKind = args[0].clone();\n            if !exec_mode(mode) {\n                return payload;\n            }\n            let ret: ast::TypeKind = cx.ret.clone();\n            if try_variants(&ret) == kind {\n                let ra: Vec<ast::TypeKind> = types::named_args(&ret);\n                if kind == 1 || ra.len() < 2 || args.len() < 2 {\n                    return payload;\n                }\n                if types::same(&ra[1], &args[1]) {\n                    return payload;\n                }\n                let want: String = types::text(&ra[1]);\n                return payload;\n            }\n            if types::is_error(&ret) {\n                return payload;\n            }\n            if kind == 1 {\n            } else {\n            }\n            payload\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "cases": [
+  {
+   "name": "replay-tries",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/tries.bmb"
+   ]
+  }
+ ],
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "        payload\n    }",
+     "new": "        self.diags\n            .push(Diag::new(\"E0241\", e.span, fix.0).fix(fix.1, None));\n        payload\n    }"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "body",
+     "code": "    impl Body {\n        #[effects(alloc)]\n        fn try_expr(self: &mut Body, cx: &mut FnCtx, e: &ast::Expr, x: &ast::Expr, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3 + 1,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            if !exec_mode(mode) {\n                self.c.help(\"E0503\", e.span, \"`?` is not allowed in a specification\", \"a specification is one expression: test the variant with `match`\");\n            }\n            let no: Option<ast::TypeKind> = None;\n            let xt: ast::TypeKind = self.expr(cx, x, &no, mode, f - 1);\n            let kind: u8 = try_variants(&xt);\n            if kind == 0 {\n                if !types::is_error(&xt) && !is_never(&xt) {\n                    let through: bool = match ref_inner(&xt) {\n                        None => false,\n                        Some(inner) => try_variants(&inner) != 0,\n                    };\n                    let msg: String = types::cat3(\"`?` applies to an `Option` or a `Result`, found `\", types::text(&xt).as_str(), \"`\");\n                    if through {\n                        self.c.help(\"E0401\", x.span, msg.as_str(), \"`?` takes the value itself: `(*x)?` when it is `Copy`, otherwise `match` the reference\");\n                    } else {\n                        self.c.help(\"E0401\", x.span, msg.as_str(), \"test the value with `if` or `match` instead\");\n                    }\n                }\n                return ast::TypeKind::Error;\n            }\n            let args: Vec<ast::TypeKind> = types::named_args(&xt);\n            if args.len() == 0 {\n                return ast::TypeKind::Error;\n            }\n            let payload: ast::TypeKind = args[0].clone();\n            if !exec_mode(mode) {\n                return payload;\n            }\n            let ret: ast::TypeKind = cx.ret.clone();\n            if try_variants(&ret) == kind {\n                let ra: Vec<ast::TypeKind> = types::named_args(&ret);\n                if kind == 1 || ra.len() < 2 || args.len() < 2 {\n                    return payload;\n                }\n                if types::same(&ra[1], &args[1]) {\n                    return payload;\n                }\n                let want: String = types::text(&ra[1]);\n                self.c.help(\"E0241\", e.span, types::cat5(\"the error type `\", types::text(&args[1]).as_str(), \"` of `?` is not the function's `\", want.as_str(), \"`\").as_str(), types::cat3(\"convert it explicitly: `match` the value and `return Err(..)` with a `\", want.as_str(), \"`\").as_str());\n                return payload;\n            }\n            if types::is_error(&ret) {\n                return payload;\n            }\n            if kind == 1 {\n                self.c.help(\"E0241\", e.span, types::cat5(\"`?` on `\", types::text(&xt).as_str(), \"` returns its `None` from a function returning `\", types::text(&ret).as_str(), \"`\").as_str(), \"`?` needs the function to return `Option<..>`; otherwise `match` the value\");\n            } else {\n                self.c.help(\"E0241\", e.span, types::cat5(\"`?` on `\", types::text(&xt).as_str(), \"` returns its `Err` from a function returning `\", types::text(&ret).as_str(), \"`\").as_str(), \"`?` needs the function to return `Result<.., E>`; otherwise `match` the value\");\n            }\n            payload\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "corpus",
+   "bmb": [],
+   "rust": []
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "body",
+      "code": "    impl Body {\n        #[effects(alloc)]\n        fn try_expr(self: &mut Body, cx: &mut FnCtx, e: &ast::Expr, x: &ast::Expr, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3 + 1,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            if !exec_mode(mode) {\n                self.c.help(\"E0503\", e.span, \"`?` is not allowed in a specification\", \"a specification is one expression: test the variant with `match`\");\n            }\n            let no: Option<ast::TypeKind> = None;\n            let xt: ast::TypeKind = self.expr(cx, x, &no, mode, f - 1);\n            let kind: u8 = try_variants(&xt);\n            if kind == 0 {\n                if !types::is_error(&xt) && !is_never(&xt) {\n                    let through: bool = match ref_inner(&xt) {\n                        None => false,\n                        Some(inner) => try_variants(&inner) != 0,\n                    };\n                    let msg: String = types::cat3(\"`?` applies to an `Option` or a `Result`, found `\", types::text(&xt).as_str(), \"`\");\n                    if through {\n                        self.c.help(\"E0401\", x.span, msg.as_str(), \"`?` takes the value itself: `(*x)?` when it is `Copy`, otherwise `match` the reference\");\n                    } else {\n                        self.c.help(\"E0401\", x.span, msg.as_str(), \"test the value with `if` or `match` instead\");\n                    }\n                }\n                return ast::TypeKind::Error;\n            }\n            let args: Vec<ast::TypeKind> = types::named_args(&xt);\n            if args.len() == 0 {\n                return ast::TypeKind::Error;\n            }\n            let payload: ast::TypeKind = args[0].clone();\n            if !exec_mode(mode) {\n                return payload;\n            }\n            let ret: ast::TypeKind = cx.ret.clone();\n            if try_variants(&ret) == kind {\n                let ra: Vec<ast::TypeKind> = types::named_args(&ret);\n                if kind == 1 || ra.len() < 2 || args.len() < 2 {\n                    return payload;\n                }\n                if types::same(&ra[1], &args[1]) {\n                    return payload;\n                }\n                let want: String = types::text(&ra[1]);\n                self.c.help(\"E0241\", e.span, types::cat5(\"the error type `\", types::text(&args[1]).as_str(), \"` of `?` is not the function's `\", want.as_str(), \"`\").as_str(), types::cat3(\"convert it explicitly: `match` the value and `return Err(..)` with a `\", want.as_str(), \"`\").as_str());\n                return payload;\n            }\n            if types::is_error(&ret) {\n                return payload;\n            }\n            if kind == 1 {\n                self.c.help(\"E0241\", e.span, types::cat5(\"`?` on `\", types::text(&xt).as_str(), \"` returns its `None` from a function returning `\", types::text(&ret).as_str(), \"`\").as_str(), \"`?` needs the function to return `Option<..>`; otherwise `match` the value\");\n            } else {\n                self.c.help(\"E0241\", e.span, types::cat5(\"`?` on `\", types::text(&xt).as_str(), \"` returns its `Err` from a function returning `\", types::text(&ret).as_str(), \"`\").as_str(), \"`?` needs the function to return `Result<.., E>`; otherwise `match` the value\");\n            }\n            payload\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "        payload\n    }",
+      "new": "        self.diags\n            .push(Diag::new(\"E0241\", e.span, fix.0).fix(fix.1, None));\n        payload\n    }"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ]
+  }
+ ]
+}

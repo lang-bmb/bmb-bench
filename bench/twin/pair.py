@@ -37,7 +37,8 @@ a task's `must_change` lists the definitions the change must touch, and a
 control that does nothing fails it);
 `openai:MODEL` and `anthropic:MODEL` run a real model (ADR-0066).
 
-  pair.py check [--tasks DIR]               twins agree on the corpus, oracles
+  pair.py check [--tasks DIR] [--only ID..] [--arms bmb rust] [--jobs N]
+                [--log F.jsonl]             twins agree on the corpus, oracles
                                             pass, weak controls fail (the gate)
   pair.py run --agent KIND [--arms bmb rust] [--tasks DIR] [--only ID..]
               [--out F.jsonl]               sessions, one JSON row each
@@ -320,11 +321,20 @@ def twin_dir(commit, *parts):
 def commit_tree(commit, paths):
     """`paths` of the repository at `commit`, extracted once."""
     d = twin_dir(commit, "tree")
-    need = [p for p in paths if not os.path.exists(os.path.join(d, p))]
+    # What was extracted is written down: that a path exists does not say
+    # it is whole (a corpus file under `compiler/` comes before the crate).
+    listed = twin_dir(commit, "tree.paths")
+    have = set()
+    if os.path.exists(listed):
+        with open(listed, encoding="utf-8") as h:
+            have = set(h.read().split("\n"))
+    need = [p for p in paths if p not in have and not any(p.startswith(q + "/") for q in have if q)]
     if need:
         os.makedirs(d, exist_ok=True)
         tar = subprocess.run(["git", "archive", commit, *need], cwd=lang_bmb.root(), capture_output=True, check=True).stdout
         subprocess.run(["tar", "-x", "-C", d], input=tar, check=True)
+        with open(listed, "w", encoding="utf-8") as h:
+            h.write("\n".join(sorted(have | set(need))))
     return d
 
 
@@ -430,11 +440,49 @@ def ws_files(ws):
 # `PAIR_MCP` overrides): a `write` then returns the definitions that failed and a count of
 # the proved ones, not one line per definition of the workspace.
 def mcp_flags(fixture):
+    if "PAIR_COND" in os.environ:
+        return conditions()[os.environ["PAIR_COND"]]
     if "PAIR_MCP" in os.environ:
         return os.environ["PAIR_MCP"].split()
     # The port twin: the compact view (ADR-0144) and the window of a bounded
     # response, whose tool description names `query text` (ADR-0146).
     return ["--write-tool", "--compact", "--bounded"] if repo_fixture(fixture) else ["--write-tool"]
+
+
+def conditions():
+    """{name: flags} of the tool conditions of `parity.json`. `PAIR_COND`
+    names the one a run is made under (`port`, `port-rename`); it wins over
+    `PAIR_MCP`."""
+    with open(os.path.join(HERE, "parity.json"), encoding="utf-8") as h:
+        out = {name: c["flags"] for name, c in json.load(h)["conditions"].items()}
+    cond = os.environ.get("PAIR_COND")
+    if cond is not None and cond not in out:
+        raise SystemExit(f"PAIR_COND={cond!r}: {', '.join(sorted(out))}")
+    return out
+
+
+def condition(fixture):
+    """The name of the tool condition of a session on `fixture`: the
+    condition of `parity.json` that has exactly the server's flags, or
+    None (a fixture outside the port twin, or flags of no condition)."""
+    flags = sorted(mcp_flags(fixture))
+    return next((name for name, fl in sorted(conditions().items()) if sorted(fl) == flags), None)
+
+
+def calls_of(calls, arm, fixture):
+    """The scripted calls of `arm` in `calls` ({arm: calls} of a reference
+    or a weak solution): those written for the tool condition of the run
+    (`ARM:CONDITION`) where the task has them, else the arm's."""
+    return calls.get(f"{arm}:{condition(fixture)}", calls[arm]) if arm == "bmb" else calls[arm]
+
+
+def stamp(task, arm):
+    """The row fields that say under what a session ran: the documentation
+    condition, for the BMB arm the server's flags, and the name of the tool
+    condition of the run (in the rows of both arms: the Rust sessions of a
+    run belong to its comparison, though no flag reaches them)."""
+    fx = task["fixture"]
+    return {"docs": docs_of(fx), "mcp": " ".join(mcp_flags(fx)) if arm == "bmb" else None, "cond": condition(fx)}
 
 
 class BmbTools:
@@ -750,6 +798,13 @@ def run_cases(exe, cases, cwd=None):
 
 
 def judge_change(task, arm, root, before, work):
+    t0 = time.perf_counter()
+    out = _judge_change(task, arm, root, before, work)
+    out["judge_s"] = round(time.perf_counter() - t0, 3)  # what the hidden judge took (no part of `wall_s`)
+    return out
+
+
+def _judge_change(task, arm, root, before, work):
     out = {"built": False, "tests": None, "corpus_passed": 0, "corpus_total": 0, "corpus_failures": [],
            "out_of_scope": []}
     spec = repo_fixture(task["fixture"])
@@ -813,7 +868,7 @@ def make_agent(kind, arm, task, script=None):
     if script is not None:
         return Scripted(script)
     if kind == "oracle":
-        return Scripted(task["oracle"][arm])
+        return Scripted(calls_of(task["oracle"], arm, task["fixture"]))
     from model_api import make_model_agent  # noqa: E402
     system, user = prompt(arm, task)
     if agent := make_model_agent(kind, system, user):
@@ -914,7 +969,7 @@ def run_task(task, arm, agent_kind, script=None):
         finally:
             tools.close()
         row = {"id": task["id"], "kind": task["kind"], "fixture": task["fixture"], "arm": arm, "agent": agent_kind,
-               "docs": docs_of(task["fixture"]), "mcp": " ".join(mcp_flags(task["fixture"])) if arm == "bmb" else None, **m}
+               **stamp(task, arm), **m}
         if comprehend:
             truth = task["truth"]
             want, got = set(truth[arm] if isinstance(truth, dict) else truth), set(answer or [])
@@ -929,7 +984,7 @@ def run_task(task, arm, agent_kind, script=None):
         shutil.rmtree(work, ignore_errors=True)
 
 
-SUMS = ("tool_calls", "resp_bytes", "req_bytes", "tool_errors", "tokens", "req_tokens", "wall_s")
+SUMS = ("tool_calls", "resp_bytes", "req_bytes", "tool_errors", "tokens", "req_tokens", "wall_s", "judge_s")
 
 
 def run_history(task, arm, agent_kind, script=None):
@@ -962,7 +1017,7 @@ def run_history(task, arm, agent_kind, script=None):
                 if isinstance(v, (int, float)):
                     usage[key] = usage.get(key, 0) + v
         return {"id": task["id"], "kind": task["kind"], "fixture": task["fixture"], "arm": arm, "agent": agent_kind,
-                "docs": docs_of(task["fixture"]), "mcp": " ".join(mcp_flags(task["fixture"])) if arm == "bmb" else None,
+                **stamp(task, arm),
                 **{key: round(sum(st[key] for st in steps), 3) for key in SUMS}, "model_usage": usage,
                 "steps_passed": sum(1 for st in steps if st["success"]),
                 **{key: steps[-1][key] for key in ("built", "tests", "corpus_passed", "corpus_total",
@@ -1121,33 +1176,86 @@ WEAK_CHECKS = {
 }
 
 
+def prepare(tasks):
+    """What is computed once per commit of a repository fixture and kept
+    (the proof cache, the reference build, the expected outputs), made
+    before sessions run side by side."""
+    for t in tasks:
+        spec = repo_fixture(t["fixture"])
+        if not spec:
+            continue
+        proof_cache(t["commit"], spec["bmb"])
+        if t["kind"] == "change":
+            cases = [c for st in t.get("steps", [t]) for c in st.get("cases", [])]
+            repo_cases({**t, "cases": cases}, spec)
+
+
 def cmd_check(a):
-    tasks = load_tasks(a.tasks)
+    import concurrent.futures
+    import threading
+    tasks = [t for t in load_tasks(a.tasks) if not a.only or t["id"] in a.only]
     problems = []
     for fx in sorted({t["fixture"] for t in tasks}):
         # A repository fixture's twins are compared by the port's own
         # differential tests (tests/port/cases.json).
         if not repo_fixture(fx):
             problems += check_twins(fx)
+    lock = threading.Lock()
+    # A check that was cut goes on from its log: a session whose row is
+    # there (same task, arm and agent, and for the BMB arm the same tool
+    # condition: a Rust session does not depend on it) is not run again,
+    # its row is judged as it is.
+    done = {}
+    if a.log and os.path.exists(a.log):
+        with open(a.log, encoding="utf-8") as h:
+            for r in map(json.loads, h):
+                done[(r["id"], r["arm"], r["agent"], r.get("cond") if r["arm"] == "bmb" else None)] = r
+    log = open(a.log, "a", encoding="utf-8") if a.log else None
+
     def problem(text):
         problems.append(text)
         print(text, file=sys.stderr, flush=True)
 
-    for t in tasks:
-        for arm in ("bmb", "rust"):
-            r = run_task(t, arm, "oracle")
-            if not r["success"]:
-                problem(f"{t['id']} {arm}: oracle failed: {json.dumps(r, ensure_ascii=False)[:1500]}")
-            for k, weak in enumerate(t.get("weak", [])):
-                w = run_task(t, arm, f"weak{k}", weak[arm])
-                why = weak["fails"]
-                if w["success"] or not WEAK_CHECKS[why](w):
-                    problem(f"{t['id']} {arm}: weak control {k} did not fail its {why} check: "
-                            f"{json.dumps(w, ensure_ascii=False)[:1500]}")
-            print(f"{t['id']} {arm}: oracle {'ok' if r['success'] else 'FAILED'}", file=sys.stderr, flush=True)
+    def note(row):
+        if log:
+            with lock:
+                log.write(json.dumps(row, ensure_ascii=False) + "\n")
+                log.flush()
+
+    def session(t, arm, agent, script=None):
+        key = (t["id"], arm, agent, condition(t["fixture"]) if arm == "bmb" else None)
+        if key in done:
+            return done[key]
+        r = run_task(t, arm, agent, script)
+        note(r)
+        return r
+
+    def one(unit):
+        t, arm = unit
+        r = session(t, arm, "oracle")
+        if not r["success"]:
+            problem(f"{t['id']} {arm}: oracle failed: {json.dumps(r, ensure_ascii=False)[:1500]}")
+        for k, weak in enumerate(t.get("weak", [])):
+            w = session(t, arm, f"weak{k}", calls_of(weak, arm, t["fixture"]))
+            why = weak["fails"]
+            if w["success"] or not WEAK_CHECKS[why](w):
+                problem(f"{t['id']} {arm}: weak control {k} did not fail its {why} check: "
+                        f"{json.dumps(w, ensure_ascii=False)[:1500]}")
+        print(f"{t['id']} {arm}: oracle {'ok' if r['success'] else 'FAILED'}", file=sys.stderr, flush=True)
+
+    units = [(t, arm) for t in tasks for arm in a.arms]
+    if a.jobs > 1:
+        # Sessions are independent (each has its own copy of the code);
+        # what they share is made first.
+        prepare(tasks)
+        with concurrent.futures.ThreadPoolExecutor(a.jobs) as pool:
+            list(pool.map(one, units))
+    else:
+        for u in units:
+            one(u)
     if problems:
         sys.exit(1)
-    print(f"ok: {len(tasks)} tasks, both arms")
+    print(f"ok: {len(tasks)} tasks, {'both arms' if len(a.arms) == 2 else 'arm ' + a.arms[0]}")
 
 
 def cmd_run(a):
@@ -1173,6 +1281,11 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     ck = sub.add_parser("check")
     ck.add_argument("--tasks", default=os.path.join(HERE, "tasks"))
+    ck.add_argument("--only", nargs="*", help="only these tasks")
+    ck.add_argument("--arms", nargs="+", default=["bmb", "rust"], choices=["bmb", "rust"])
+    ck.add_argument("--jobs", type=int, default=1, help="sessions side by side (each builds: at most 2 on 4 cores)")
+    ck.add_argument("--log", help="append every session's row (the oracle's and each weak control's) to this file; "
+                                  "a session whose row is already there is not run again")
     rn = sub.add_parser("run")
     rn.add_argument("--agent", default="oracle")
     rn.add_argument("--arms", nargs="+", default=["bmb", "rust"], choices=["bmb", "rust"])

@@ -1,0 +1,305 @@
+{
+ "id": "t04-replay-e0428",
+ "family": "replay",
+ "kind": "change",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "scope": "any",
+ "source": {
+  "code": "E0428",
+  "commit": "2f4b09b4a",
+  "subject": "2T-01: generic functions and data types, proved once, monomorphized"
+ },
+ "prompt": "`bmb check` does not report the diagnostic E0428 yet: a type argument does not satisfy a bound of its parameter. It came with the commit \"2T-01: generic functions and data types, proved once, monomorphized\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    struct Wrapped { c: Cell2<Holder> }\n    {\"code\": \"E0428\", \"severity\": \"error\", \"message\": \"`bx::Holder` is not `Copy`, a bound of `T` in `Cell2`\", \"file\": \"err/boxes.bmb\", \"line\": 10, \"col\": 31, \"end_line\": 10, \"end_col\": 37, \"fix\": {\"message\": \"pass a `Copy` type (a scalar, a struct or enum, an array of them); a `Vec`, a `Box` and what holds them move (ADR-0047)\"}}\n\n    largest::<f64>(x, y)\n    {\"code\": \"E0428\", \"severity\": \"error\", \"message\": \"`f64` is not `Ord`, a bound of `T` in `largest`\", \"file\": \"err/floats.bmb\", \"line\": 65, \"col\": 19, \"end_line\": 65, \"end_col\": 22, \"fix\": {\"message\": \"`f64` is not `Ord`, as in Rust: NaN is not equal to itself (ADR-0061 §1); compare `f64` values with `<`, `==` in code, or drop the bound\"}}\n\nEverything else the program prints must stay as it is.",
+ "setup": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    self.diags.push(\n                        Diag::new(\n                            \"E0428\",\n                            span,\n                            format!(\n                                \"`{}` is not `{b}`, a bound of `{}` in `{of}`\",\n                                ty_str(t),\n                                p.name\n                            ),\n                        )\n                        .fix(\n                            if *t == TypeKind::F64 {\n                                format!(\"`f64` is not `{b}`, as in Rust: NaN is not equal to itself (ADR-0061 §1); compare `f64` values with `<`, `==` in code, or drop the bound\")\n                            } else {\n                                format!(\"`{b}` holds for the integer types, `bool`, `char`, `String` and type parameters bounded by it; for data types it is ADR-0046 open question 4\")\n                            },\n                            None,\n                        ),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    self.diags\n                        .push(Diag::new(\"E0428\", span, what).fix(help, None));",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    self.diags.push(\n                        Diag::new(\n                            \"E0428\",\n                            span,\n                            format!(\n                                \"`{}` cannot be a `Vec` element, which `{}` is in `{of}`\",\n                                ty_str(t),\n                                p.name\n                            ),\n                        )\n                        .fix(\n                            \"pass a scalar, a struct or enum without arrays, a `String`, or a `Vec` or `Box` of them\",\n                            None,\n                        ),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    self.diags.push(\n                        Diag::new(\n                            \"E0428\",\n                            span,\n                            format!(\n                                \"`{}` is not `Copy`, a bound of `{}` in `{of}`\",\n                                ty_str(t),\n                                p.name\n                            ),\n                        )\n                        .fix(\n                            \"pass a `Copy` type (a scalar, a struct or enum, an array of them); a `Vec`, a `Box` and what holds them move (ADR-0047)\",\n                            None,\n                        ),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                        self.diags.push(\n                            Diag::new(\n                                \"E0428\",\n                                span,\n                                format!(\"`{}` on `{n}` needs the bound `{n}: Ord`\", op.symbol()),\n                            )\n                            .fix(format!(\"add `Ord` to the bounds of `{n}`\"), None),\n                        );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                        self.diags.push(\n                            Diag::new(\n                                \"E0428\",\n                                span,\n                                format!(\n                                    \"`{}` on `{}` in code needs the bound `{}: Eq`\",\n                                    op.symbol(),\n                                    ty_str(&lt),\n                                    ty_str(&lt)\n                                ),\n                            )\n                            .fix(\n                                format!(\"add `Eq` (or `Ord`) to the bounds of `{}`\", ty_str(&lt)),\n                                None,\n                            ),\n                        );",
+     "new": ""
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "body",
+     "code": "    impl Body {\n        #[effects(alloc)]\n        fn binary_same(self: &mut Body, op: ast::BinOp, l: &ast::Expr, r: &ast::Expr, lt: &ast::TypeKind, mode: Mode, span: source::Span) -> ast::TypeKind {\n            let valued: bool = is_arith(op) || is_bit(op);\n            let sym: String = op_symbol(op);\n            let ltt: String = types::text(lt);\n            let eq: bool = is_eq(op);\n            if eq && is_vec(lt) {\n                self.c.help(\"E0514\", span, types::cat5(\"`\", sym.as_str(), \"` is not defined for `\", ltt.as_str(), \"`\").as_str(), \"compare the lengths and the elements with a spec predicate over `v.as_slice()`\");\n                return ast::TypeKind::Bool;\n            }\n            let slice: bool = match ref_inner(lt) {\n                None => false,\n                Some(inner) => is_slice(&inner),\n            };\n            match types::param_name(lt) {\n                None => {},\n                Some(n) => { if is_cmp(op) && !eq { if !self.c.has_builtin(lt, \"Ord\") { } return ast::TypeKind::Bool; } if eq { if exec_mode(mode) && !self.c.has_builtin(lt, \"Eq\") { } return ast::TypeKind::Bool; } },\n            }\n            if eq && (is_named(lt) || is_array(lt) || is_box(lt) || slice) {\n                if exec_mode(mode) {\n                    let fix: String = if is_box(lt) {\n                        types::cat7(\"compare the values: `*\", fmt::expr_text(l).as_str(), \" \", sym.as_str(), \" *\", fmt::expr_text(r).as_str(), \"`\")\n                    } else {\n                        String::from(\"compare the fields (or `match` the variants) in code\")\n                    };\n                    self.c.help(\"E0425\", span, types::cat5(\"`\", sym.as_str(), \"` on `\", ltt.as_str(), \"` is only defined in specifications\").as_str(), fix.as_str());\n                } else {\n                    match self.recursive_with_vec(lt) {\n                        None => {},\n                        Some(c) => self.c.help(\"E0431\", span, types::cat7(\"`\", sym.as_str(), \"` on `\", ltt.as_str(), \"` is not defined: `\", types::text(&c).as_str(), \"` is recursive and holds a `Vec`\").as_str(), \"compare the parts that matter, or write a recursive spec fn over them\"),\n                    }\n                }\n                return ast::TypeKind::Bool;\n            }\n            let ok: bool = if eq {\n                types::is_scalar(lt)\n            } else if is_bit(op) {\n                types::is_int(lt) || is_bool(lt)\n            } else if is_rem(op) {\n                types::is_int(lt)\n            } else if is_cmp(op) && (is_char(lt) || is_bool(lt)) {\n                true\n            } else {\n                types::is_int(lt) || is_f64(lt)\n            };\n            if !ok {\n                let msg: String = types::cat5(\"`\", sym.as_str(), \"` is not defined for `\", ltt.as_str(), \"`\");\n                if is_f64(lt) && is_rem(op) {\n                    self.c.help(\"E0401\", span, msg.as_str(), \"`%` on `f64` (Rust's truncated remainder) is not supported yet (ADR-0061 §3): compute `x - y * q` with the quotient you need\");\n                } else if is_f64(lt) {\n                    self.c.help(\"E0401\", span, msg.as_str(), \"`f64` has `+ - * /`, unary `-` and the comparisons; bit operations are on integers\");\n                } else if is_bit(op) {\n                    self.c.help(\"E0401\", span, msg.as_str(), \"`&`, `|` and `^` take two integers of one type, or two `bool`s\");\n                } else {\n                    self.c.err(\"E0401\", span, msg.as_str());\n                }\n                return bin_fail(valued);\n            }\n            if valued {\n                lt.clone()\n            } else {\n                ast::TypeKind::Bool\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "decls",
+     "code": "    impl Checker {\n        #[effects(alloc)]\n        fn targ_ok(self: &mut Checker, t: &ast::TypeKind, p: &types::TParam, of: &str, span: source::Span, report: bool) -> bool {\n            if types::is_error(t) {\n                return false;\n            }\n            let tt: String = types::text(t);\n            if not_value(t) {\n                if report {\n                    self.help(\"E0403\", span, types::cat7(\"type argument `\", tt.as_str(), \"` for `\", p.name.as_str(), \"` of `\", of, \"` is not a value type\").as_str(), \"type arguments are value types: references are second-class (ADR-0015)\");\n                }\n                return false;\n            }\n            for i in 0..p.bounds.len()\n                invariant 0 <= i && i <= p.bounds.len(),\n            {\n                let b_s: String = p.bounds[i].clone();\n                if (b_s.as_str() == \"Eq\" || b_s.as_str() == \"Ord\") && !self.has_builtin(t, b_s.as_str()) {\n                    if report {\n                        let fix: String = if is_f64(t) {\n                            types::cat3(\"`f64` is not `\", b_s.as_str(), \"`, as in Rust: NaN is not equal to itself (ADR-0061 §1); compare `f64` values with `<`, `==` in code, or drop the bound\")\n                        } else {\n                            types::cat3(\"`\", b_s.as_str(), \"` holds for the integer types, `bool`, `char`, `String` and type parameters bounded by it; for data types it is ADR-0046 open question 4\")\n                        };\n                    }\n                    return false;\n                }\n            }\n            for j in 0..p.bounds.len()\n                invariant 0 <= j && j <= p.bounds.len(),\n            {\n                let b_s: String = p.bounds[j].clone();\n                if is_path(b_s.as_str()) && !self.has_trait(t, b_s.as_str(), 100000) {\n                    if report {\n                        let what: String = if p.name.as_str() == \"Self\" {\n                            types::cat5(\"`\", tt.as_str(), \"` does not implement `\", b_s.as_str(), \"`\")\n                        } else {\n                            types::cat4(types::cat4(\"`\", tt.as_str(), \"` does not implement `\", b_s.as_str()).as_str(), \"`, a bound of `\", p.name.as_str(), types::cat3(\"` in `\", of, \"`\").as_str())\n                        };\n                        let fix: String = if types::is_param(t) {\n                            types::cat5(\"bound the type parameter: `\", tt.as_str(), \": \", b_s.as_str(), \"`\")\n                        } else {\n                            types::cat5(\"write `impl \", b_s.as_str(), \" for \", tt.as_str(), \" { .. }`\")\n                        };\n                    }\n                    return false;\n                }\n            }\n            if types::has(p.bounds.as_slice(), \"elem\") && !self.vec_elem_ok(t, 100000) {\n                if report {\n                }\n                return false;\n            }\n            if types::has(p.bounds.as_slice(), \"Copy\") && !self.is_copy(t) {\n                if report {\n                }\n                return false;\n            }\n            true\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "cases": [
+  {
+   "name": "replay-boxes",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/boxes.bmb"
+   ]
+  },
+  {
+   "name": "replay-floats",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/floats.bmb"
+   ]
+  },
+  {
+   "name": "replay-generics",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/generics.bmb"
+   ]
+  },
+  {
+   "name": "replay-impl_blocks",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/impl_blocks.bmb"
+   ]
+  },
+  {
+   "name": "replay-traits",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/traits.bmb"
+   ]
+  },
+  {
+   "name": "replay-vec_params",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/vec_params.bmb"
+   ]
+  }
+ ],
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                }\n                false\n            }\n            _ if p\n                .bounds\n                .iter()\n                .any(|b| b.contains(\"::\") && !self.has_trait(t, b)) =>",
+     "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0428\",\n                            span,\n                            format!(\n                                \"`{}` is not `{b}`, a bound of `{}` in `{of}`\",\n                                ty_str(t),\n                                p.name\n                            ),\n                        )\n                        .fix(\n                            if *t == TypeKind::F64 {\n                                format!(\"`f64` is not `{b}`, as in Rust: NaN is not equal to itself (ADR-0061 §1); compare `f64` values with `<`, `==` in code, or drop the bound\")\n                            } else {\n                                format!(\"`{b}` holds for the integer types, `bool`, `char`, `String` and type parameters bounded by it; for data types it is ADR-0046 open question 4\")\n                            },\n                            None,\n                        ),\n                    );\n                }\n                false\n            }\n            _ if p\n                .bounds\n                .iter()\n                .any(|b| b.contains(\"::\") && !self.has_trait(t, b)) =>"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                }\n                false\n            }\n            _ if p.bounds.iter().any(|b| b == ELEM) && !self.vec_elem_ok(t) => {",
+     "new": "                    self.diags\n                        .push(Diag::new(\"E0428\", span, what).fix(help, None));\n                }\n                false\n            }\n            _ if p.bounds.iter().any(|b| b == ELEM) && !self.vec_elem_ok(t) => {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                }\n                false\n            }\n            _ if p.bounds.iter().any(|b| b == \"Copy\") && !self.is_copy(t) => {",
+     "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0428\",\n                            span,\n                            format!(\n                                \"`{}` cannot be a `Vec` element, which `{}` is in `{of}`\",\n                                ty_str(t),\n                                p.name\n                            ),\n                        )\n                        .fix(\n                            \"pass a scalar, a struct or enum without arrays, a `String`, or a `Vec` or `Box` of them\",\n                            None,\n                        ),\n                    );\n                }\n                false\n            }\n            _ if p.bounds.iter().any(|b| b == \"Copy\") && !self.is_copy(t) => {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                }\n                false\n            }\n            _ => true,",
+     "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0428\",\n                            span,\n                            format!(\n                                \"`{}` is not `Copy`, a bound of `{}` in `{of}`\",\n                                ty_str(t),\n                                p.name\n                            ),\n                        )\n                        .fix(\n                            \"pass a `Copy` type (a scalar, a struct or enum, an array of them); a `Vec`, a `Box` and what holds them move (ADR-0047)\",\n                            None,\n                        ),\n                    );\n                }\n                false\n            }\n            _ => true,"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    }\n                    return TypeKind::Bool;\n                }\n                if matches!(op, BinOp::Eq | BinOp::Ne) && matches!(lt, TypeKind::Param(_)) {",
+     "new": "                        self.diags.push(\n                            Diag::new(\n                                \"E0428\",\n                                span,\n                                format!(\"`{}` on `{n}` needs the bound `{n}: Ord`\", op.symbol()),\n                            )\n                            .fix(format!(\"add `Ord` to the bounds of `{n}`\"), None),\n                        );\n                    }\n                    return TypeKind::Bool;\n                }\n                if matches!(op, BinOp::Eq | BinOp::Ne) && matches!(lt, TypeKind::Param(_)) {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    }\n                    return TypeKind::Bool;\n                }\n                if matches!(op, BinOp::Eq | BinOp::Ne)\n                    && (matches!(",
+     "new": "                        self.diags.push(\n                            Diag::new(\n                                \"E0428\",\n                                span,\n                                format!(\n                                    \"`{}` on `{}` in code needs the bound `{}: Eq`\",\n                                    op.symbol(),\n                                    ty_str(&lt),\n                                    ty_str(&lt)\n                                ),\n                            )\n                            .fix(\n                                format!(\"add `Eq` (or `Ord`) to the bounds of `{}`\", ty_str(&lt)),\n                                None,\n                            ),\n                        );\n                    }\n                    return TypeKind::Bool;\n                }\n                if matches!(op, BinOp::Eq | BinOp::Ne)\n                    && (matches!("
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "body",
+     "code": "    impl Body {\n        #[effects(alloc)]\n        fn binary_same(self: &mut Body, op: ast::BinOp, l: &ast::Expr, r: &ast::Expr, lt: &ast::TypeKind, mode: Mode, span: source::Span) -> ast::TypeKind {\n            let valued: bool = is_arith(op) || is_bit(op);\n            let sym: String = op_symbol(op);\n            let ltt: String = types::text(lt);\n            let eq: bool = is_eq(op);\n            if eq && is_vec(lt) {\n                self.c.help(\"E0514\", span, types::cat5(\"`\", sym.as_str(), \"` is not defined for `\", ltt.as_str(), \"`\").as_str(), \"compare the lengths and the elements with a spec predicate over `v.as_slice()`\");\n                return ast::TypeKind::Bool;\n            }\n            let slice: bool = match ref_inner(lt) {\n                None => false,\n                Some(inner) => is_slice(&inner),\n            };\n            match types::param_name(lt) {\n                None => {},\n                Some(n) => { if is_cmp(op) && !eq { if !self.c.has_builtin(lt, \"Ord\") { self.c.help(\"E0428\", span, types::cat7(\"`\", sym.as_str(), \"` on `\", n.as_str(), \"` needs the bound `\", n.as_str(), \": Ord`\").as_str(), types::cat3(\"add `Ord` to the bounds of `\", n.as_str(), \"`\").as_str()); } return ast::TypeKind::Bool; } if eq { if exec_mode(mode) && !self.c.has_builtin(lt, \"Eq\") { self.c.help(\"E0428\", span, types::cat7(\"`\", sym.as_str(), \"` on `\", ltt.as_str(), \"` in code needs the bound `\", ltt.as_str(), \": Eq`\").as_str(), types::cat3(\"add `Eq` (or `Ord`) to the bounds of `\", ltt.as_str(), \"`\").as_str()); } return ast::TypeKind::Bool; } },\n            }\n            if eq && (is_named(lt) || is_array(lt) || is_box(lt) || slice) {\n                if exec_mode(mode) {\n                    let fix: String = if is_box(lt) {\n                        types::cat7(\"compare the values: `*\", fmt::expr_text(l).as_str(), \" \", sym.as_str(), \" *\", fmt::expr_text(r).as_str(), \"`\")\n                    } else {\n                        String::from(\"compare the fields (or `match` the variants) in code\")\n                    };\n                    self.c.help(\"E0425\", span, types::cat5(\"`\", sym.as_str(), \"` on `\", ltt.as_str(), \"` is only defined in specifications\").as_str(), fix.as_str());\n                } else {\n                    match self.recursive_with_vec(lt) {\n                        None => {},\n                        Some(c) => self.c.help(\"E0431\", span, types::cat7(\"`\", sym.as_str(), \"` on `\", ltt.as_str(), \"` is not defined: `\", types::text(&c).as_str(), \"` is recursive and holds a `Vec`\").as_str(), \"compare the parts that matter, or write a recursive spec fn over them\"),\n                    }\n                }\n                return ast::TypeKind::Bool;\n            }\n            let ok: bool = if eq {\n                types::is_scalar(lt)\n            } else if is_bit(op) {\n                types::is_int(lt) || is_bool(lt)\n            } else if is_rem(op) {\n                types::is_int(lt)\n            } else if is_cmp(op) && (is_char(lt) || is_bool(lt)) {\n                true\n            } else {\n                types::is_int(lt) || is_f64(lt)\n            };\n            if !ok {\n                let msg: String = types::cat5(\"`\", sym.as_str(), \"` is not defined for `\", ltt.as_str(), \"`\");\n                if is_f64(lt) && is_rem(op) {\n                    self.c.help(\"E0401\", span, msg.as_str(), \"`%` on `f64` (Rust's truncated remainder) is not supported yet (ADR-0061 §3): compute `x - y * q` with the quotient you need\");\n                } else if is_f64(lt) {\n                    self.c.help(\"E0401\", span, msg.as_str(), \"`f64` has `+ - * /`, unary `-` and the comparisons; bit operations are on integers\");\n                } else if is_bit(op) {\n                    self.c.help(\"E0401\", span, msg.as_str(), \"`&`, `|` and `^` take two integers of one type, or two `bool`s\");\n                } else {\n                    self.c.err(\"E0401\", span, msg.as_str());\n                }\n                return bin_fail(valued);\n            }\n            if valued {\n                lt.clone()\n            } else {\n                ast::TypeKind::Bool\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "decls",
+     "code": "    impl Checker {\n        #[effects(alloc)]\n        fn targ_ok(self: &mut Checker, t: &ast::TypeKind, p: &types::TParam, of: &str, span: source::Span, report: bool) -> bool {\n            if types::is_error(t) {\n                return false;\n            }\n            let tt: String = types::text(t);\n            if not_value(t) {\n                if report {\n                    self.help(\"E0403\", span, types::cat7(\"type argument `\", tt.as_str(), \"` for `\", p.name.as_str(), \"` of `\", of, \"` is not a value type\").as_str(), \"type arguments are value types: references are second-class (ADR-0015)\");\n                }\n                return false;\n            }\n            for i in 0..p.bounds.len()\n                invariant 0 <= i && i <= p.bounds.len(),\n            {\n                let b_s: String = p.bounds[i].clone();\n                if (b_s.as_str() == \"Eq\" || b_s.as_str() == \"Ord\") && !self.has_builtin(t, b_s.as_str()) {\n                    if report {\n                        let fix: String = if is_f64(t) {\n                            types::cat3(\"`f64` is not `\", b_s.as_str(), \"`, as in Rust: NaN is not equal to itself (ADR-0061 §1); compare `f64` values with `<`, `==` in code, or drop the bound\")\n                        } else {\n                            types::cat3(\"`\", b_s.as_str(), \"` holds for the integer types, `bool`, `char`, `String` and type parameters bounded by it; for data types it is ADR-0046 open question 4\")\n                        };\n                        self.help(\"E0428\", span, types::cat4(types::cat4(\"`\", tt.as_str(), \"` is not `\", b_s.as_str()).as_str(), \"`, a bound of `\", p.name.as_str(), types::cat3(\"` in `\", of, \"`\").as_str()).as_str(), fix.as_str());\n                    }\n                    return false;\n                }\n            }\n            for j in 0..p.bounds.len()\n                invariant 0 <= j && j <= p.bounds.len(),\n            {\n                let b_s: String = p.bounds[j].clone();\n                if is_path(b_s.as_str()) && !self.has_trait(t, b_s.as_str(), 100000) {\n                    if report {\n                        let what: String = if p.name.as_str() == \"Self\" {\n                            types::cat5(\"`\", tt.as_str(), \"` does not implement `\", b_s.as_str(), \"`\")\n                        } else {\n                            types::cat4(types::cat4(\"`\", tt.as_str(), \"` does not implement `\", b_s.as_str()).as_str(), \"`, a bound of `\", p.name.as_str(), types::cat3(\"` in `\", of, \"`\").as_str())\n                        };\n                        let fix: String = if types::is_param(t) {\n                            types::cat5(\"bound the type parameter: `\", tt.as_str(), \": \", b_s.as_str(), \"`\")\n                        } else {\n                            types::cat5(\"write `impl \", b_s.as_str(), \" for \", tt.as_str(), \" { .. }`\")\n                        };\n                        self.help(\"E0428\", span, what.as_str(), fix.as_str());\n                    }\n                    return false;\n                }\n            }\n            if types::has(p.bounds.as_slice(), \"elem\") && !self.vec_elem_ok(t, 100000) {\n                if report {\n                    self.help(\"E0428\", span, types::cat7(\"`\", tt.as_str(), \"` cannot be a `Vec` element, which `\", p.name.as_str(), \"` is in `\", of, \"`\").as_str(), \"pass a scalar, a struct or enum without arrays, a `String`, or a `Vec` or `Box` of them\");\n                }\n                return false;\n            }\n            if types::has(p.bounds.as_slice(), \"Copy\") && !self.is_copy(t) {\n                if report {\n                    self.help(\"E0428\", span, types::cat7(\"`\", tt.as_str(), \"` is not `Copy`, a bound of `\", p.name.as_str(), \"` in `\", of, \"`\").as_str(), \"pass a `Copy` type (a scalar, a struct or enum, an array of them); a `Vec`, a `Box` and what holds them move (ADR-0047)\");\n                }\n                return false;\n            }\n            true\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "corpus",
+   "bmb": [],
+   "rust": []
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "body",
+      "code": "    impl Body {\n        #[effects(alloc)]\n        fn binary_same(self: &mut Body, op: ast::BinOp, l: &ast::Expr, r: &ast::Expr, lt: &ast::TypeKind, mode: Mode, span: source::Span) -> ast::TypeKind {\n            let valued: bool = is_arith(op) || is_bit(op);\n            let sym: String = op_symbol(op);\n            let ltt: String = types::text(lt);\n            let eq: bool = is_eq(op);\n            if eq && is_vec(lt) {\n                self.c.help(\"E0514\", span, types::cat5(\"`\", sym.as_str(), \"` is not defined for `\", ltt.as_str(), \"`\").as_str(), \"compare the lengths and the elements with a spec predicate over `v.as_slice()`\");\n                return ast::TypeKind::Bool;\n            }\n            let slice: bool = match ref_inner(lt) {\n                None => false,\n                Some(inner) => is_slice(&inner),\n            };\n            match types::param_name(lt) {\n                None => {},\n                Some(n) => { if is_cmp(op) && !eq { if !self.c.has_builtin(lt, \"Ord\") { self.c.help(\"E0428\", span, types::cat7(\"`\", sym.as_str(), \"` on `\", n.as_str(), \"` needs the bound `\", n.as_str(), \": Ord`\").as_str(), types::cat3(\"add `Ord` to the bounds of `\", n.as_str(), \"`\").as_str()); } return ast::TypeKind::Bool; } if eq { if exec_mode(mode) && !self.c.has_builtin(lt, \"Eq\") { self.c.help(\"E0428\", span, types::cat7(\"`\", sym.as_str(), \"` on `\", ltt.as_str(), \"` in code needs the bound `\", ltt.as_str(), \": Eq`\").as_str(), types::cat3(\"add `Eq` (or `Ord`) to the bounds of `\", ltt.as_str(), \"`\").as_str()); } return ast::TypeKind::Bool; } },\n            }\n            if eq && (is_named(lt) || is_array(lt) || is_box(lt) || slice) {\n                if exec_mode(mode) {\n                    let fix: String = if is_box(lt) {\n                        types::cat7(\"compare the values: `*\", fmt::expr_text(l).as_str(), \" \", sym.as_str(), \" *\", fmt::expr_text(r).as_str(), \"`\")\n                    } else {\n                        String::from(\"compare the fields (or `match` the variants) in code\")\n                    };\n                    self.c.help(\"E0425\", span, types::cat5(\"`\", sym.as_str(), \"` on `\", ltt.as_str(), \"` is only defined in specifications\").as_str(), fix.as_str());\n                } else {\n                    match self.recursive_with_vec(lt) {\n                        None => {},\n                        Some(c) => self.c.help(\"E0431\", span, types::cat7(\"`\", sym.as_str(), \"` on `\", ltt.as_str(), \"` is not defined: `\", types::text(&c).as_str(), \"` is recursive and holds a `Vec`\").as_str(), \"compare the parts that matter, or write a recursive spec fn over them\"),\n                    }\n                }\n                return ast::TypeKind::Bool;\n            }\n            let ok: bool = if eq {\n                types::is_scalar(lt)\n            } else if is_bit(op) {\n                types::is_int(lt) || is_bool(lt)\n            } else if is_rem(op) {\n                types::is_int(lt)\n            } else if is_cmp(op) && (is_char(lt) || is_bool(lt)) {\n                true\n            } else {\n                types::is_int(lt) || is_f64(lt)\n            };\n            if !ok {\n                let msg: String = types::cat5(\"`\", sym.as_str(), \"` is not defined for `\", ltt.as_str(), \"`\");\n                if is_f64(lt) && is_rem(op) {\n                    self.c.help(\"E0401\", span, msg.as_str(), \"`%` on `f64` (Rust's truncated remainder) is not supported yet (ADR-0061 §3): compute `x - y * q` with the quotient you need\");\n                } else if is_f64(lt) {\n                    self.c.help(\"E0401\", span, msg.as_str(), \"`f64` has `+ - * /`, unary `-` and the comparisons; bit operations are on integers\");\n                } else if is_bit(op) {\n                    self.c.help(\"E0401\", span, msg.as_str(), \"`&`, `|` and `^` take two integers of one type, or two `bool`s\");\n                } else {\n                    self.c.err(\"E0401\", span, msg.as_str());\n                }\n                return bin_fail(valued);\n            }\n            if valued {\n                lt.clone()\n            } else {\n                ast::TypeKind::Bool\n            }\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "decls",
+      "code": "    impl Checker {\n        #[effects(alloc)]\n        fn targ_ok(self: &mut Checker, t: &ast::TypeKind, p: &types::TParam, of: &str, span: source::Span, report: bool) -> bool {\n            if types::is_error(t) {\n                return false;\n            }\n            let tt: String = types::text(t);\n            if not_value(t) {\n                if report {\n                    self.help(\"E0403\", span, types::cat7(\"type argument `\", tt.as_str(), \"` for `\", p.name.as_str(), \"` of `\", of, \"` is not a value type\").as_str(), \"type arguments are value types: references are second-class (ADR-0015)\");\n                }\n                return false;\n            }\n            for i in 0..p.bounds.len()\n                invariant 0 <= i && i <= p.bounds.len(),\n            {\n                let b_s: String = p.bounds[i].clone();\n                if (b_s.as_str() == \"Eq\" || b_s.as_str() == \"Ord\") && !self.has_builtin(t, b_s.as_str()) {\n                    if report {\n                        let fix: String = if is_f64(t) {\n                            types::cat3(\"`f64` is not `\", b_s.as_str(), \"`, as in Rust: NaN is not equal to itself (ADR-0061 §1); compare `f64` values with `<`, `==` in code, or drop the bound\")\n                        } else {\n                            types::cat3(\"`\", b_s.as_str(), \"` holds for the integer types, `bool`, `char`, `String` and type parameters bounded by it; for data types it is ADR-0046 open question 4\")\n                        };\n                        self.help(\"E0428\", span, types::cat4(types::cat4(\"`\", tt.as_str(), \"` is not `\", b_s.as_str()).as_str(), \"`, a bound of `\", p.name.as_str(), types::cat3(\"` in `\", of, \"`\").as_str()).as_str(), fix.as_str());\n                    }\n                    return false;\n                }\n            }\n            for j in 0..p.bounds.len()\n                invariant 0 <= j && j <= p.bounds.len(),\n            {\n                let b_s: String = p.bounds[j].clone();\n                if is_path(b_s.as_str()) && !self.has_trait(t, b_s.as_str(), 100000) {\n                    if report {\n                        let what: String = if p.name.as_str() == \"Self\" {\n                            types::cat5(\"`\", tt.as_str(), \"` does not implement `\", b_s.as_str(), \"`\")\n                        } else {\n                            types::cat4(types::cat4(\"`\", tt.as_str(), \"` does not implement `\", b_s.as_str()).as_str(), \"`, a bound of `\", p.name.as_str(), types::cat3(\"` in `\", of, \"`\").as_str())\n                        };\n                        let fix: String = if types::is_param(t) {\n                            types::cat5(\"bound the type parameter: `\", tt.as_str(), \": \", b_s.as_str(), \"`\")\n                        } else {\n                            types::cat5(\"write `impl \", b_s.as_str(), \" for \", tt.as_str(), \" { .. }`\")\n                        };\n                        self.help(\"E0428\", span, what.as_str(), fix.as_str());\n                    }\n                    return false;\n                }\n            }\n            if types::has(p.bounds.as_slice(), \"elem\") && !self.vec_elem_ok(t, 100000) {\n                if report {\n                    self.help(\"E0428\", span, types::cat7(\"`\", tt.as_str(), \"` cannot be a `Vec` element, which `\", p.name.as_str(), \"` is in `\", of, \"`\").as_str(), \"pass a scalar, a struct or enum without arrays, a `String`, or a `Vec` or `Box` of them\");\n                }\n                return false;\n            }\n            if types::has(p.bounds.as_slice(), \"Copy\") && !self.is_copy(t) {\n                if report {\n                    self.help(\"E0428\", span, types::cat7(\"`\", tt.as_str(), \"` is not `Copy`, a bound of `\", p.name.as_str(), \"` in `\", of, \"`\").as_str(), \"pass a `Copy` type (a scalar, a struct or enum, an array of them); a `Vec`, a `Box` and what holds them move (ADR-0047)\");\n                }\n                return false;\n            }\n            true\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "                }\n                false\n            }\n            _ if p\n                .bounds\n                .iter()\n                .any(|b| b.contains(\"::\") && !self.has_trait(t, b)) =>",
+      "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0428\",\n                            span,\n                            format!(\n                                \"`{}` is not `{b}`, a bound of `{}` in `{of}`\",\n                                ty_str(t),\n                                p.name\n                            ),\n                        )\n                        .fix(\n                            if *t == TypeKind::F64 {\n                                format!(\"`f64` is not `{b}`, as in Rust: NaN is not equal to itself (ADR-0061 §1); compare `f64` values with `<`, `==` in code, or drop the bound\")\n                            } else {\n                                format!(\"`{b}` holds for the integer types, `bool`, `char`, `String` and type parameters bounded by it; for data types it is ADR-0046 open question 4\")\n                            },\n                            None,\n                        ),\n                    );\n                }\n                false\n            }\n            _ if p\n                .bounds\n                .iter()\n                .any(|b| b.contains(\"::\") && !self.has_trait(t, b)) =>"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "                }\n                false\n            }\n            _ if p.bounds.iter().any(|b| b == ELEM) && !self.vec_elem_ok(t) => {",
+      "new": "                    self.diags\n                        .push(Diag::new(\"E0428\", span, what).fix(help, None));\n                }\n                false\n            }\n            _ if p.bounds.iter().any(|b| b == ELEM) && !self.vec_elem_ok(t) => {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "                }\n                false\n            }\n            _ if p.bounds.iter().any(|b| b == \"Copy\") && !self.is_copy(t) => {",
+      "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0428\",\n                            span,\n                            format!(\n                                \"`{}` cannot be a `Vec` element, which `{}` is in `{of}`\",\n                                ty_str(t),\n                                p.name\n                            ),\n                        )\n                        .fix(\n                            \"pass a scalar, a struct or enum without arrays, a `String`, or a `Vec` or `Box` of them\",\n                            None,\n                        ),\n                    );\n                }\n                false\n            }\n            _ if p.bounds.iter().any(|b| b == \"Copy\") && !self.is_copy(t) => {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "                }\n                false\n            }\n            _ => true,",
+      "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0428\",\n                            span,\n                            format!(\n                                \"`{}` is not `Copy`, a bound of `{}` in `{of}`\",\n                                ty_str(t),\n                                p.name\n                            ),\n                        )\n                        .fix(\n                            \"pass a `Copy` type (a scalar, a struct or enum, an array of them); a `Vec`, a `Box` and what holds them move (ADR-0047)\",\n                            None,\n                        ),\n                    );\n                }\n                false\n            }\n            _ => true,"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "                    }\n                    return TypeKind::Bool;\n                }\n                if matches!(op, BinOp::Eq | BinOp::Ne) && matches!(lt, TypeKind::Param(_)) {",
+      "new": "                        self.diags.push(\n                            Diag::new(\n                                \"E0428\",\n                                span,\n                                format!(\"`{}` on `{n}` needs the bound `{n}: Ord`\", op.symbol()),\n                            )\n                            .fix(format!(\"add `Ord` to the bounds of `{n}`\"), None),\n                        );\n                    }\n                    return TypeKind::Bool;\n                }\n                if matches!(op, BinOp::Eq | BinOp::Ne) && matches!(lt, TypeKind::Param(_)) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "                    }\n                    return TypeKind::Bool;\n                }\n                if matches!(op, BinOp::Eq | BinOp::Ne)\n                    && (matches!(",
+      "new": "                        self.diags.push(\n                            Diag::new(\n                                \"E0428\",\n                                span,\n                                format!(\n                                    \"`{}` on `{}` in code needs the bound `{}: Eq`\",\n                                    op.symbol(),\n                                    ty_str(&lt),\n                                    ty_str(&lt)\n                                ),\n                            )\n                            .fix(\n                                format!(\"add `Eq` (or `Ord`) to the bounds of `{}`\", ty_str(&lt)),\n                                None,\n                            ),\n                        );\n                    }\n                    return TypeKind::Bool;\n                }\n                if matches!(op, BinOp::Eq | BinOp::Ne)\n                    && (matches!("
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ]
+  }
+ ]
+}

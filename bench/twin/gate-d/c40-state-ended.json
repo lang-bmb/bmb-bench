@@ -1,0 +1,76 @@
+{
+ "id": "c40-state-ended",
+ "kind": "comprehend",
+ "family": "state",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions change the field `ended` of `solver::Solver`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions change the field `ended` of `smt::Solver`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "smt::Solver::ask",
+   "smt::Solver::check_sat"
+  ],
+  "bmb": [
+   "solver::ask",
+   "solver::check_sat"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "solver::ask",
+      "solver::check_sat"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\\.ended\\b"
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "smt::Solver::ask",
+      "smt::Solver::check_sat"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "solver::check_sat"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "smt::Solver::check_sat"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

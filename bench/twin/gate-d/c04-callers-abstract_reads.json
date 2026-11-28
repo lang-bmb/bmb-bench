@@ -1,0 +1,93 @@
+{
+ "id": "c04-callers-abstract_reads",
+ "kind": "comprehend",
+ "family": "callers",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `encode_exec::Exec::abstract_reads` directly? Leave out `encode_exec::Exec::abstract_reads` itself unless it calls itself. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `verify::Enc::abstract_reads` directly? Leave out `verify::Enc::abstract_reads` itself unless it calls itself. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "verify::Enc::abstract_block",
+   "verify::Enc::abstract_reads",
+   "verify::Enc::sub_proof"
+  ],
+  "bmb": [
+   "encode_exec::Exec::abstract_block",
+   "encode_exec::Exec::abstract_reads",
+   "encode_exec::Exec::sub_proof"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "encode_exec::Exec::abstract_reads",
+      "in",
+      "1"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "encode_exec::Exec::abstract_block",
+      "encode_exec::Exec::abstract_reads",
+      "encode_exec::Exec::sub_proof"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])abstract_reads\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "verify::Enc::abstract_block",
+      "verify::Enc::abstract_reads",
+      "verify::Enc::sub_proof"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "encode_exec::Exec::abstract_reads",
+       "encode_exec::Exec::sub_proof"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "verify::Enc::abstract_reads",
+       "verify::Enc::sub_proof"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

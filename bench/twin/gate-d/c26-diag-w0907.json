@@ -1,0 +1,79 @@
+{
+ "id": "c26-diag-w0907",
+ "kind": "comprehend",
+ "family": "diag",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions report the diagnostic code `W0907`, that is, write the code in their own body? Leave out the table that lists every code. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions report the diagnostic code `W0907`, that is, write the code in their own body? Leave out the table that lists every code. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "lint::lint_sources_selected",
+   "lint::w0907"
+  ],
+  "bmb": [
+   "lint::codes",
+   "lint::run",
+   "lint_syntax::w0907"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "lint::codes",
+      "lint::run",
+      "lint_syntax::w0907"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\"W0907\""
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "lint::lint_sources_selected",
+      "lint::w0907"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "lint::run",
+       "lint_syntax::w0907"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "lint::w0907"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

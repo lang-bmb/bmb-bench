@@ -1,0 +1,576 @@
+{
+ "id": "h07-history-e0702",
+ "family": "history",
+ "kind": "change",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "scope": "any",
+ "setup": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "            self.diags.push(\n                Diag::new(\n                    \"E0257\",\n                    span,\n                    \"a `proof fn` parameter cannot be `&mut`: ghost code changes no executable state\",\n                )\n                .fix(\"take the value or `&T`\", None),\n            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "        self.diags.push(\n            Diag::new(\n                \"E0257\",\n                span,\n                format!(\"{what} is not allowed in ghost code (a `proof fn` body or a `proof {{ .. }}` block)\"),\n            )\n            .fix(fix, None),\n        );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "            self.diags.push(\n                Diag::new(\n                    \"E1003\",\n                    span,\n                    \"`assume` is not allowed in a specification or ghost code\",\n                )\n                .fix(\n                    \"an escape is a statement of executable code; a ghost fact is proved \\\n                         (`assert`, a `proof fn`)\",\n                    None,\n                ),\n            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "            self.diags.push(\n                Diag::new(\n                    \"E1003\",\n                    cond.span,\n                    \"`assume` takes one named predicate call\",\n                )\n                .fix(\n                    \"move the condition into `spec fn name(..) -> bool { .. }` and assume \\\n                         `name(..)`\",\n                    None,\n                ),\n            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                        self.err(\n                            \"E0407\",\n                            base.span,\n                            format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                        );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    self.err(\n                        \"E0407\",\n                        base.span,\n                        format!(\n                            \"`{}` has type `{}` and cannot be indexed\",\n                            id.name,\n                            ty_str(&l.ty)\n                        ),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                            self.err(\n                                \"E0407\",\n                                base.span,\n                                format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                            );\n                        }\n                        (TypeKind::Error, false)",
+     "new": "                        }\n                        (TypeKind::Error, false)"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                            self.diags.push(\n                                Diag::new(\n                                    \"E0407\",\n                                    base.span,\n                                    format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                                )\n                                .fix(\n                                    \"read a byte with `s.as_bytes()[i]`; a part of the text is `&s[a..b]`, as an argument\",\n                                    None,\n                                ),\n                            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                            self.err(\n                                \"E0407\",\n                                base.span,\n                                format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.err(\"E0702\", f.name.span, \"the program already has a `main`\");",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "                self.diags.push(\n                    Diag::new(\"E0236\", span, \"trait objects (`dyn Trait`) are not used\")\n                        .fix(\n                            \"calls are static: take a type parameter bounded by the trait, or an enum of the closed set of variants\",\n                            None,\n                        ),\n                );",
+     "new": ""
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "body",
+     "code": "    impl Body {\n        #[effects(alloc)]\n        fn assume_stmt(self: &mut Body, cx: &mut FnCtx, a: &ast::Assume, mode: Mode, f: usize) -> ()\n            decreases f * 3,\n        {\n            if f == 0 {\n                return;\n            }\n            if !exec_mode(mode) {\n            }\n            let want: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &a.cond, &want, Mode::Spec(false), f - 1);\n            let named: Option<usize> = match call_of(&a.cond) {\n                None => None,\n                Some(call) => { match self.resolve(call.path.as_slice(), cx.mod_path.as_str()) { None => None, Some(p) => self.c.fns.find(p.as_str()), } },\n            };\n            let pred: bool = match named {\n                None => false,\n                Some(i) => is_spec(self.c.fns.items[i].kind) && types::same(&self.c.fns.items[i].ret, &ast::TypeKind::Bool),\n            };\n            if !pred && !types::is_error(&t) {\n            }\n            match &a.rationale {\n                None => self.c.missing_rationale(a.span, \"`assume`\"),\n                Some(r) => self.c.check_rationale(r),\n            }\n            if exec_mode(mode) {\n                need_own(cx, panic_effect(), \"`assume`\");\n            }\n        }\n\n        #[effects(alloc)]\n        fn check_main(self: &mut Body, p: &ast::Program) -> () {\n            let mut found: Vec<ast::FnDef> = Vec::new();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                mains_of(&p.mods[i], &mut found, 100000);\n            }\n            let mains: Vec<ast::FnDef> = by_place(found.as_slice());\n            for i in 0..mains.len()\n                invariant 0 <= i && i <= mains.len(),\n            {\n                if i > 0 {\n                }\n                if mains[i].params.len() != 0 || !decls::is_unit(&mains[i].ret.ty.kind) || !declares_io(mains[i].attrs.as_slice()) {\n                    self.c.help(\"E0701\", mains[i].name.span, \"`main` must be `#[effects(io)] fn main() -> ()`\", \"write `#[effects(io)] fn main() -> ()`: no parameters, no result (other effects may be listed with `io`)\");\n                }\n            }\n        }\n\n        #[effects(alloc)]\n        fn elem_place(self: &mut Body, span: source::Span, p: Place) -> Place {\n            match elem_of(&p.ty) {\n                None => { if !types::is_error(&p.ty) { } Place { ty: ast::TypeKind::Error, writable: false } },\n                Some(t) => Place { ty: t, writable: p.writable },\n            }\n        }\n\n        #[effects(alloc)]\n        fn ghost_mut_param(self: &mut Body, span: source::Span, kind: ast::FnKind) -> () {\n            if is_proof(kind) {\n            } else {\n                self.c.err(\"E0402\", span, \"spec function parameters cannot be `&mut`\");\n            }\n        }\n\n        #[effects(alloc)]\n        fn ghost_violation(self: &mut Body, span: source::Span, what: &str, fix: &str) -> () {\n        }\n\n        #[effects(alloc)]\n        fn index_expr(self: &mut Body, cx: &mut FnCtx, base: &ast::Expr, index: &ast::Expr, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let no: Option<ast::TypeKind> = None;\n            let wu: Option<ast::TypeKind> = Some(ast::TypeKind::Int(ast::IntTy::Usize));\n            match as_bytes_of(base) {\n                None => {},\n                Some(recv) => { let ok: bool = self.as_bytes_arg(cx, base, &recv, mode, f - 1); let bi: ast::TypeKind = self.expr(cx, index, &wu, mode, f - 1); self.expect_ty(&bi, &ast::TypeKind::Int(ast::IntTy::Usize), index.span); if !ok { self.c.err(\"E0404\", base.span, \"`as_bytes` is defined for `String` and `&str`\"); return ast::TypeKind::Error; } return ast::TypeKind::Int(ast::IntTy::U8); },\n            }\n            let bt: ast::TypeKind = self.expr(cx, base, &no, mode, f - 1);\n            let it: ast::TypeKind = self.expr(cx, index, &wu, mode, f - 1);\n            self.expect_ty(&it, &ast::TypeKind::Int(ast::IntTy::Usize), index.span);\n            match elem_of(&bt) {\n                None => { let msg: String = types::cat3(\"type `\", types::text(&bt).as_str(), \"` cannot be indexed\"); if is_text(&bt) { } else if !types::is_error(&bt) { } ast::TypeKind::Error },\n                Some(t) => t,\n            }\n        }\n\n        #[effects(alloc)]\n        fn place_index(self: &mut Body, cx: &mut FnCtx, target: &ast::Expr, base: &ast::Expr, index: &ast::Expr, f: usize) -> ast::TypeKind\n            decreases f * 3 + 1,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            if nested_place(&base.kind) {\n                let p: Place = self.place_of(cx, base, f - 1);\n                self.types.insert(span_key(base.span).as_str(), p.ty.clone());\n                self.index_usize(cx, index, f - 1);\n                let bad: bool = types::is_error(&p.ty);\n                let writable: bool = p.writable;\n                let indexable: bool = has_type(&elem_of(&p.ty));\n                let q: Place = self.elem_place(base.span, p);\n                if !indexable {\n                    return ast::TypeKind::Error;\n                }\n                if !writable && !bad {\n                    self.c.help(\"E0408\", target.span, \"this place cannot be assigned\", \"assign through a `let mut` local or a `&mut` parameter\");\n                }\n                return q.ty;\n            }\n            let id: String = match ast::var_name(base) {\n                None => { self.c.err(\"E0408\", target.span, \"only elements of a variable, a field or an element can be assigned\"); return ast::TypeKind::Error; },\n                Some(n) => n,\n            };\n            let l: Local = match lookup(cx, id.as_str()) {\n                None => { self.unknown_local(cx, id.as_str(), base.span); return ast::TypeKind::Error; },\n                Some(found) => found,\n            };\n            let writable: bool = if is_array(&l.ty) || is_vec(&l.ty) {\n                l.mutable\n            } else {\n                types::is_ref_mut(&l.ty)\n            };\n            self.index_usize(cx, index, f - 1);\n            match elem_of(&l.ty) {\n                None => { ast::TypeKind::Error },\n                Some(elem) => { if !writable { self.c.err(\"E0408\", target.span, types::cat5(\"elements of `\", id.as_str(), \"` cannot be assigned (`\", types::text(&l.ty).as_str(), \"`)\").as_str()); } elem },\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "parser",
+     "code": "    impl Parser {\n        #[effects(alloc)]\n        fn parse_type_inner(self: &mut Parser, d: usize) -> ast::Type\n            requires d <= 256,\n            decreases (256 - d) * 64 + 3,\n        {\n            let lo: source::Span = self.span();\n            let fn_ptr: bool = self.is_kw(\"fn\") && self.t.is_p(1, \"(\");\n            let impl_fn: bool = self.is_kw(\"impl\") && (self.t.is_kw(1, \"Fn\") || self.t.is_kw(1, \"FnMut\") || self.t.is_kw(1, \"FnOnce\"));\n            if fn_ptr || impl_fn {\n                self.bump();\n                if impl_fn {\n                    self.bump();\n                }\n                self.bump();\n                let mut n: usize = self.left();\n                while n > 0 && !self.is_p(\")\") && !self.eof()\n                    decreases n,\n                {\n                    n = n - 1;\n                    self.parse_type(d);\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n                self.expect_p(\")\");\n                if self.eat_p(\"->\") {\n                    self.parse_type(d);\n                }\n                let fspan: source::Span = lo.to(self.prev_span());\n                if fn_ptr {\n                    self.err_fix(\"E0264\", fspan, \"function pointer types are not used\", \"take a type parameter `F: Fn(..) -> R` and pass the function or closure as its value (ADR-0053 §1, §3)\");\n                } else if self.in_ret {\n                    self.err_fix(\"E0264\", fspan, \"a closure is not returned: it does not leave the function that makes it\", \"take a type parameter `F: Fn(..) -> R` and pass the function or closure as its value (ADR-0053 §1, §3)\");\n                } else {\n                    self.err_fix(\"E0265\", fspan, \"an argument-position `impl Fn(..)` is a type parameter\", \"declare `<F: Fn(..) -> R>` on the function and take `f: F` (one form, ADR-0053 §1)\");\n                }\n                return ast::Type { kind: ast::TypeKind::Error, span: fspan };\n            }\n            if self.is_kw(\"Self\") {\n                self.bump();\n                let mut one: Vec<String> = Vec::new();\n                one.push(String::from(\"Self\"));\n                return ast::Type { kind: ast::TypeKind::Named(one, Vec::new()), span: lo };\n            }\n            if self.is_kw(\"dyn\") {\n                self.bump();\n                let inner: ast::Type = self.parse_type(d);\n                let dspan: source::Span = lo.to(inner.span);\n                return ast::Type { kind: ast::TypeKind::Error, span: dspan };\n            }\n            if self.is_p(\"&\") {\n                self.bump();\n                let mutable: bool = self.eat_kw(\"mut\");\n                let target: ast::Type = self.parse_type(d);\n                let rspan: source::Span = lo.to(target.span);\n                return ast::Type { kind: ast::TypeKind::Ref(mutable, Box::new(target)), span: rspan };\n            }\n            if self.is_p(\"(\") && self.t.is_p(1, \")\") {\n                self.bump();\n                let uhi: source::Span = self.bump();\n                return ast::Type { kind: ast::TypeKind::Unit, span: lo.to(uhi) };\n            }\n            if self.is_p(\"(\") {\n                self.bump();\n                let mut depth: usize = 1;\n                let mut m: usize = self.left();\n                while m > 0 && depth > 0 && !self.eof()\n                    decreases m,\n                {\n                    m = m - 1;\n                    if self.is_p(\"(\") {\n                        depth = depth.saturating_add(1);\n                    } else if self.is_p(\")\") {\n                        depth = depth - 1;\n                    }\n                    self.bump();\n                }\n                let tspan: source::Span = lo.to(self.prev_span());\n                self.err_fix(\"E0233\", tspan, \"tuple types are not allowed\", \"use a struct with named fields\");\n                return ast::Type { kind: ast::TypeKind::Error, span: tspan };\n            }\n            if self.is_p(\"[\") {\n                self.bump();\n                let elem: ast::Type = self.parse_type(d);\n                if self.eat_p(\";\") {\n                    let mut len: u64 = 0;\n                    let mut large: bool = false;\n                    match self.t.int() {\n                        None => { if self.t.kind(0) == 0 { let mut path: Vec<String> = Vec::new(); let mut q: usize = self.left(); while q > 0 && self.t.kind(0) == 0 decreases q, { q = q - 1; path.push(text_of(self.t.ident(0))); self.bump(); if !self.eat_p(\"::\") { q = 0; } } let nhi: source::Span = self.span(); self.expect_p(\"]\"); return ast::Type { kind: ast::TypeKind::ArrayN(Box::new(elem), path), span: lo.to(nhi) }; } self.err_expected(\"array length\"); },\n                        Some(v) => { let isp: source::Span = self.bump(); if v.hi != 0 || v.lo > 4294967295 { self.err(\"E0406\", isp, \"array length is too large\"); large = true; } else { len = v.lo; } },\n                    }\n                    let ahi: source::Span = self.span();\n                    self.expect_p(\"]\");\n                    if large {\n                        return ast::Type { kind: ast::TypeKind::Error, span: lo.to(ahi) };\n                    }\n                    return ast::Type { kind: ast::TypeKind::Array(Box::new(elem), len), span: lo.to(ahi) };\n                }\n                let shi: source::Span = self.span();\n                self.expect_p(\"]\");\n                return ast::Type { kind: ast::TypeKind::Slice(Box::new(elem)), span: lo.to(shi) };\n            }\n            if self.t.kind(0) != 0 {\n                self.err_expected(\"type\");\n                return ast::Type { kind: ast::TypeKind::Error, span: lo };\n            }\n            let s: String = text_of(self.t.ident(0));\n            if !builtin_type(s.as_str()) && !reserved(s.as_str()) {\n                let mut npath: Vec<String> = Vec::new();\n                npath.push(s);\n                self.bump();\n                let mut k: usize = self.left();\n                while k > 0 && self.is_p(\"::\") && self.t.kind(1) == 0\n                    decreases k,\n                {\n                    k = k - 1;\n                    self.bump();\n                    npath.push(text_of(self.t.ident(0)));\n                    self.bump();\n                }\n                let mut args: Vec<ast::Type> = Vec::new();\n                if self.eat_p(\"<\") {\n                    let mut a: usize = self.left();\n                    while a > 0 && !self.is_p(\">\")\n                        decreases a,\n                    {\n                        a = a - 1;\n                        args.push(self.parse_type(d));\n                        if !self.eat_p(\",\") {\n                            a = 0;\n                        }\n                    }\n                    self.expect_p(\">\");\n                }\n                return ast::Type { kind: ast::TypeKind::Named(npath, args), span: lo.to(self.prev_span()) };\n            }\n            self.bump();\n            let mut kind: ast::TypeKind = ast::TypeKind::Error;\n            if s == \"bool\" {\n                kind = ast::TypeKind::Bool;\n            } else if s == \"f64\" {\n                kind = ast::TypeKind::F64;\n            } else if s == \"char\" {\n                kind = ast::TypeKind::Char;\n            } else if s == \"str\" {\n                kind = ast::TypeKind::Str;\n            } else {\n                match ast::int_of(s.as_str()) {\n                    None => { let msg: String = cat3(\"type `\", s.as_str(), \"` is not supported in milestone 1\"); if s == \"i128\" { self.err_rep(\"E0402\", lo, msg.as_str(), \"use `i64`\", \"i64\"); } else if s == \"u128\" { self.err_rep(\"E0402\", lo, msg.as_str(), \"use `u64`\", \"u64\"); } else if s == \"f32\" { self.err_rep(\"E0402\", lo, msg.as_str(), \"use `f64`\", \"f64\"); } else { self.err_fix(\"E0402\", lo, msg.as_str(), \"types: the integers i8..i64, isize, u8..u64, usize; f64, bool, char, (), [T; N], &[T], &mut [T], &str, String, Vec<T>, Box<T>, Option<T>, Result<T, E>, structs and enums\"); } if self.is_p(\"<\") { self.skip_angle(); } },\n                    Some(it) => { kind = ast::TypeKind::Int(it); },\n                }\n            }\n            ast::Type { kind: kind, span: lo.to(self.prev_span()) }\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "steps": [
+  {
+   "source": {
+    "code": "E0702",
+    "commit": "d3949466e",
+    "subject": "compiler: M1 front end (parse, check, JSONL diagnostics)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0702 yet: more than one `main`. It came with the commit \"compiler: M1 front end (parse, check, JSONL diagnostics)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    fn main() -> () {}\n    {\"code\": \"E0702\", \"severity\": \"error\", \"message\": \"the program already has a `main`\", \"file\": \"err/effects.bmb\", \"line\": 22, \"col\": 8, \"end_line\": 22, \"end_col\": 12}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-effects",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/effects.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n            let io = f.attrs.iter().any(|a| {",
+       "new": "                self.err(\"E0702\", f.name.span, \"the program already has a `main`\");\n            }\n            let io = f.attrs.iter().any(|a| {"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_main(self: &mut Body, p: &ast::Program) -> () {\n            let mut found: Vec<ast::FnDef> = Vec::new();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                mains_of(&p.mods[i], &mut found, 100000);\n            }\n            let mains: Vec<ast::FnDef> = by_place(found.as_slice());\n            for i in 0..mains.len()\n                invariant 0 <= i && i <= mains.len(),\n            {\n                if i > 0 {\n                    self.c.err(\"E0702\", mains[i].name.span, \"the program already has a `main`\");\n                }\n                if mains[i].params.len() != 0 || !decls::is_unit(&mains[i].ret.ty.kind) || !declares_io(mains[i].attrs.as_slice()) {\n                    self.c.help(\"E0701\", mains[i].name.span, \"`main` must be `#[effects(io)] fn main() -> ()`\", \"write `#[effects(io)] fn main() -> ()`: no parameters, no result (other effects may be listed with `io`)\");\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E1003",
+    "commit": "5644c8404",
+    "subject": "2F-02, 2F-03 (ADR-0030), 2E-02..2E-04 (ADR-0029): effect sets with alloc and panic; escapes with rationales and trust levels"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E1003 yet: `assume` takes one named predicate call, in executable code. It came with the commit \"2F-02, 2F-03 (ADR-0030), 2E-02..2E-04 (ADR-0029): effect sets with alloc and panic; escapes with rationales and trust levels\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    assume(x < 10);\n    {\"code\": \"E1003\", \"severity\": \"error\", \"message\": \"`assume` takes one named predicate call\", \"file\": \"err/escapes.bmb\", \"line\": 28, \"col\": 16, \"end_line\": 28, \"end_col\": 22, \"fix\": {\"message\": \"move the condition into `spec fn name(..) -> bool { .. }` and assume `name(..)`\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-escapes",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/escapes.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        }\n        let t = self.expr(\n            cx,",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E1003\",\n                    span,\n                    \"`assume` is not allowed in a specification or ghost code\",\n                )\n                .fix(\n                    \"an escape is a statement of executable code; a ghost fact is proved \\\n                         (`assert`, a `proof fn`)\",\n                    None,\n                ),\n            );\n        }\n        let t = self.expr(\n            cx,"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        }\n        match rationale {",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E1003\",\n                    cond.span,\n                    \"`assume` takes one named predicate call\",\n                )\n                .fix(\n                    \"move the condition into `spec fn name(..) -> bool { .. }` and assume \\\n                         `name(..)`\",\n                    None,\n                ),\n            );\n        }\n        match rationale {"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn assume_stmt(self: &mut Body, cx: &mut FnCtx, a: &ast::Assume, mode: Mode, f: usize) -> ()\n            decreases f * 3,\n        {\n            if f == 0 {\n                return;\n            }\n            if !exec_mode(mode) {\n                self.c.help(\"E1003\", a.span, \"`assume` is not allowed in a specification or ghost code\", \"an escape is a statement of executable code; a ghost fact is proved (`assert`, a `proof fn`)\");\n            }\n            let want: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &a.cond, &want, Mode::Spec(false), f - 1);\n            let named: Option<usize> = match call_of(&a.cond) {\n                None => None,\n                Some(call) => { match self.resolve(call.path.as_slice(), cx.mod_path.as_str()) { None => None, Some(p) => self.c.fns.find(p.as_str()), } },\n            };\n            let pred: bool = match named {\n                None => false,\n                Some(i) => is_spec(self.c.fns.items[i].kind) && types::same(&self.c.fns.items[i].ret, &ast::TypeKind::Bool),\n            };\n            if !pred && !types::is_error(&t) {\n                self.c.help(\"E1003\", a.cond.span, \"`assume` takes one named predicate call\", \"move the condition into `spec fn name(..) -> bool { .. }` and assume `name(..)`\");\n            }\n            match &a.rationale {\n                None => self.c.missing_rationale(a.span, \"`assume`\"),\n                Some(r) => self.c.check_rationale(r),\n            }\n            if exec_mode(mode) {\n                need_own(cx, panic_effect(), \"`assume`\");\n            }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0236",
+    "commit": "61304be45",
+    "subject": "2T-07a: user traits, impls, bounds and static trait calls"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0236 yet: trait objects `dyn Trait` are not used. It came with the commit \"2T-07a: user traits, impls, bounds and static trait calls\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    fn obj(x: &dyn Shape) -> i64 {\n    {\"code\": \"E0236\", \"severity\": \"error\", \"message\": \"trait objects (`dyn Trait`) are not used\", \"file\": \"err/traits.bmb\", \"line\": 65, \"col\": 16, \"end_line\": 65, \"end_col\": 25, \"fix\": {\"message\": \"calls are static: take a type parameter bounded by the trait, or an enum of the closed set of variants\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-traits",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/traits.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "                Type {\n                    kind: TypeKind::Error,\n                    span,\n                }\n            }\n            Tok::P(\"&\") => {",
+       "new": "                self.diags.push(\n                    Diag::new(\"E0236\", span, \"trait objects (`dyn Trait`) are not used\")\n                        .fix(\n                            \"calls are static: take a type parameter bounded by the trait, or an enum of the closed set of variants\",\n                            None,\n                        ),\n                );\n                Type {\n                    kind: TypeKind::Error,\n                    span,\n                }\n            }\n            Tok::P(\"&\") => {"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "parser",
+       "code": "    impl Parser {\n        #[effects(alloc)]\n        fn parse_type_inner(self: &mut Parser, d: usize) -> ast::Type\n            requires d <= 256,\n            decreases (256 - d) * 64 + 3,\n        {\n            let lo: source::Span = self.span();\n            let fn_ptr: bool = self.is_kw(\"fn\") && self.t.is_p(1, \"(\");\n            let impl_fn: bool = self.is_kw(\"impl\") && (self.t.is_kw(1, \"Fn\") || self.t.is_kw(1, \"FnMut\") || self.t.is_kw(1, \"FnOnce\"));\n            if fn_ptr || impl_fn {\n                self.bump();\n                if impl_fn {\n                    self.bump();\n                }\n                self.bump();\n                let mut n: usize = self.left();\n                while n > 0 && !self.is_p(\")\") && !self.eof()\n                    decreases n,\n                {\n                    n = n - 1;\n                    self.parse_type(d);\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n                self.expect_p(\")\");\n                if self.eat_p(\"->\") {\n                    self.parse_type(d);\n                }\n                let fspan: source::Span = lo.to(self.prev_span());\n                if fn_ptr {\n                    self.err_fix(\"E0264\", fspan, \"function pointer types are not used\", \"take a type parameter `F: Fn(..) -> R` and pass the function or closure as its value (ADR-0053 §1, §3)\");\n                } else if self.in_ret {\n                    self.err_fix(\"E0264\", fspan, \"a closure is not returned: it does not leave the function that makes it\", \"take a type parameter `F: Fn(..) -> R` and pass the function or closure as its value (ADR-0053 §1, §3)\");\n                } else {\n                    self.err_fix(\"E0265\", fspan, \"an argument-position `impl Fn(..)` is a type parameter\", \"declare `<F: Fn(..) -> R>` on the function and take `f: F` (one form, ADR-0053 §1)\");\n                }\n                return ast::Type { kind: ast::TypeKind::Error, span: fspan };\n            }\n            if self.is_kw(\"Self\") {\n                self.bump();\n                let mut one: Vec<String> = Vec::new();\n                one.push(String::from(\"Self\"));\n                return ast::Type { kind: ast::TypeKind::Named(one, Vec::new()), span: lo };\n            }\n            if self.is_kw(\"dyn\") {\n                self.bump();\n                let inner: ast::Type = self.parse_type(d);\n                let dspan: source::Span = lo.to(inner.span);\n                self.err_fix(\"E0236\", dspan, \"trait objects (`dyn Trait`) are not used\", \"calls are static: take a type parameter bounded by the trait, or an enum of the closed set of variants\");\n                return ast::Type { kind: ast::TypeKind::Error, span: dspan };\n            }\n            if self.is_p(\"&\") {\n                self.bump();\n                let mutable: bool = self.eat_kw(\"mut\");\n                let target: ast::Type = self.parse_type(d);\n                let rspan: source::Span = lo.to(target.span);\n                return ast::Type { kind: ast::TypeKind::Ref(mutable, Box::new(target)), span: rspan };\n            }\n            if self.is_p(\"(\") && self.t.is_p(1, \")\") {\n                self.bump();\n                let uhi: source::Span = self.bump();\n                return ast::Type { kind: ast::TypeKind::Unit, span: lo.to(uhi) };\n            }\n            if self.is_p(\"(\") {\n                self.bump();\n                let mut depth: usize = 1;\n                let mut m: usize = self.left();\n                while m > 0 && depth > 0 && !self.eof()\n                    decreases m,\n                {\n                    m = m - 1;\n                    if self.is_p(\"(\") {\n                        depth = depth.saturating_add(1);\n                    } else if self.is_p(\")\") {\n                        depth = depth - 1;\n                    }\n                    self.bump();\n                }\n                let tspan: source::Span = lo.to(self.prev_span());\n                self.err_fix(\"E0233\", tspan, \"tuple types are not allowed\", \"use a struct with named fields\");\n                return ast::Type { kind: ast::TypeKind::Error, span: tspan };\n            }\n            if self.is_p(\"[\") {\n                self.bump();\n                let elem: ast::Type = self.parse_type(d);\n                if self.eat_p(\";\") {\n                    let mut len: u64 = 0;\n                    let mut large: bool = false;\n                    match self.t.int() {\n                        None => { if self.t.kind(0) == 0 { let mut path: Vec<String> = Vec::new(); let mut q: usize = self.left(); while q > 0 && self.t.kind(0) == 0 decreases q, { q = q - 1; path.push(text_of(self.t.ident(0))); self.bump(); if !self.eat_p(\"::\") { q = 0; } } let nhi: source::Span = self.span(); self.expect_p(\"]\"); return ast::Type { kind: ast::TypeKind::ArrayN(Box::new(elem), path), span: lo.to(nhi) }; } self.err_expected(\"array length\"); },\n                        Some(v) => { let isp: source::Span = self.bump(); if v.hi != 0 || v.lo > 4294967295 { self.err(\"E0406\", isp, \"array length is too large\"); large = true; } else { len = v.lo; } },\n                    }\n                    let ahi: source::Span = self.span();\n                    self.expect_p(\"]\");\n                    if large {\n                        return ast::Type { kind: ast::TypeKind::Error, span: lo.to(ahi) };\n                    }\n                    return ast::Type { kind: ast::TypeKind::Array(Box::new(elem), len), span: lo.to(ahi) };\n                }\n                let shi: source::Span = self.span();\n                self.expect_p(\"]\");\n                return ast::Type { kind: ast::TypeKind::Slice(Box::new(elem)), span: lo.to(shi) };\n            }\n            if self.t.kind(0) != 0 {\n                self.err_expected(\"type\");\n                return ast::Type { kind: ast::TypeKind::Error, span: lo };\n            }\n            let s: String = text_of(self.t.ident(0));\n            if !builtin_type(s.as_str()) && !reserved(s.as_str()) {\n                let mut npath: Vec<String> = Vec::new();\n                npath.push(s);\n                self.bump();\n                let mut k: usize = self.left();\n                while k > 0 && self.is_p(\"::\") && self.t.kind(1) == 0\n                    decreases k,\n                {\n                    k = k - 1;\n                    self.bump();\n                    npath.push(text_of(self.t.ident(0)));\n                    self.bump();\n                }\n                let mut args: Vec<ast::Type> = Vec::new();\n                if self.eat_p(\"<\") {\n                    let mut a: usize = self.left();\n                    while a > 0 && !self.is_p(\">\")\n                        decreases a,\n                    {\n                        a = a - 1;\n                        args.push(self.parse_type(d));\n                        if !self.eat_p(\",\") {\n                            a = 0;\n                        }\n                    }\n                    self.expect_p(\">\");\n                }\n                return ast::Type { kind: ast::TypeKind::Named(npath, args), span: lo.to(self.prev_span()) };\n            }\n            self.bump();\n            let mut kind: ast::TypeKind = ast::TypeKind::Error;\n            if s == \"bool\" {\n                kind = ast::TypeKind::Bool;\n            } else if s == \"f64\" {\n                kind = ast::TypeKind::F64;\n            } else if s == \"char\" {\n                kind = ast::TypeKind::Char;\n            } else if s == \"str\" {\n                kind = ast::TypeKind::Str;\n            } else {\n                match ast::int_of(s.as_str()) {\n                    None => { let msg: String = cat3(\"type `\", s.as_str(), \"` is not supported in milestone 1\"); if s == \"i128\" { self.err_rep(\"E0402\", lo, msg.as_str(), \"use `i64`\", \"i64\"); } else if s == \"u128\" { self.err_rep(\"E0402\", lo, msg.as_str(), \"use `u64`\", \"u64\"); } else if s == \"f32\" { self.err_rep(\"E0402\", lo, msg.as_str(), \"use `f64`\", \"f64\"); } else { self.err_fix(\"E0402\", lo, msg.as_str(), \"types: the integers i8..i64, isize, u8..u64, usize; f64, bool, char, (), [T; N], &[T], &mut [T], &str, String, Vec<T>, Box<T>, Option<T>, Result<T, E>, structs and enums\"); } if self.is_p(\"<\") { self.skip_angle(); } },\n                    Some(it) => { kind = ast::TypeKind::Int(it); },\n                }\n            }\n            ast::Type { kind: kind, span: lo.to(self.prev_span()) }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0407",
+    "commit": "d3949466e",
+    "subject": "compiler: M1 front end (parse, check, JSONL diagnostics)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0407 yet: value is not indexable. It came with the commit \"compiler: M1 front end (parse, check, JSONL diagnostics)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    k[0] = 1;\n    {\"code\": \"E0407\", \"severity\": \"error\", \"message\": \"`k` has type `i64` and cannot be indexed\", \"file\": \"err/places.bmb\", \"line\": 40, \"col\": 9, \"end_line\": 40, \"end_col\": 10}\n\n    x[0][0] = 1;\n    {\"code\": \"E0407\", \"severity\": \"error\", \"message\": \"type `i64` cannot be indexed\", \"file\": \"err/places.bmb\", \"line\": 46, \"col\": 9, \"end_line\": 46, \"end_col\": 13}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-places",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/places.bmb"
+     ]
+    },
+    {
+     "name": "replay-strings",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/strings.bmb"
+     ]
+    },
+    {
+     "name": "replay-types",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/types.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    }\n                    return TypeKind::Error;\n                };",
+       "new": "                        self.err(\n                            \"E0407\",\n                            base.span,\n                            format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                        );\n                    }\n                    return TypeKind::Error;\n                };"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    return TypeKind::Error;\n                };\n                if !writable {",
+       "new": "                    self.err(\n                        \"E0407\",\n                        base.span,\n                        format!(\n                            \"`{}` has type `{}` and cannot be indexed\",\n                            id.name,\n                            ty_str(&l.ty)\n                        ),\n                    );\n                    return TypeKind::Error;\n                };\n                if !writable {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        }\n                        (TypeKind::Error, false)",
+       "new": "                            self.err(\n                                \"E0407\",\n                                base.span,\n                                format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                            );\n                        }\n                        (TypeKind::Error, false)"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        } else if bt != TypeKind::Error {",
+       "new": "                            self.diags.push(\n                                Diag::new(\n                                    \"E0407\",\n                                    base.span,\n                                    format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                                )\n                                .fix(\n                                    \"read a byte with `s.as_bytes()[i]`; a part of the text is `&s[a..b]`, as an argument\",\n                                    None,\n                                ),\n                            );\n                        } else if bt != TypeKind::Error {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        }\n                        TypeKind::Error",
+       "new": "                            self.err(\n                                \"E0407\",\n                                base.span,\n                                format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                            );\n                        }\n                        TypeKind::Error"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn elem_place(self: &mut Body, span: source::Span, p: Place) -> Place {\n            match elem_of(&p.ty) {\n                None => { if !types::is_error(&p.ty) { self.c.err(\"E0407\", span, types::cat3(\"type `\", types::text(&p.ty).as_str(), \"` cannot be indexed\").as_str()); } Place { ty: ast::TypeKind::Error, writable: false } },\n                Some(t) => Place { ty: t, writable: p.writable },\n            }\n        }\n\n        #[effects(alloc)]\n        fn index_expr(self: &mut Body, cx: &mut FnCtx, base: &ast::Expr, index: &ast::Expr, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let no: Option<ast::TypeKind> = None;\n            let wu: Option<ast::TypeKind> = Some(ast::TypeKind::Int(ast::IntTy::Usize));\n            match as_bytes_of(base) {\n                None => {},\n                Some(recv) => { let ok: bool = self.as_bytes_arg(cx, base, &recv, mode, f - 1); let bi: ast::TypeKind = self.expr(cx, index, &wu, mode, f - 1); self.expect_ty(&bi, &ast::TypeKind::Int(ast::IntTy::Usize), index.span); if !ok { self.c.err(\"E0404\", base.span, \"`as_bytes` is defined for `String` and `&str`\"); return ast::TypeKind::Error; } return ast::TypeKind::Int(ast::IntTy::U8); },\n            }\n            let bt: ast::TypeKind = self.expr(cx, base, &no, mode, f - 1);\n            let it: ast::TypeKind = self.expr(cx, index, &wu, mode, f - 1);\n            self.expect_ty(&it, &ast::TypeKind::Int(ast::IntTy::Usize), index.span);\n            match elem_of(&bt) {\n                None => { let msg: String = types::cat3(\"type `\", types::text(&bt).as_str(), \"` cannot be indexed\"); if is_text(&bt) { self.c.help(\"E0407\", base.span, msg.as_str(), \"read a byte with `s.as_bytes()[i]`; a part of the text is `&s[a..b]`, as an argument\"); } else if !types::is_error(&bt) { self.c.err(\"E0407\", base.span, msg.as_str()); } ast::TypeKind::Error },\n                Some(t) => t,\n            }\n        }\n\n        #[effects(alloc)]\n        fn place_index(self: &mut Body, cx: &mut FnCtx, target: &ast::Expr, base: &ast::Expr, index: &ast::Expr, f: usize) -> ast::TypeKind\n            decreases f * 3 + 1,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            if nested_place(&base.kind) {\n                let p: Place = self.place_of(cx, base, f - 1);\n                self.types.insert(span_key(base.span).as_str(), p.ty.clone());\n                self.index_usize(cx, index, f - 1);\n                let bad: bool = types::is_error(&p.ty);\n                let writable: bool = p.writable;\n                let indexable: bool = has_type(&elem_of(&p.ty));\n                let q: Place = self.elem_place(base.span, p);\n                if !indexable {\n                    return ast::TypeKind::Error;\n                }\n                if !writable && !bad {\n                    self.c.help(\"E0408\", target.span, \"this place cannot be assigned\", \"assign through a `let mut` local or a `&mut` parameter\");\n                }\n                return q.ty;\n            }\n            let id: String = match ast::var_name(base) {\n                None => { self.c.err(\"E0408\", target.span, \"only elements of a variable, a field or an element can be assigned\"); return ast::TypeKind::Error; },\n                Some(n) => n,\n            };\n            let l: Local = match lookup(cx, id.as_str()) {\n                None => { self.unknown_local(cx, id.as_str(), base.span); return ast::TypeKind::Error; },\n                Some(found) => found,\n            };\n            let writable: bool = if is_array(&l.ty) || is_vec(&l.ty) {\n                l.mutable\n            } else {\n                types::is_ref_mut(&l.ty)\n            };\n            self.index_usize(cx, index, f - 1);\n            match elem_of(&l.ty) {\n                None => { self.c.err(\"E0407\", base.span, types::cat5(\"`\", id.as_str(), \"` has type `\", types::text(&l.ty).as_str(), \"` and cannot be indexed\").as_str()); ast::TypeKind::Error },\n                Some(elem) => { if !writable { self.c.err(\"E0408\", target.span, types::cat5(\"elements of `\", id.as_str(), \"` cannot be assigned (`\", types::text(&l.ty).as_str(), \"`)\").as_str()); } elem },\n            }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0257",
+    "commit": "4e338a7fc",
+    "subject": "T1-18: proof functions and induction (ADR-0062 P1-P5)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0257 yet: ghost code (a `proof fn` body or a `proof { .. }` block) cannot run executable code: no executable call, assignment, `&mut` or loop. It came with the commit \"T1-18: proof functions and induction (ADR-0062 P1-P5)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    proof fn writes(a: &mut [i64]) {\n    {\"code\": \"E0257\", \"severity\": \"error\", \"message\": \"a `proof fn` parameter cannot be `&mut`: ghost code changes no executable state\", \"file\": \"err/proofs.bmb\", \"line\": 34, \"col\": 24, \"end_line\": 34, \"end_col\": 34, \"fix\": {\"message\": \"take the value or `&T`\"}}\n\n    let y: i64 = bump(x);\n    {\"code\": \"E0257\", \"severity\": \"error\", \"message\": \"a call of executable function `bump` is not allowed in ghost code (a `proof fn` body or a `proof { .. }` block)\", \"file\": \"err/proofs.bmb\", \"line\": 42, \"col\": 22, \"end_line\": 42, \"end_col\": 29, \"fix\": {\"message\": \"call it outside the `proof` block, or state the fact with a spec fn or a `proof fn`\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-proofs",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/proofs.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        } else {\n            self.err(\"E0402\", span, \"spec function parameters cannot be `&mut`\");",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E0257\",\n                    span,\n                    \"a `proof fn` parameter cannot be `&mut`: ghost code changes no executable state\",\n                )\n                .fix(\"take the value or `&T`\", None),\n            );\n        } else {\n            self.err(\"E0402\", span, \"spec function parameters cannot be `&mut`\");"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "    }\n\n    fn spec_vec(&mut self, span: Span) {",
+       "new": "        self.diags.push(\n            Diag::new(\n                \"E0257\",\n                span,\n                format!(\"{what} is not allowed in ghost code (a `proof fn` body or a `proof {{ .. }}` block)\"),\n            )\n            .fix(fix, None),\n        );\n    }\n\n    fn spec_vec(&mut self, span: Span) {"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn ghost_mut_param(self: &mut Body, span: source::Span, kind: ast::FnKind) -> () {\n            if is_proof(kind) {\n                self.c.help(\"E0257\", span, \"a `proof fn` parameter cannot be `&mut`: ghost code changes no executable state\", \"take the value or `&T`\");\n            } else {\n                self.c.err(\"E0402\", span, \"spec function parameters cannot be `&mut`\");\n            }\n        }\n\n        #[effects(alloc)]\n        fn ghost_violation(self: &mut Body, span: source::Span, what: &str, fix: &str) -> () {\n            self.c.help(\"E0257\", span, types::cat2(what, \" is not allowed in ghost code (a `proof fn` body or a `proof { .. }` block)\").as_str(), fix);\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  }
+ ],
+ "weak": [
+  {
+   "fails": "corpus",
+   "bmb": [
+    [],
+    [],
+    [],
+    [],
+    []
+   ],
+   "rust": [
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_main(self: &mut Body, p: &ast::Program) -> () {\n            let mut found: Vec<ast::FnDef> = Vec::new();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                mains_of(&p.mods[i], &mut found, 100000);\n            }\n            let mains: Vec<ast::FnDef> = by_place(found.as_slice());\n            for i in 0..mains.len()\n                invariant 0 <= i && i <= mains.len(),\n            {\n                if i > 0 {\n                    self.c.err(\"E0702\", mains[i].name.span, \"the program already has a `main`\");\n                }\n                if mains[i].params.len() != 0 || !decls::is_unit(&mains[i].ret.ty.kind) || !declares_io(mains[i].attrs.as_slice()) {\n                    self.c.help(\"E0701\", mains[i].name.span, \"`main` must be `#[effects(io)] fn main() -> ()`\", \"write `#[effects(io)] fn main() -> ()`: no parameters, no result (other effects may be listed with `io`)\");\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn assume_stmt(self: &mut Body, cx: &mut FnCtx, a: &ast::Assume, mode: Mode, f: usize) -> ()\n            decreases f * 3,\n        {\n            if f == 0 {\n                return;\n            }\n            if !exec_mode(mode) {\n                self.c.help(\"E1003\", a.span, \"`assume` is not allowed in a specification or ghost code\", \"an escape is a statement of executable code; a ghost fact is proved (`assert`, a `proof fn`)\");\n            }\n            let want: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &a.cond, &want, Mode::Spec(false), f - 1);\n            let named: Option<usize> = match call_of(&a.cond) {\n                None => None,\n                Some(call) => { match self.resolve(call.path.as_slice(), cx.mod_path.as_str()) { None => None, Some(p) => self.c.fns.find(p.as_str()), } },\n            };\n            let pred: bool = match named {\n                None => false,\n                Some(i) => is_spec(self.c.fns.items[i].kind) && types::same(&self.c.fns.items[i].ret, &ast::TypeKind::Bool),\n            };\n            if !pred && !types::is_error(&t) {\n                self.c.help(\"E1003\", a.cond.span, \"`assume` takes one named predicate call\", \"move the condition into `spec fn name(..) -> bool { .. }` and assume `name(..)`\");\n            }\n            match &a.rationale {\n                None => self.c.missing_rationale(a.span, \"`assume`\"),\n                Some(r) => self.c.check_rationale(r),\n            }\n            if exec_mode(mode) {\n                need_own(cx, panic_effect(), \"`assume`\");\n            }\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "parser",
+       "code": "    impl Parser {\n        #[effects(alloc)]\n        fn parse_type_inner(self: &mut Parser, d: usize) -> ast::Type\n            requires d <= 256,\n            decreases (256 - d) * 64 + 3,\n        {\n            let lo: source::Span = self.span();\n            let fn_ptr: bool = self.is_kw(\"fn\") && self.t.is_p(1, \"(\");\n            let impl_fn: bool = self.is_kw(\"impl\") && (self.t.is_kw(1, \"Fn\") || self.t.is_kw(1, \"FnMut\") || self.t.is_kw(1, \"FnOnce\"));\n            if fn_ptr || impl_fn {\n                self.bump();\n                if impl_fn {\n                    self.bump();\n                }\n                self.bump();\n                let mut n: usize = self.left();\n                while n > 0 && !self.is_p(\")\") && !self.eof()\n                    decreases n,\n                {\n                    n = n - 1;\n                    self.parse_type(d);\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n                self.expect_p(\")\");\n                if self.eat_p(\"->\") {\n                    self.parse_type(d);\n                }\n                let fspan: source::Span = lo.to(self.prev_span());\n                if fn_ptr {\n                    self.err_fix(\"E0264\", fspan, \"function pointer types are not used\", \"take a type parameter `F: Fn(..) -> R` and pass the function or closure as its value (ADR-0053 §1, §3)\");\n                } else if self.in_ret {\n                    self.err_fix(\"E0264\", fspan, \"a closure is not returned: it does not leave the function that makes it\", \"take a type parameter `F: Fn(..) -> R` and pass the function or closure as its value (ADR-0053 §1, §3)\");\n                } else {\n                    self.err_fix(\"E0265\", fspan, \"an argument-position `impl Fn(..)` is a type parameter\", \"declare `<F: Fn(..) -> R>` on the function and take `f: F` (one form, ADR-0053 §1)\");\n                }\n                return ast::Type { kind: ast::TypeKind::Error, span: fspan };\n            }\n            if self.is_kw(\"Self\") {\n                self.bump();\n                let mut one: Vec<String> = Vec::new();\n                one.push(String::from(\"Self\"));\n                return ast::Type { kind: ast::TypeKind::Named(one, Vec::new()), span: lo };\n            }\n            if self.is_kw(\"dyn\") {\n                self.bump();\n                let inner: ast::Type = self.parse_type(d);\n                let dspan: source::Span = lo.to(inner.span);\n                self.err_fix(\"E0236\", dspan, \"trait objects (`dyn Trait`) are not used\", \"calls are static: take a type parameter bounded by the trait, or an enum of the closed set of variants\");\n                return ast::Type { kind: ast::TypeKind::Error, span: dspan };\n            }\n            if self.is_p(\"&\") {\n                self.bump();\n                let mutable: bool = self.eat_kw(\"mut\");\n                let target: ast::Type = self.parse_type(d);\n                let rspan: source::Span = lo.to(target.span);\n                return ast::Type { kind: ast::TypeKind::Ref(mutable, Box::new(target)), span: rspan };\n            }\n            if self.is_p(\"(\") && self.t.is_p(1, \")\") {\n                self.bump();\n                let uhi: source::Span = self.bump();\n                return ast::Type { kind: ast::TypeKind::Unit, span: lo.to(uhi) };\n            }\n            if self.is_p(\"(\") {\n                self.bump();\n                let mut depth: usize = 1;\n                let mut m: usize = self.left();\n                while m > 0 && depth > 0 && !self.eof()\n                    decreases m,\n                {\n                    m = m - 1;\n                    if self.is_p(\"(\") {\n                        depth = depth.saturating_add(1);\n                    } else if self.is_p(\")\") {\n                        depth = depth - 1;\n                    }\n                    self.bump();\n                }\n                let tspan: source::Span = lo.to(self.prev_span());\n                self.err_fix(\"E0233\", tspan, \"tuple types are not allowed\", \"use a struct with named fields\");\n                return ast::Type { kind: ast::TypeKind::Error, span: tspan };\n            }\n            if self.is_p(\"[\") {\n                self.bump();\n                let elem: ast::Type = self.parse_type(d);\n                if self.eat_p(\";\") {\n                    let mut len: u64 = 0;\n                    let mut large: bool = false;\n                    match self.t.int() {\n                        None => { if self.t.kind(0) == 0 { let mut path: Vec<String> = Vec::new(); let mut q: usize = self.left(); while q > 0 && self.t.kind(0) == 0 decreases q, { q = q - 1; path.push(text_of(self.t.ident(0))); self.bump(); if !self.eat_p(\"::\") { q = 0; } } let nhi: source::Span = self.span(); self.expect_p(\"]\"); return ast::Type { kind: ast::TypeKind::ArrayN(Box::new(elem), path), span: lo.to(nhi) }; } self.err_expected(\"array length\"); },\n                        Some(v) => { let isp: source::Span = self.bump(); if v.hi != 0 || v.lo > 4294967295 { self.err(\"E0406\", isp, \"array length is too large\"); large = true; } else { len = v.lo; } },\n                    }\n                    let ahi: source::Span = self.span();\n                    self.expect_p(\"]\");\n                    if large {\n                        return ast::Type { kind: ast::TypeKind::Error, span: lo.to(ahi) };\n                    }\n                    return ast::Type { kind: ast::TypeKind::Array(Box::new(elem), len), span: lo.to(ahi) };\n                }\n                let shi: source::Span = self.span();\n                self.expect_p(\"]\");\n                return ast::Type { kind: ast::TypeKind::Slice(Box::new(elem)), span: lo.to(shi) };\n            }\n            if self.t.kind(0) != 0 {\n                self.err_expected(\"type\");\n                return ast::Type { kind: ast::TypeKind::Error, span: lo };\n            }\n            let s: String = text_of(self.t.ident(0));\n            if !builtin_type(s.as_str()) && !reserved(s.as_str()) {\n                let mut npath: Vec<String> = Vec::new();\n                npath.push(s);\n                self.bump();\n                let mut k: usize = self.left();\n                while k > 0 && self.is_p(\"::\") && self.t.kind(1) == 0\n                    decreases k,\n                {\n                    k = k - 1;\n                    self.bump();\n                    npath.push(text_of(self.t.ident(0)));\n                    self.bump();\n                }\n                let mut args: Vec<ast::Type> = Vec::new();\n                if self.eat_p(\"<\") {\n                    let mut a: usize = self.left();\n                    while a > 0 && !self.is_p(\">\")\n                        decreases a,\n                    {\n                        a = a - 1;\n                        args.push(self.parse_type(d));\n                        if !self.eat_p(\",\") {\n                            a = 0;\n                        }\n                    }\n                    self.expect_p(\">\");\n                }\n                return ast::Type { kind: ast::TypeKind::Named(npath, args), span: lo.to(self.prev_span()) };\n            }\n            self.bump();\n            let mut kind: ast::TypeKind = ast::TypeKind::Error;\n            if s == \"bool\" {\n                kind = ast::TypeKind::Bool;\n            } else if s == \"f64\" {\n                kind = ast::TypeKind::F64;\n            } else if s == \"char\" {\n                kind = ast::TypeKind::Char;\n            } else if s == \"str\" {\n                kind = ast::TypeKind::Str;\n            } else {\n                match ast::int_of(s.as_str()) {\n                    None => { let msg: String = cat3(\"type `\", s.as_str(), \"` is not supported in milestone 1\"); if s == \"i128\" { self.err_rep(\"E0402\", lo, msg.as_str(), \"use `i64`\", \"i64\"); } else if s == \"u128\" { self.err_rep(\"E0402\", lo, msg.as_str(), \"use `u64`\", \"u64\"); } else if s == \"f32\" { self.err_rep(\"E0402\", lo, msg.as_str(), \"use `f64`\", \"f64\"); } else { self.err_fix(\"E0402\", lo, msg.as_str(), \"types: the integers i8..i64, isize, u8..u64, usize; f64, bool, char, (), [T; N], &[T], &mut [T], &str, String, Vec<T>, Box<T>, Option<T>, Result<T, E>, structs and enums\"); } if self.is_p(\"<\") { self.skip_angle(); } },\n                    Some(it) => { kind = ast::TypeKind::Int(it); },\n                }\n            }\n            ast::Type { kind: kind, span: lo.to(self.prev_span()) }\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn elem_place(self: &mut Body, span: source::Span, p: Place) -> Place {\n            match elem_of(&p.ty) {\n                None => { if !types::is_error(&p.ty) { self.c.err(\"E0407\", span, types::cat3(\"type `\", types::text(&p.ty).as_str(), \"` cannot be indexed\").as_str()); } Place { ty: ast::TypeKind::Error, writable: false } },\n                Some(t) => Place { ty: t, writable: p.writable },\n            }\n        }\n\n        #[effects(alloc)]\n        fn index_expr(self: &mut Body, cx: &mut FnCtx, base: &ast::Expr, index: &ast::Expr, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let no: Option<ast::TypeKind> = None;\n            let wu: Option<ast::TypeKind> = Some(ast::TypeKind::Int(ast::IntTy::Usize));\n            match as_bytes_of(base) {\n                None => {},\n                Some(recv) => { let ok: bool = self.as_bytes_arg(cx, base, &recv, mode, f - 1); let bi: ast::TypeKind = self.expr(cx, index, &wu, mode, f - 1); self.expect_ty(&bi, &ast::TypeKind::Int(ast::IntTy::Usize), index.span); if !ok { self.c.err(\"E0404\", base.span, \"`as_bytes` is defined for `String` and `&str`\"); return ast::TypeKind::Error; } return ast::TypeKind::Int(ast::IntTy::U8); },\n            }\n            let bt: ast::TypeKind = self.expr(cx, base, &no, mode, f - 1);\n            let it: ast::TypeKind = self.expr(cx, index, &wu, mode, f - 1);\n            self.expect_ty(&it, &ast::TypeKind::Int(ast::IntTy::Usize), index.span);\n            match elem_of(&bt) {\n                None => { let msg: String = types::cat3(\"type `\", types::text(&bt).as_str(), \"` cannot be indexed\"); if is_text(&bt) { self.c.help(\"E0407\", base.span, msg.as_str(), \"read a byte with `s.as_bytes()[i]`; a part of the text is `&s[a..b]`, as an argument\"); } else if !types::is_error(&bt) { self.c.err(\"E0407\", base.span, msg.as_str()); } ast::TypeKind::Error },\n                Some(t) => t,\n            }\n        }\n\n        #[effects(alloc)]\n        fn place_index(self: &mut Body, cx: &mut FnCtx, target: &ast::Expr, base: &ast::Expr, index: &ast::Expr, f: usize) -> ast::TypeKind\n            decreases f * 3 + 1,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            if nested_place(&base.kind) {\n                let p: Place = self.place_of(cx, base, f - 1);\n                self.types.insert(span_key(base.span).as_str(), p.ty.clone());\n                self.index_usize(cx, index, f - 1);\n                let bad: bool = types::is_error(&p.ty);\n                let writable: bool = p.writable;\n                let indexable: bool = has_type(&elem_of(&p.ty));\n                let q: Place = self.elem_place(base.span, p);\n                if !indexable {\n                    return ast::TypeKind::Error;\n                }\n                if !writable && !bad {\n                    self.c.help(\"E0408\", target.span, \"this place cannot be assigned\", \"assign through a `let mut` local or a `&mut` parameter\");\n                }\n                return q.ty;\n            }\n            let id: String = match ast::var_name(base) {\n                None => { self.c.err(\"E0408\", target.span, \"only elements of a variable, a field or an element can be assigned\"); return ast::TypeKind::Error; },\n                Some(n) => n,\n            };\n            let l: Local = match lookup(cx, id.as_str()) {\n                None => { self.unknown_local(cx, id.as_str(), base.span); return ast::TypeKind::Error; },\n                Some(found) => found,\n            };\n            let writable: bool = if is_array(&l.ty) || is_vec(&l.ty) {\n                l.mutable\n            } else {\n                types::is_ref_mut(&l.ty)\n            };\n            self.index_usize(cx, index, f - 1);\n            match elem_of(&l.ty) {\n                None => { self.c.err(\"E0407\", base.span, types::cat5(\"`\", id.as_str(), \"` has type `\", types::text(&l.ty).as_str(), \"` and cannot be indexed\").as_str()); ast::TypeKind::Error },\n                Some(elem) => { if !writable { self.c.err(\"E0408\", target.span, types::cat5(\"elements of `\", id.as_str(), \"` cannot be assigned (`\", types::text(&l.ty).as_str(), \"`)\").as_str()); } elem },\n            }\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn ghost_mut_param(self: &mut Body, span: source::Span, kind: ast::FnKind) -> () {\n            if is_proof(kind) {\n                self.c.help(\"E0257\", span, \"a `proof fn` parameter cannot be `&mut`: ghost code changes no executable state\", \"take the value or `&T`\");\n            } else {\n                self.c.err(\"E0402\", span, \"spec function parameters cannot be `&mut`\");\n            }\n        }\n\n        #[effects(alloc)]\n        fn ghost_violation(self: &mut Body, span: source::Span, what: &str, fix: &str) -> () {\n            self.c.help(\"E0257\", span, types::cat2(what, \" is not allowed in ghost code (a `proof fn` body or a `proof { .. }` block)\").as_str(), fix);\n        }\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ]
+   ],
+   "rust": [
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n            let io = f.attrs.iter().any(|a| {",
+       "new": "                self.err(\"E0702\", f.name.span, \"the program already has a `main`\");\n            }\n            let io = f.attrs.iter().any(|a| {"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        }\n        let t = self.expr(\n            cx,",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E1003\",\n                    span,\n                    \"`assume` is not allowed in a specification or ghost code\",\n                )\n                .fix(\n                    \"an escape is a statement of executable code; a ghost fact is proved \\\n                         (`assert`, a `proof fn`)\",\n                    None,\n                ),\n            );\n        }\n        let t = self.expr(\n            cx,"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        }\n        match rationale {",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E1003\",\n                    cond.span,\n                    \"`assume` takes one named predicate call\",\n                )\n                .fix(\n                    \"move the condition into `spec fn name(..) -> bool { .. }` and assume \\\n                         `name(..)`\",\n                    None,\n                ),\n            );\n        }\n        match rationale {"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "                Type {\n                    kind: TypeKind::Error,\n                    span,\n                }\n            }\n            Tok::P(\"&\") => {",
+       "new": "                self.diags.push(\n                    Diag::new(\"E0236\", span, \"trait objects (`dyn Trait`) are not used\")\n                        .fix(\n                            \"calls are static: take a type parameter bounded by the trait, or an enum of the closed set of variants\",\n                            None,\n                        ),\n                );\n                Type {\n                    kind: TypeKind::Error,\n                    span,\n                }\n            }\n            Tok::P(\"&\") => {"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    }\n                    return TypeKind::Error;\n                };",
+       "new": "                        self.err(\n                            \"E0407\",\n                            base.span,\n                            format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                        );\n                    }\n                    return TypeKind::Error;\n                };"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    return TypeKind::Error;\n                };\n                if !writable {",
+       "new": "                    self.err(\n                        \"E0407\",\n                        base.span,\n                        format!(\n                            \"`{}` has type `{}` and cannot be indexed\",\n                            id.name,\n                            ty_str(&l.ty)\n                        ),\n                    );\n                    return TypeKind::Error;\n                };\n                if !writable {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        }\n                        (TypeKind::Error, false)",
+       "new": "                            self.err(\n                                \"E0407\",\n                                base.span,\n                                format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                            );\n                        }\n                        (TypeKind::Error, false)"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        } else if bt != TypeKind::Error {",
+       "new": "                            self.diags.push(\n                                Diag::new(\n                                    \"E0407\",\n                                    base.span,\n                                    format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                                )\n                                .fix(\n                                    \"read a byte with `s.as_bytes()[i]`; a part of the text is `&s[a..b]`, as an argument\",\n                                    None,\n                                ),\n                            );\n                        } else if bt != TypeKind::Error {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        }\n                        TypeKind::Error",
+       "new": "                            self.err(\n                                \"E0407\",\n                                base.span,\n                                format!(\"type `{}` cannot be indexed\", ty_str(&bt)),\n                            );\n                        }\n                        TypeKind::Error"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        } else {\n            self.err(\"E0402\", span, \"spec function parameters cannot be `&mut`\");",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E0257\",\n                    span,\n                    \"a `proof fn` parameter cannot be `&mut`: ghost code changes no executable state\",\n                )\n                .fix(\"take the value or `&T`\", None),\n            );\n        } else {\n            self.err(\"E0402\", span, \"spec function parameters cannot be `&mut`\");"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "    }\n\n    fn spec_vec(&mut self, span: Span) {",
+       "new": "        self.diags.push(\n            Diag::new(\n                \"E0257\",\n                span,\n                format!(\"{what} is not allowed in ghost code (a `proof fn` body or a `proof {{ .. }}` block)\"),\n            )\n            .fix(fix, None),\n        );\n    }\n\n    fn spec_vec(&mut self, span: Span) {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   ]
+  }
+ ]
+}

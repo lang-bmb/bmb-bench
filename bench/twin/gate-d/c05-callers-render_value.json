@@ -1,0 +1,123 @@
+{
+ "id": "c05-callers-render_value",
+ "kind": "comprehend",
+ "family": "callers",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `encode_terms::render_value` directly? Leave out `encode_terms::render_value` itself unless it calls itself. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `smt::render_value` directly? Leave out `smt::render_value` itself unless it calls itself. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "smt::Solver::get_values",
+   "smt::render_value",
+   "verify::assumed_values",
+   "verify::examples::pin",
+   "verify::f64_agrees",
+   "verify::model_select",
+   "verify::show_leaves",
+   "verify::show_variant"
+  ],
+  "bmb": [
+   "encode_terms::render_value",
+   "examples::len_of",
+   "model::f64_agrees",
+   "model::scalar_text",
+   "model::show_leaves",
+   "model::show_variant",
+   "model::small_int",
+   "solver::get_values"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "encode_terms::render_value",
+      "in",
+      "1"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "encode_terms::render_value",
+      "examples::len_of",
+      "model::f64_agrees",
+      "model::scalar_text",
+      "model::show_leaves",
+      "model::show_variant",
+      "model::small_int",
+      "solver::get_values"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])render_value\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "smt::Solver::get_values",
+      "smt::render_value",
+      "verify::assumed_values",
+      "verify::examples::pin",
+      "verify::f64_agrees",
+      "verify::model_select",
+      "verify::show_leaves",
+      "verify::show_variant"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "examples::len_of",
+       "model::f64_agrees",
+       "model::scalar_text",
+       "model::show_leaves",
+       "model::show_variant",
+       "model::small_int",
+       "solver::get_values"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "smt::render_value",
+       "verify::assumed_values",
+       "verify::examples::pin",
+       "verify::f64_agrees",
+       "verify::model_select",
+       "verify::show_leaves",
+       "verify::show_variant"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

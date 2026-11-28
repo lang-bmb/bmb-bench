@@ -1,0 +1,111 @@
+{
+ "id": "c09-callers-detach",
+ "kind": "comprehend",
+ "family": "callers",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `codegen::Gen::detach` directly? Leave out `codegen::Gen::detach` itself unless it calls itself. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `codegen::Gen::detach` directly? Leave out `codegen::Gen::detach` itself unless it calls itself. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "codegen::Gen::block_expr",
+   "codegen::Gen::init_data_array",
+   "codegen::Gen::jump",
+   "codegen::Gen::release",
+   "codegen::Gen::return_expr",
+   "codegen::Gen::vec_method"
+  ],
+  "bmb": [
+   "codegen::Gen::block_expr",
+   "codegen::Gen::init_data_array",
+   "codegen::Gen::jump",
+   "codegen::Gen::release",
+   "codegen::Gen::return_expr",
+   "codegen::Gen::vec_method"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "codegen::Gen::detach",
+      "in",
+      "1"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "codegen::Gen::block_expr",
+      "codegen::Gen::init_data_array",
+      "codegen::Gen::jump",
+      "codegen::Gen::release",
+      "codegen::Gen::return_expr",
+      "codegen::Gen::vec_method"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])detach\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "codegen::Gen::block_expr",
+      "codegen::Gen::init_data_array",
+      "codegen::Gen::jump",
+      "codegen::Gen::release",
+      "codegen::Gen::return_expr",
+      "codegen::Gen::vec_method"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "codegen::Gen::init_data_array",
+       "codegen::Gen::jump",
+       "codegen::Gen::release",
+       "codegen::Gen::return_expr",
+       "codegen::Gen::vec_method"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "codegen::Gen::init_data_array",
+       "codegen::Gen::jump",
+       "codegen::Gen::release",
+       "codegen::Gen::return_expr",
+       "codegen::Gen::vec_method"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

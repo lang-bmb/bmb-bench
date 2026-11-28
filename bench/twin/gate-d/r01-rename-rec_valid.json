@@ -1,0 +1,249 @@
+{
+ "id": "r01-rename-rec_valid",
+ "kind": "change",
+ "family": "rename",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Rename the function `encode_exec::rec_valid` to `rec_valid_renamed` and update every use of it. The program's behaviour must not change; change nothing else.",
+  "rust": "Rename the function `verify::invariants::Prog::rec_valid` to `rec_valid_renamed` and update every use of it. The program's behaviour must not change; change nothing else."
+ },
+ "scope": {
+  "rust": [
+   "verify::invariants::Enc::valid",
+   "verify::invariants::Prog::rec_valid",
+   "verify::invariants::Prog::rec_valid_renamed"
+  ],
+  "bmb": [
+   "encode_exec::Exec::valid",
+   "encode_exec::rec_valid",
+   "encode_exec::rec_valid_renamed"
+  ]
+ },
+ "must_change": {
+  "rust": [
+   "verify::invariants::Enc::valid",
+   "verify::invariants::Prog::rec_valid",
+   "verify::invariants::Prog::rec_valid_renamed"
+  ],
+  "bmb": [
+   "encode_exec::Exec::valid",
+   "encode_exec::rec_valid",
+   "encode_exec::rec_valid_renamed"
+  ]
+ },
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/verify/invariants.rs",
+     "old": "    fn rec_valid(&self, t: &TypeKind) -> bool {",
+     "new": "    fn rec_valid_renamed(&self, t: &TypeKind) -> bool {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/verify/invariants.rs",
+     "old": "        if self.prog.rec_valid(t) {",
+     "new": "        if self.prog.rec_valid_renamed(t) {"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "encode_exec",
+     "code": "    #[effects(alloc)]\n    fn rec_valid_renamed(t: &ast::TypeKind, tb: &lowered::Tables) -> bool {\n        let vt: ast::TypeKind = lowered::value_ty(t);\n        let is_enum: bool = match lowered::enum_variants(&vt, tb) {\n            None => false,\n            Some(vs) => true,\n        };\n        if !encode_decls::dt_struct(&vt, tb) && !is_enum {\n            return false;\n        }\n        let me: String = types::text(&vt);\n        let mut seen: table::Table<bool> = table::new::<bool>();\n        let mut todo: Vec<ast::TypeKind> = encode_decls::holds(&vt, tb);\n        let mut fuel: usize = 1000000000;\n        while todo.len() > 0 && fuel > 0\n            decreases fuel,\n        {\n            fuel = fuel - 1;\n            match todo.pop() {\n                None => {},\n                Some(u) => { if types::text(&lowered::value_ty(&u)) == me { return true; } let k: String = types::text(&u); if !seen.has(k.as_str()) { seen.insert(k.as_str(), true); let more: Vec<ast::TypeKind> = encode_decls::holds(&u, tb); body::push_all(&mut todo, more.as_slice()); } },\n            }\n        }\n        false\n    }\n\n    impl Exec {\n        #[effects(alloc)]\n        fn valid(self: &mut Exec, v: &encode_terms::Val, t: &ast::TypeKind, pg: &encode_spec::Prog, f: usize) -> Vec<String>\n            decreases f,\n        {\n            if f == 0 {\n                return Vec::new();\n            }\n            if !self.needs_valid(t, pg) {\n                return Vec::new();\n            }\n            let arr: bool = encode_decls::is_array(t);\n            if !arr {\n                match body::ref_inner(t) {\n                    None => {},\n                    Some(inner) => { return self.valid(v, &inner, pg, f - 1); },\n                }\n            }\n            match param_name(t) {\n                None => {},\n                Some(pn) => { let pf: String = encode_decls::sym(types::cat3(\"'\", pn.as_str(), \".valid\").as_str()); if !self.valid_decl.has(pf.as_str()) { self.valid_decl.insert(pf.as_str(), true); self.enc.fr.decls.push(types::cat5(\"(declare-fun \", pf.as_str(), \" (\", encode_decls::sort_of(t).as_str(), \") Bool)\")); } let mut one: Vec<String> = Vec::new(); one.push(types::cat5(\"(\", pf.as_str(), \" \", encode_terms::scalar_of(v).as_str(), \")\")); return one; },\n            }\n            if arr {\n                return self.valid_array(v, t, pg, f - 1);\n            }\n            match encode_decls::flat_fields(t, &pg.pr.t) {\n                None => {},\n                Some(fs) => { match v { encode_terms::Val::S(vsv_s0) => {}, encode_terms::Val::A(vsv_a0, vsv_a1) => {}, encode_terms::Val::Unit => {}, encode_terms::Val::Struct(xs) => { let mut out: Vec<String> = self.inv_app(v, t, pg); for i in 0..fs.len() invariant 0 <= i && i <= fs.len(), { if i < xs.len() { let more: Vec<String> = self.valid(&xs[i], &fs[i].ty, pg, f - 1); extend(&mut out, more.as_slice()); } } return out; }, encode_terms::Val::Arr(vsv_arr0, vsv_arr1) => {}, } },\n            }\n            let c: String = match v {\n                encode_terms::Val::S(x) => x.clone(),\n                encode_terms::Val::A(vcv_a0, vcv_a1) => { return Vec::new(); },\n                encode_terms::Val::Unit => { return Vec::new(); },\n                encode_terms::Val::Struct(vcv_struct0) => { return Vec::new(); },\n                encode_terms::Val::Arr(vcv_arr0, vcv_arr1) => { return Vec::new(); },\n            };\n            if rec_valid_renamed(t, &pg.pr.t) {\n                let vf: String = self.valid_fn(t, pg, f - 1);\n                let mut app: Vec<String> = Vec::new();\n                app.push(types::cat5(\"(\", vf.as_str(), \" \", c.as_str(), \")\"));\n                return app;\n            }\n            self.valid_dt(c.as_str(), t, pg, f - 1)\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "encode_exec",
+     "remove": [
+      "encode_exec::rec_valid"
+     ]
+    }
+   ]
+  ],
+  "bmb:port-rename": [
+   [
+    "write",
+    {
+     "rename": [
+      {
+       "def": "encode_exec::rec_valid",
+       "to": "rec_valid_renamed"
+      }
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "scope",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "code": "    #[effects(alloc)]\n    fn rec_valid_renamed(t: &ast::TypeKind, tb: &lowered::Tables) -> bool {\n        let vt: ast::TypeKind = lowered::value_ty(t);\n        let is_enum: bool = match lowered::enum_variants(&vt, tb) {\n            None => false,\n            Some(vs) => true,\n        };\n        if !encode_decls::dt_struct(&vt, tb) && !is_enum {\n            return false;\n        }\n        let me: String = types::text(&vt);\n        let mut seen: table::Table<bool> = table::new::<bool>();\n        let mut todo: Vec<ast::TypeKind> = encode_decls::holds(&vt, tb);\n        let mut fuel: usize = 1000000000;\n        while todo.len() > 0 && fuel > 0\n            decreases fuel,\n        {\n            fuel = fuel - 1;\n            match todo.pop() {\n                None => {},\n                Some(u) => { if types::text(&lowered::value_ty(&u)) == me { return true; } let k: String = types::text(&u); if !seen.has(k.as_str()) { seen.insert(k.as_str(), true); let more: Vec<ast::TypeKind> = encode_decls::holds(&u, tb); body::push_all(&mut todo, more.as_slice()); } },\n            }\n        }\n        false\n    }\n\n    impl Exec {\n        #[effects(alloc)]\n        fn valid(self: &mut Exec, v: &encode_terms::Val, t: &ast::TypeKind, pg: &encode_spec::Prog, f: usize) -> Vec<String>\n            decreases f,\n        {\n            if f == 0 {\n                return Vec::new();\n            }\n            if !self.needs_valid(t, pg) {\n                return Vec::new();\n            }\n            let arr: bool = encode_decls::is_array(t);\n            if !arr {\n                match body::ref_inner(t) {\n                    None => {},\n                    Some(inner) => { return self.valid(v, &inner, pg, f - 1); },\n                }\n            }\n            match param_name(t) {\n                None => {},\n                Some(pn) => { let pf: String = encode_decls::sym(types::cat3(\"'\", pn.as_str(), \".valid\").as_str()); if !self.valid_decl.has(pf.as_str()) { self.valid_decl.insert(pf.as_str(), true); self.enc.fr.decls.push(types::cat5(\"(declare-fun \", pf.as_str(), \" (\", encode_decls::sort_of(t).as_str(), \") Bool)\")); } let mut one: Vec<String> = Vec::new(); one.push(types::cat5(\"(\", pf.as_str(), \" \", encode_terms::scalar_of(v).as_str(), \")\")); return one; },\n            }\n            if arr {\n                return self.valid_array(v, t, pg, f - 1);\n            }\n            match encode_decls::flat_fields(t, &pg.pr.t) {\n                None => {},\n                Some(fs) => { match v { encode_terms::Val::S(vsv_s0) => {}, encode_terms::Val::A(vsv_a0, vsv_a1) => {}, encode_terms::Val::Unit => {}, encode_terms::Val::Struct(xs) => { let mut out: Vec<String> = self.inv_app(v, t, pg); for i in 0..fs.len() invariant 0 <= i && i <= fs.len(), { if i < xs.len() { let more: Vec<String> = self.valid(&xs[i], &fs[i].ty, pg, f - 1); extend(&mut out, more.as_slice()); } } return out; }, encode_terms::Val::Arr(vsv_arr0, vsv_arr1) => {}, } },\n            }\n            let c: String = match v {\n                encode_terms::Val::S(x) => x.clone(),\n                encode_terms::Val::A(vcv_a0, vcv_a1) => { return Vec::new(); },\n                encode_terms::Val::Unit => { return Vec::new(); },\n                encode_terms::Val::Struct(vcv_struct0) => { return Vec::new(); },\n                encode_terms::Val::Arr(vcv_arr0, vcv_arr1) => { return Vec::new(); },\n            };\n            if rec_valid_renamed(t, &pg.pr.t) {\n                let vf: String = self.valid_fn(t, pg, f - 1);\n                let mut app: Vec<String> = Vec::new();\n                app.push(types::cat5(\"(\", vf.as_str(), \" \", c.as_str(), \")\"));\n                return app;\n            }\n            self.valid_dt(c.as_str(), t, pg, f - 1)\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "remove": [
+       "encode_exec::rec_valid"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/verify/invariants.rs",
+      "old": "    fn rec_valid(&self, t: &TypeKind) -> bool {",
+      "new": "    fn rec_valid_renamed(&self, t: &TypeKind) -> bool {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify/invariants.rs",
+      "old": "        if self.prog.rec_valid(t) {",
+      "new": "        if self.prog.rec_valid_renamed(t) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/sha256.rs",
+      "old": "    let mut s = String::from(\"sha256:\");",
+      "new": "    let mut s = \"sha256:\".to_string();"
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "encode_exec::rec_valid",
+        "to": "rec_valid_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "code": "    #[effects(alloc)]\n    fn rec_valid_renamed(t: &ast::TypeKind, tb: &lowered::Tables) -> bool {\n        let vt: ast::TypeKind = lowered::value_ty(t);\n        let is_enum: bool = match lowered::enum_variants(&vt, tb) {\n            None => false,\n            Some(vs) => true,\n        };\n        if !encode_decls::dt_struct(&vt, tb) && !is_enum {\n            return false;\n        }\n        let me: String = types::text(&vt);\n        let mut seen: table::Table<bool> = table::new::<bool>();\n        let mut todo: Vec<ast::TypeKind> = encode_decls::holds(&vt, tb);\n        let mut fuel: usize = 1000000000;\n        while todo.len() > 0 && fuel > 0\n            decreases fuel,\n        {\n            fuel = fuel - 1;\n            match todo.pop() {\n                None => {},\n                Some(u) => { if types::text(&lowered::value_ty(&u)) == me { return true; } let k: String = types::text(&u); if !seen.has(k.as_str()) { seen.insert(k.as_str(), true); let more: Vec<ast::TypeKind> = encode_decls::holds(&u, tb); body::push_all(&mut todo, more.as_slice()); } },\n            }\n        }\n        false\n    }\n\n    impl Exec {\n        #[effects(alloc)]\n        fn valid(self: &mut Exec, v: &encode_terms::Val, t: &ast::TypeKind, pg: &encode_spec::Prog, f: usize) -> Vec<String>\n            decreases f,\n        {\n            if f == 0 {\n                return Vec::new();\n            }\n            if !self.needs_valid(t, pg) {\n                return Vec::new();\n            }\n            let arr: bool = encode_decls::is_array(t);\n            if !arr {\n                match body::ref_inner(t) {\n                    None => {},\n                    Some(inner) => { return self.valid(v, &inner, pg, f - 1); },\n                }\n            }\n            match param_name(t) {\n                None => {},\n                Some(pn) => { let pf: String = encode_decls::sym(types::cat3(\"'\", pn.as_str(), \".valid\").as_str()); if !self.valid_decl.has(pf.as_str()) { self.valid_decl.insert(pf.as_str(), true); self.enc.fr.decls.push(types::cat5(\"(declare-fun \", pf.as_str(), \" (\", encode_decls::sort_of(t).as_str(), \") Bool)\")); } let mut one: Vec<String> = Vec::new(); one.push(types::cat5(\"(\", pf.as_str(), \" \", encode_terms::scalar_of(v).as_str(), \")\")); return one; },\n            }\n            if arr {\n                return self.valid_array(v, t, pg, f - 1);\n            }\n            match encode_decls::flat_fields(t, &pg.pr.t) {\n                None => {},\n                Some(fs) => { match v { encode_terms::Val::S(vsv_s0) => {}, encode_terms::Val::A(vsv_a0, vsv_a1) => {}, encode_terms::Val::Unit => {}, encode_terms::Val::Struct(xs) => { let mut out: Vec<String> = self.inv_app(v, t, pg); for i in 0..fs.len() invariant 0 <= i && i <= fs.len(), { if i < xs.len() { let more: Vec<String> = self.valid(&xs[i], &fs[i].ty, pg, f - 1); extend(&mut out, more.as_slice()); } } return out; }, encode_terms::Val::Arr(vsv_arr0, vsv_arr1) => {}, } },\n            }\n            let c: String = match v {\n                encode_terms::Val::S(x) => x.clone(),\n                encode_terms::Val::A(vcv_a0, vcv_a1) => { return Vec::new(); },\n                encode_terms::Val::Unit => { return Vec::new(); },\n                encode_terms::Val::Struct(vcv_struct0) => { return Vec::new(); },\n                encode_terms::Val::Arr(vcv_arr0, vcv_arr1) => { return Vec::new(); },\n            };\n            if rec_valid_renamed(t, &pg.pr.t) {\n                let vf: String = self.valid_fn(t, pg, f - 1);\n                let mut app: Vec<String> = Vec::new();\n                app.push(types::cat5(\"(\", vf.as_str(), \" \", c.as_str(), \")\"));\n                return app;\n            }\n            self.valid_dt(c.as_str(), t, pg, f - 1)\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "remove": [
+       "encode_exec::rec_valid"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/verify/invariants.rs",
+      "old": "    fn rec_valid(&self, t: &TypeKind) -> bool {",
+      "new": "    fn rec_valid_renamed(&self, t: &TypeKind) -> bool {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify/invariants.rs",
+      "old": "        if self.prog.rec_valid(t) {",
+      "new": "        if self.prog.rec_valid_renamed(t) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "encode_exec::rec_valid",
+        "to": "rec_valid_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "done",
+   "bmb": [],
+   "rust": []
+  }
+ ]
+}

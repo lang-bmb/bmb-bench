@@ -1,0 +1,360 @@
+{
+ "id": "r16-swap-oblige_given",
+ "kind": "change",
+ "family": "swap",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Change the signature of the function `encode_spec::Enc::oblige_given`: its first two parameters after `self` change places (`code` and `span`). Update every call of it. The program's behaviour must not change; change nothing else.",
+  "rust": "Change the signature of the function `verify::Enc::oblige_given`: its first two parameters after `self` change places (`code` and `span`). Update every call of it. The program's behaviour must not change; change nothing else."
+ },
+ "scope": {
+  "rust": [
+   "verify::Enc::oblige",
+   "verify::Enc::oblige_given",
+   "verify::text::Enc::str_slice"
+  ],
+  "bmb": [
+   "encode_exec::Exec::oblige",
+   "encode_exec::Exec::str_slice",
+   "encode_spec::Enc::check_spec_recursion",
+   "encode_spec::Enc::oblige_given"
+  ]
+ },
+ "must_change": {
+  "rust": [
+   "verify::Enc::oblige",
+   "verify::Enc::oblige_given",
+   "verify::text::Enc::str_slice"
+  ],
+  "bmb": [
+   "encode_exec::Exec::oblige",
+   "encode_exec::Exec::str_slice",
+   "encode_spec::Enc::check_spec_recursion",
+   "encode_spec::Enc::oblige_given"
+  ]
+ },
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/verify.rs",
+     "old": "        self.oblige_given(code, span, msg, None, goal);",
+     "new": "        self.oblige_given(span, code, msg, None, goal);"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/verify.rs",
+     "old": "        code: &'static str,",
+     "new": "        span: Span,\n        code: &'static str,"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/verify.rs",
+     "old": "        span: Span,\n        msg: impl Into<String>,",
+     "new": "        msg: impl Into<String>,"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/verify/text.rs",
+     "old": "            \"E0820\",",
+     "new": "            e.span,\n            \"E0820\","
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/verify/text.rs",
+     "old": "            e.span,\n            \"the range may not lie on character boundaries of the string\",",
+     "new": "            \"the range may not lie on character boundaries of the string\","
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "encode_spec",
+     "code": "    impl Enc {\n        #[effects(alloc)]\n        fn check_spec_recursion(self: &mut Enc, target: &str, args: &[encode_terms::Val], span: source::Span, pg: &Prog, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let tc: TermCheck = match &self.term_check {\n                None => { return; },\n                Some(found) => found.clone(),\n            };\n            let in_comp: bool = match pg.pr.insts.find(target) {\n                None => same_comp(pg, target, tc.comp),\n                Some(i) => same_comp(pg, pg.pr.insts.items[i].base.as_str(), tc.comp),\n            };\n            if !in_comp {\n                return;\n            }\n            let at: usize = match pg.defs.find(target) {\n                None => { return; },\n                Some(found_def) => found_def,\n            };\n            let callee: Measure = match &pg.defs.items[at].d.measure {\n                None => { return; },\n                Some(dec) => { let env: table::Table<encode_terms::Val> = bind_params(&pg.defs.items[at].d, args); let none: table::Table<encode_terms::Val> = table::new::<encode_terms::Val>(); let saved_sub: types::Subst = self.tsub.clone(); let saved_mod: String = self.spec_mod.clone(); self.term_check = None; self.tsub = pg.defs.items[at].tsub.clone(); self.spec_mod = pg.defs.items[at].unit.clone(); let m: Measure = self.measure(dec, &env, &none, pg, f - 1); self.spec_mod = saved_mod; self.tsub = saved_sub; self.term_check = Some(tc.clone()); m },\n            };\n            let goal: String = decrease_goal(pg, &Measure { term: tc.measure.clone(), data: tc.data }, &callee);\n            let msg: String = types::cat3(\"recursive call to `\", target, \"` may not decrease its `decreases` measure\");\n            if self.foralls.len() == 0 {\n                let no_given: Option<String> = None;\n                self.oblige_given_swapped(span, \"E0813\", msg.as_str(), &no_given, goal.as_str());\n                return;\n            }\n            let start: usize = self.foralls[0].start;\n            let mut decls: Vec<String> = Vec::new();\n            let mut inner: Vec<String> = Vec::new();\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].decls.len()\n                    invariant 0 <= j && j <= self.foralls[i].decls.len(),\n                {\n                    decls.push(self.foralls[i].decls[j].clone());\n                }\n            }\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].facts.len()\n                    invariant 0 <= j && j <= self.foralls[i].facts.len(),\n                {\n                    inner.push(self.foralls[i].facts[j].clone());\n                }\n            }\n            let mut assumptions: Vec<String> = self.pc.clone();\n            for i in 0..self.spec_pc.len()\n                invariant 0 <= i && i <= self.spec_pc.len(),\n            {\n                if i < start {\n                    assumptions.push(self.spec_pc[i].clone());\n                } else {\n                    inner.push(self.spec_pc[i].clone());\n                }\n            }\n            let mut g: String = types::cat5(\"(forall (\", encode_terms::join(decls.as_slice(), \" \").as_str(), \") (=> \", encode_terms::and(inner.as_slice()).as_str(), \" \");\n            g.push_str(goal.as_str());\n            g.push_str(\"))\");\n            self.obls.push(Obl { code: String::from(\"E0813\"), span: span, msg: msg, assumptions: assumptions, goal: g, shown: None, sub: None });\n        }\n\n        #[effects(alloc)]\n        fn oblige_given_swapped(self: &mut Enc, span: source::Span, code: &str, msg: &str, given: &Option<String>, goal: &str) -> () {\n            if goal != \"true\" {\n                let mut assumptions: Vec<String> = self.pc.clone();\n                for i in 0..self.spec_pc.len()\n                    invariant 0 <= i && i <= self.spec_pc.len(),\n                {\n                    assumptions.push(self.spec_pc[i].clone());\n                }\n                match given {\n                    None => {},\n                    Some(g) => assumptions.push(g.clone()),\n                }\n                self.obls.push(Obl { code: String::from(code), span: span, msg: String::from(msg), assumptions: assumptions, goal: String::from(goal), shown: None, sub: None });\n            } else {\n                self.trivial.push(Trivial { code: String::from(code), span: span });\n            }\n            let checking: bool = match &self.term_check {\n                None => false,\n                Some(tc) => true,\n            };\n            if !checking {\n                self.pc.push(String::from(goal));\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "encode_exec",
+     "code": "    impl Exec {\n        #[effects(alloc)]\n        fn oblige(self: &mut Exec, code: &str, span: source::Span, msg: &str, goal: &str) -> () {\n            let none: Option<String> = None;\n            self.enc.oblige_given_swapped(span, code, msg, &none, goal);\n        }\n\n        #[effects(alloc)]\n        fn str_slice(self: &mut Exec, e: &ast::Expr, base: &ast::Expr, lo: &ast::Expr, hi: &ast::Expr, pg: &encode_spec::Prog, f: usize) -> encode_terms::Val\n            decreases f,\n        {\n            if f == 0 {\n                return encode_terms::Val::Unit;\n            }\n            let v: encode_terms::Val = self.eval(base, pg, f - 1);\n            let a: String = encode_terms::scalar_of(&self.eval(lo, pg, f - 1));\n            let b: String = encode_terms::scalar_of(&self.eval(hi, pg, f - 1));\n            let p: encode_terms::Pair = match encode_terms::parts(&v) {\n                None => { return encode_terms::Val::Unit; },\n                Some(found) => found,\n            };\n            let given: Option<String> = Some(types::cat5(\"(and \", self.utf8_window(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), \" \", self.utf8_window(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\"));\n            let goal: String = types::cat7(\"(and (<= \", a.as_str(), \" \", b.as_str(), \") \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), types::cat3(\" \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\").as_str());\n            self.enc.oblige_given_swapped(e.span, \"E0820\", \"the range may not lie on character boundaries of the string\", &given, goal.as_str());\n            encode_spec::sub_text(&v, a.as_str(), b.as_str())\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "encode_spec",
+     "remove": [
+      "encode_spec::Enc::oblige_given"
+     ]
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "encode_spec",
+     "code": "    impl Enc {\n        #[effects(alloc)]\n        fn check_spec_recursion(self: &mut Enc, target: &str, args: &[encode_terms::Val], span: source::Span, pg: &Prog, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let tc: TermCheck = match &self.term_check {\n                None => { return; },\n                Some(found) => found.clone(),\n            };\n            let in_comp: bool = match pg.pr.insts.find(target) {\n                None => same_comp(pg, target, tc.comp),\n                Some(i) => same_comp(pg, pg.pr.insts.items[i].base.as_str(), tc.comp),\n            };\n            if !in_comp {\n                return;\n            }\n            let at: usize = match pg.defs.find(target) {\n                None => { return; },\n                Some(found_def) => found_def,\n            };\n            let callee: Measure = match &pg.defs.items[at].d.measure {\n                None => { return; },\n                Some(dec) => { let env: table::Table<encode_terms::Val> = bind_params(&pg.defs.items[at].d, args); let none: table::Table<encode_terms::Val> = table::new::<encode_terms::Val>(); let saved_sub: types::Subst = self.tsub.clone(); let saved_mod: String = self.spec_mod.clone(); self.term_check = None; self.tsub = pg.defs.items[at].tsub.clone(); self.spec_mod = pg.defs.items[at].unit.clone(); let m: Measure = self.measure(dec, &env, &none, pg, f - 1); self.spec_mod = saved_mod; self.tsub = saved_sub; self.term_check = Some(tc.clone()); m },\n            };\n            let goal: String = decrease_goal(pg, &Measure { term: tc.measure.clone(), data: tc.data }, &callee);\n            let msg: String = types::cat3(\"recursive call to `\", target, \"` may not decrease its `decreases` measure\");\n            if self.foralls.len() == 0 {\n                let no_given: Option<String> = None;\n                self.oblige_given(span, \"E0813\", msg.as_str(), &no_given, goal.as_str());\n                return;\n            }\n            let start: usize = self.foralls[0].start;\n            let mut decls: Vec<String> = Vec::new();\n            let mut inner: Vec<String> = Vec::new();\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].decls.len()\n                    invariant 0 <= j && j <= self.foralls[i].decls.len(),\n                {\n                    decls.push(self.foralls[i].decls[j].clone());\n                }\n            }\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].facts.len()\n                    invariant 0 <= j && j <= self.foralls[i].facts.len(),\n                {\n                    inner.push(self.foralls[i].facts[j].clone());\n                }\n            }\n            let mut assumptions: Vec<String> = self.pc.clone();\n            for i in 0..self.spec_pc.len()\n                invariant 0 <= i && i <= self.spec_pc.len(),\n            {\n                if i < start {\n                    assumptions.push(self.spec_pc[i].clone());\n                } else {\n                    inner.push(self.spec_pc[i].clone());\n                }\n            }\n            let mut g: String = types::cat5(\"(forall (\", encode_terms::join(decls.as_slice(), \" \").as_str(), \") (=> \", encode_terms::and(inner.as_slice()).as_str(), \" \");\n            g.push_str(goal.as_str());\n            g.push_str(\"))\");\n            self.obls.push(Obl { code: String::from(\"E0813\"), span: span, msg: msg, assumptions: assumptions, goal: g, shown: None, sub: None });\n        }\n\n        #[effects(alloc)]\n        fn oblige_given(self: &mut Enc, span: source::Span, code: &str, msg: &str, given: &Option<String>, goal: &str) -> () {\n            if goal != \"true\" {\n                let mut assumptions: Vec<String> = self.pc.clone();\n                for i in 0..self.spec_pc.len()\n                    invariant 0 <= i && i <= self.spec_pc.len(),\n                {\n                    assumptions.push(self.spec_pc[i].clone());\n                }\n                match given {\n                    None => {},\n                    Some(g) => assumptions.push(g.clone()),\n                }\n                self.obls.push(Obl { code: String::from(code), span: span, msg: String::from(msg), assumptions: assumptions, goal: String::from(goal), shown: None, sub: None });\n            } else {\n                self.trivial.push(Trivial { code: String::from(code), span: span });\n            }\n            let checking: bool = match &self.term_check {\n                None => false,\n                Some(tc) => true,\n            };\n            if !checking {\n                self.pc.push(String::from(goal));\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "encode_exec",
+     "code": "    impl Exec {\n        #[effects(alloc)]\n        fn oblige(self: &mut Exec, code: &str, span: source::Span, msg: &str, goal: &str) -> () {\n            let none: Option<String> = None;\n            self.enc.oblige_given(span, code, msg, &none, goal);\n        }\n\n        #[effects(alloc)]\n        fn str_slice(self: &mut Exec, e: &ast::Expr, base: &ast::Expr, lo: &ast::Expr, hi: &ast::Expr, pg: &encode_spec::Prog, f: usize) -> encode_terms::Val\n            decreases f,\n        {\n            if f == 0 {\n                return encode_terms::Val::Unit;\n            }\n            let v: encode_terms::Val = self.eval(base, pg, f - 1);\n            let a: String = encode_terms::scalar_of(&self.eval(lo, pg, f - 1));\n            let b: String = encode_terms::scalar_of(&self.eval(hi, pg, f - 1));\n            let p: encode_terms::Pair = match encode_terms::parts(&v) {\n                None => { return encode_terms::Val::Unit; },\n                Some(found) => found,\n            };\n            let given: Option<String> = Some(types::cat5(\"(and \", self.utf8_window(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), \" \", self.utf8_window(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\"));\n            let goal: String = types::cat7(\"(and (<= \", a.as_str(), \" \", b.as_str(), \") \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), types::cat3(\" \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\").as_str());\n            self.enc.oblige_given(e.span, \"E0820\", \"the range may not lie on character boundaries of the string\", &given, goal.as_str());\n            encode_spec::sub_text(&v, a.as_str(), b.as_str())\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "encode_spec",
+     "remove": [
+      "encode_spec::Enc::oblige_given_swapped"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "scope",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "encode_spec",
+      "code": "    impl Enc {\n        #[effects(alloc)]\n        fn check_spec_recursion(self: &mut Enc, target: &str, args: &[encode_terms::Val], span: source::Span, pg: &Prog, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let tc: TermCheck = match &self.term_check {\n                None => { return; },\n                Some(found) => found.clone(),\n            };\n            let in_comp: bool = match pg.pr.insts.find(target) {\n                None => same_comp(pg, target, tc.comp),\n                Some(i) => same_comp(pg, pg.pr.insts.items[i].base.as_str(), tc.comp),\n            };\n            if !in_comp {\n                return;\n            }\n            let at: usize = match pg.defs.find(target) {\n                None => { return; },\n                Some(found_def) => found_def,\n            };\n            let callee: Measure = match &pg.defs.items[at].d.measure {\n                None => { return; },\n                Some(dec) => { let env: table::Table<encode_terms::Val> = bind_params(&pg.defs.items[at].d, args); let none: table::Table<encode_terms::Val> = table::new::<encode_terms::Val>(); let saved_sub: types::Subst = self.tsub.clone(); let saved_mod: String = self.spec_mod.clone(); self.term_check = None; self.tsub = pg.defs.items[at].tsub.clone(); self.spec_mod = pg.defs.items[at].unit.clone(); let m: Measure = self.measure(dec, &env, &none, pg, f - 1); self.spec_mod = saved_mod; self.tsub = saved_sub; self.term_check = Some(tc.clone()); m },\n            };\n            let goal: String = decrease_goal(pg, &Measure { term: tc.measure.clone(), data: tc.data }, &callee);\n            let msg: String = types::cat3(\"recursive call to `\", target, \"` may not decrease its `decreases` measure\");\n            if self.foralls.len() == 0 {\n                let no_given: Option<String> = None;\n                self.oblige_given_swapped(span, \"E0813\", msg.as_str(), &no_given, goal.as_str());\n                return;\n            }\n            let start: usize = self.foralls[0].start;\n            let mut decls: Vec<String> = Vec::new();\n            let mut inner: Vec<String> = Vec::new();\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].decls.len()\n                    invariant 0 <= j && j <= self.foralls[i].decls.len(),\n                {\n                    decls.push(self.foralls[i].decls[j].clone());\n                }\n            }\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].facts.len()\n                    invariant 0 <= j && j <= self.foralls[i].facts.len(),\n                {\n                    inner.push(self.foralls[i].facts[j].clone());\n                }\n            }\n            let mut assumptions: Vec<String> = self.pc.clone();\n            for i in 0..self.spec_pc.len()\n                invariant 0 <= i && i <= self.spec_pc.len(),\n            {\n                if i < start {\n                    assumptions.push(self.spec_pc[i].clone());\n                } else {\n                    inner.push(self.spec_pc[i].clone());\n                }\n            }\n            let mut g: String = types::cat5(\"(forall (\", encode_terms::join(decls.as_slice(), \" \").as_str(), \") (=> \", encode_terms::and(inner.as_slice()).as_str(), \" \");\n            g.push_str(goal.as_str());\n            g.push_str(\"))\");\n            self.obls.push(Obl { code: String::from(\"E0813\"), span: span, msg: msg, assumptions: assumptions, goal: g, shown: None, sub: None });\n        }\n\n        #[effects(alloc)]\n        fn oblige_given_swapped(self: &mut Enc, span: source::Span, code: &str, msg: &str, given: &Option<String>, goal: &str) -> () {\n            if goal != \"true\" {\n                let mut assumptions: Vec<String> = self.pc.clone();\n                for i in 0..self.spec_pc.len()\n                    invariant 0 <= i && i <= self.spec_pc.len(),\n                {\n                    assumptions.push(self.spec_pc[i].clone());\n                }\n                match given {\n                    None => {},\n                    Some(g) => assumptions.push(g.clone()),\n                }\n                self.obls.push(Obl { code: String::from(code), span: span, msg: String::from(msg), assumptions: assumptions, goal: String::from(goal), shown: None, sub: None });\n            } else {\n                self.trivial.push(Trivial { code: String::from(code), span: span });\n            }\n            let checking: bool = match &self.term_check {\n                None => false,\n                Some(tc) => true,\n            };\n            if !checking {\n                self.pc.push(String::from(goal));\n            }\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "code": "    impl Exec {\n        #[effects(alloc)]\n        fn oblige(self: &mut Exec, code: &str, span: source::Span, msg: &str, goal: &str) -> () {\n            let none: Option<String> = None;\n            self.enc.oblige_given_swapped(span, code, msg, &none, goal);\n        }\n\n        #[effects(alloc)]\n        fn str_slice(self: &mut Exec, e: &ast::Expr, base: &ast::Expr, lo: &ast::Expr, hi: &ast::Expr, pg: &encode_spec::Prog, f: usize) -> encode_terms::Val\n            decreases f,\n        {\n            if f == 0 {\n                return encode_terms::Val::Unit;\n            }\n            let v: encode_terms::Val = self.eval(base, pg, f - 1);\n            let a: String = encode_terms::scalar_of(&self.eval(lo, pg, f - 1));\n            let b: String = encode_terms::scalar_of(&self.eval(hi, pg, f - 1));\n            let p: encode_terms::Pair = match encode_terms::parts(&v) {\n                None => { return encode_terms::Val::Unit; },\n                Some(found) => found,\n            };\n            let given: Option<String> = Some(types::cat5(\"(and \", self.utf8_window(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), \" \", self.utf8_window(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\"));\n            let goal: String = types::cat7(\"(and (<= \", a.as_str(), \" \", b.as_str(), \") \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), types::cat3(\" \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\").as_str());\n            self.enc.oblige_given_swapped(e.span, \"E0820\", \"the range may not lie on character boundaries of the string\", &given, goal.as_str());\n            encode_spec::sub_text(&v, a.as_str(), b.as_str())\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_spec",
+      "remove": [
+       "encode_spec::Enc::oblige_given"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_spec",
+      "code": "    impl Enc {\n        #[effects(alloc)]\n        fn check_spec_recursion(self: &mut Enc, target: &str, args: &[encode_terms::Val], span: source::Span, pg: &Prog, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let tc: TermCheck = match &self.term_check {\n                None => { return; },\n                Some(found) => found.clone(),\n            };\n            let in_comp: bool = match pg.pr.insts.find(target) {\n                None => same_comp(pg, target, tc.comp),\n                Some(i) => same_comp(pg, pg.pr.insts.items[i].base.as_str(), tc.comp),\n            };\n            if !in_comp {\n                return;\n            }\n            let at: usize = match pg.defs.find(target) {\n                None => { return; },\n                Some(found_def) => found_def,\n            };\n            let callee: Measure = match &pg.defs.items[at].d.measure {\n                None => { return; },\n                Some(dec) => { let env: table::Table<encode_terms::Val> = bind_params(&pg.defs.items[at].d, args); let none: table::Table<encode_terms::Val> = table::new::<encode_terms::Val>(); let saved_sub: types::Subst = self.tsub.clone(); let saved_mod: String = self.spec_mod.clone(); self.term_check = None; self.tsub = pg.defs.items[at].tsub.clone(); self.spec_mod = pg.defs.items[at].unit.clone(); let m: Measure = self.measure(dec, &env, &none, pg, f - 1); self.spec_mod = saved_mod; self.tsub = saved_sub; self.term_check = Some(tc.clone()); m },\n            };\n            let goal: String = decrease_goal(pg, &Measure { term: tc.measure.clone(), data: tc.data }, &callee);\n            let msg: String = types::cat3(\"recursive call to `\", target, \"` may not decrease its `decreases` measure\");\n            if self.foralls.len() == 0 {\n                let no_given: Option<String> = None;\n                self.oblige_given(span, \"E0813\", msg.as_str(), &no_given, goal.as_str());\n                return;\n            }\n            let start: usize = self.foralls[0].start;\n            let mut decls: Vec<String> = Vec::new();\n            let mut inner: Vec<String> = Vec::new();\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].decls.len()\n                    invariant 0 <= j && j <= self.foralls[i].decls.len(),\n                {\n                    decls.push(self.foralls[i].decls[j].clone());\n                }\n            }\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].facts.len()\n                    invariant 0 <= j && j <= self.foralls[i].facts.len(),\n                {\n                    inner.push(self.foralls[i].facts[j].clone());\n                }\n            }\n            let mut assumptions: Vec<String> = self.pc.clone();\n            for i in 0..self.spec_pc.len()\n                invariant 0 <= i && i <= self.spec_pc.len(),\n            {\n                if i < start {\n                    assumptions.push(self.spec_pc[i].clone());\n                } else {\n                    inner.push(self.spec_pc[i].clone());\n                }\n            }\n            let mut g: String = types::cat5(\"(forall (\", encode_terms::join(decls.as_slice(), \" \").as_str(), \") (=> \", encode_terms::and(inner.as_slice()).as_str(), \" \");\n            g.push_str(goal.as_str());\n            g.push_str(\"))\");\n            self.obls.push(Obl { code: String::from(\"E0813\"), span: span, msg: msg, assumptions: assumptions, goal: g, shown: None, sub: None });\n        }\n\n        #[effects(alloc)]\n        fn oblige_given(self: &mut Enc, span: source::Span, code: &str, msg: &str, given: &Option<String>, goal: &str) -> () {\n            if goal != \"true\" {\n                let mut assumptions: Vec<String> = self.pc.clone();\n                for i in 0..self.spec_pc.len()\n                    invariant 0 <= i && i <= self.spec_pc.len(),\n                {\n                    assumptions.push(self.spec_pc[i].clone());\n                }\n                match given {\n                    None => {},\n                    Some(g) => assumptions.push(g.clone()),\n                }\n                self.obls.push(Obl { code: String::from(code), span: span, msg: String::from(msg), assumptions: assumptions, goal: String::from(goal), shown: None, sub: None });\n            } else {\n                self.trivial.push(Trivial { code: String::from(code), span: span });\n            }\n            let checking: bool = match &self.term_check {\n                None => false,\n                Some(tc) => true,\n            };\n            if !checking {\n                self.pc.push(String::from(goal));\n            }\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "code": "    impl Exec {\n        #[effects(alloc)]\n        fn oblige(self: &mut Exec, code: &str, span: source::Span, msg: &str, goal: &str) -> () {\n            let none: Option<String> = None;\n            self.enc.oblige_given(span, code, msg, &none, goal);\n        }\n\n        #[effects(alloc)]\n        fn str_slice(self: &mut Exec, e: &ast::Expr, base: &ast::Expr, lo: &ast::Expr, hi: &ast::Expr, pg: &encode_spec::Prog, f: usize) -> encode_terms::Val\n            decreases f,\n        {\n            if f == 0 {\n                return encode_terms::Val::Unit;\n            }\n            let v: encode_terms::Val = self.eval(base, pg, f - 1);\n            let a: String = encode_terms::scalar_of(&self.eval(lo, pg, f - 1));\n            let b: String = encode_terms::scalar_of(&self.eval(hi, pg, f - 1));\n            let p: encode_terms::Pair = match encode_terms::parts(&v) {\n                None => { return encode_terms::Val::Unit; },\n                Some(found) => found,\n            };\n            let given: Option<String> = Some(types::cat5(\"(and \", self.utf8_window(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), \" \", self.utf8_window(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\"));\n            let goal: String = types::cat7(\"(and (<= \", a.as_str(), \" \", b.as_str(), \") \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), types::cat3(\" \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\").as_str());\n            self.enc.oblige_given(e.span, \"E0820\", \"the range may not lie on character boundaries of the string\", &given, goal.as_str());\n            encode_spec::sub_text(&v, a.as_str(), b.as_str())\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_spec",
+      "remove": [
+       "encode_spec::Enc::oblige_given_swapped"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "        self.oblige_given(code, span, msg, None, goal);",
+      "new": "        self.oblige_given(span, code, msg, None, goal);"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "        code: &'static str,",
+      "new": "        span: Span,\n        code: &'static str,"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "        span: Span,\n        msg: impl Into<String>,",
+      "new": "        msg: impl Into<String>,"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify/text.rs",
+      "old": "            \"E0820\",",
+      "new": "            e.span,\n            \"E0820\","
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify/text.rs",
+      "old": "            e.span,\n            \"the range may not lie on character boundaries of the string\",",
+      "new": "            \"the range may not lie on character boundaries of the string\","
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/sha256.rs",
+      "old": "    let mut s = String::from(\"sha256:\");",
+      "new": "    let mut s = \"sha256:\".to_string();"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "encode_spec",
+      "code": "    impl Enc {\n        #[effects(alloc)]\n        fn check_spec_recursion(self: &mut Enc, target: &str, args: &[encode_terms::Val], span: source::Span, pg: &Prog, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let tc: TermCheck = match &self.term_check {\n                None => { return; },\n                Some(found) => found.clone(),\n            };\n            let in_comp: bool = match pg.pr.insts.find(target) {\n                None => same_comp(pg, target, tc.comp),\n                Some(i) => same_comp(pg, pg.pr.insts.items[i].base.as_str(), tc.comp),\n            };\n            if !in_comp {\n                return;\n            }\n            let at: usize = match pg.defs.find(target) {\n                None => { return; },\n                Some(found_def) => found_def,\n            };\n            let callee: Measure = match &pg.defs.items[at].d.measure {\n                None => { return; },\n                Some(dec) => { let env: table::Table<encode_terms::Val> = bind_params(&pg.defs.items[at].d, args); let none: table::Table<encode_terms::Val> = table::new::<encode_terms::Val>(); let saved_sub: types::Subst = self.tsub.clone(); let saved_mod: String = self.spec_mod.clone(); self.term_check = None; self.tsub = pg.defs.items[at].tsub.clone(); self.spec_mod = pg.defs.items[at].unit.clone(); let m: Measure = self.measure(dec, &env, &none, pg, f - 1); self.spec_mod = saved_mod; self.tsub = saved_sub; self.term_check = Some(tc.clone()); m },\n            };\n            let goal: String = decrease_goal(pg, &Measure { term: tc.measure.clone(), data: tc.data }, &callee);\n            let msg: String = types::cat3(\"recursive call to `\", target, \"` may not decrease its `decreases` measure\");\n            if self.foralls.len() == 0 {\n                let no_given: Option<String> = None;\n                self.oblige_given_swapped(span, \"E0813\", msg.as_str(), &no_given, goal.as_str());\n                return;\n            }\n            let start: usize = self.foralls[0].start;\n            let mut decls: Vec<String> = Vec::new();\n            let mut inner: Vec<String> = Vec::new();\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].decls.len()\n                    invariant 0 <= j && j <= self.foralls[i].decls.len(),\n                {\n                    decls.push(self.foralls[i].decls[j].clone());\n                }\n            }\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].facts.len()\n                    invariant 0 <= j && j <= self.foralls[i].facts.len(),\n                {\n                    inner.push(self.foralls[i].facts[j].clone());\n                }\n            }\n            let mut assumptions: Vec<String> = self.pc.clone();\n            for i in 0..self.spec_pc.len()\n                invariant 0 <= i && i <= self.spec_pc.len(),\n            {\n                if i < start {\n                    assumptions.push(self.spec_pc[i].clone());\n                } else {\n                    inner.push(self.spec_pc[i].clone());\n                }\n            }\n            let mut g: String = types::cat5(\"(forall (\", encode_terms::join(decls.as_slice(), \" \").as_str(), \") (=> \", encode_terms::and(inner.as_slice()).as_str(), \" \");\n            g.push_str(goal.as_str());\n            g.push_str(\"))\");\n            self.obls.push(Obl { code: String::from(\"E0813\"), span: span, msg: msg, assumptions: assumptions, goal: g, shown: None, sub: None });\n        }\n\n        #[effects(alloc)]\n        fn oblige_given_swapped(self: &mut Enc, span: source::Span, code: &str, msg: &str, given: &Option<String>, goal: &str) -> () {\n            if goal != \"true\" {\n                let mut assumptions: Vec<String> = self.pc.clone();\n                for i in 0..self.spec_pc.len()\n                    invariant 0 <= i && i <= self.spec_pc.len(),\n                {\n                    assumptions.push(self.spec_pc[i].clone());\n                }\n                match given {\n                    None => {},\n                    Some(g) => assumptions.push(g.clone()),\n                }\n                self.obls.push(Obl { code: String::from(code), span: span, msg: String::from(msg), assumptions: assumptions, goal: String::from(goal), shown: None, sub: None });\n            } else {\n                self.trivial.push(Trivial { code: String::from(code), span: span });\n            }\n            let checking: bool = match &self.term_check {\n                None => false,\n                Some(tc) => true,\n            };\n            if !checking {\n                self.pc.push(String::from(goal));\n            }\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "code": "    impl Exec {\n        #[effects(alloc)]\n        fn oblige(self: &mut Exec, code: &str, span: source::Span, msg: &str, goal: &str) -> () {\n            let none: Option<String> = None;\n            self.enc.oblige_given_swapped(span, code, msg, &none, goal);\n        }\n\n        #[effects(alloc)]\n        fn str_slice(self: &mut Exec, e: &ast::Expr, base: &ast::Expr, lo: &ast::Expr, hi: &ast::Expr, pg: &encode_spec::Prog, f: usize) -> encode_terms::Val\n            decreases f,\n        {\n            if f == 0 {\n                return encode_terms::Val::Unit;\n            }\n            let v: encode_terms::Val = self.eval(base, pg, f - 1);\n            let a: String = encode_terms::scalar_of(&self.eval(lo, pg, f - 1));\n            let b: String = encode_terms::scalar_of(&self.eval(hi, pg, f - 1));\n            let p: encode_terms::Pair = match encode_terms::parts(&v) {\n                None => { return encode_terms::Val::Unit; },\n                Some(found) => found,\n            };\n            let given: Option<String> = Some(types::cat5(\"(and \", self.utf8_window(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), \" \", self.utf8_window(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\"));\n            let goal: String = types::cat7(\"(and (<= \", a.as_str(), \" \", b.as_str(), \") \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), types::cat3(\" \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\").as_str());\n            self.enc.oblige_given_swapped(e.span, \"E0820\", \"the range may not lie on character boundaries of the string\", &given, goal.as_str());\n            encode_spec::sub_text(&v, a.as_str(), b.as_str())\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_spec",
+      "remove": [
+       "encode_spec::Enc::oblige_given"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_spec",
+      "code": "    impl Enc {\n        #[effects(alloc)]\n        fn check_spec_recursion(self: &mut Enc, target: &str, args: &[encode_terms::Val], span: source::Span, pg: &Prog, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let tc: TermCheck = match &self.term_check {\n                None => { return; },\n                Some(found) => found.clone(),\n            };\n            let in_comp: bool = match pg.pr.insts.find(target) {\n                None => same_comp(pg, target, tc.comp),\n                Some(i) => same_comp(pg, pg.pr.insts.items[i].base.as_str(), tc.comp),\n            };\n            if !in_comp {\n                return;\n            }\n            let at: usize = match pg.defs.find(target) {\n                None => { return; },\n                Some(found_def) => found_def,\n            };\n            let callee: Measure = match &pg.defs.items[at].d.measure {\n                None => { return; },\n                Some(dec) => { let env: table::Table<encode_terms::Val> = bind_params(&pg.defs.items[at].d, args); let none: table::Table<encode_terms::Val> = table::new::<encode_terms::Val>(); let saved_sub: types::Subst = self.tsub.clone(); let saved_mod: String = self.spec_mod.clone(); self.term_check = None; self.tsub = pg.defs.items[at].tsub.clone(); self.spec_mod = pg.defs.items[at].unit.clone(); let m: Measure = self.measure(dec, &env, &none, pg, f - 1); self.spec_mod = saved_mod; self.tsub = saved_sub; self.term_check = Some(tc.clone()); m },\n            };\n            let goal: String = decrease_goal(pg, &Measure { term: tc.measure.clone(), data: tc.data }, &callee);\n            let msg: String = types::cat3(\"recursive call to `\", target, \"` may not decrease its `decreases` measure\");\n            if self.foralls.len() == 0 {\n                let no_given: Option<String> = None;\n                self.oblige_given(span, \"E0813\", msg.as_str(), &no_given, goal.as_str());\n                return;\n            }\n            let start: usize = self.foralls[0].start;\n            let mut decls: Vec<String> = Vec::new();\n            let mut inner: Vec<String> = Vec::new();\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].decls.len()\n                    invariant 0 <= j && j <= self.foralls[i].decls.len(),\n                {\n                    decls.push(self.foralls[i].decls[j].clone());\n                }\n            }\n            for i in 0..self.foralls.len()\n                invariant 0 <= i && i <= self.foralls.len(),\n            {\n                for j in 0..self.foralls[i].facts.len()\n                    invariant 0 <= j && j <= self.foralls[i].facts.len(),\n                {\n                    inner.push(self.foralls[i].facts[j].clone());\n                }\n            }\n            let mut assumptions: Vec<String> = self.pc.clone();\n            for i in 0..self.spec_pc.len()\n                invariant 0 <= i && i <= self.spec_pc.len(),\n            {\n                if i < start {\n                    assumptions.push(self.spec_pc[i].clone());\n                } else {\n                    inner.push(self.spec_pc[i].clone());\n                }\n            }\n            let mut g: String = types::cat5(\"(forall (\", encode_terms::join(decls.as_slice(), \" \").as_str(), \") (=> \", encode_terms::and(inner.as_slice()).as_str(), \" \");\n            g.push_str(goal.as_str());\n            g.push_str(\"))\");\n            self.obls.push(Obl { code: String::from(\"E0813\"), span: span, msg: msg, assumptions: assumptions, goal: g, shown: None, sub: None });\n        }\n\n        #[effects(alloc)]\n        fn oblige_given(self: &mut Enc, span: source::Span, code: &str, msg: &str, given: &Option<String>, goal: &str) -> () {\n            if goal != \"true\" {\n                let mut assumptions: Vec<String> = self.pc.clone();\n                for i in 0..self.spec_pc.len()\n                    invariant 0 <= i && i <= self.spec_pc.len(),\n                {\n                    assumptions.push(self.spec_pc[i].clone());\n                }\n                match given {\n                    None => {},\n                    Some(g) => assumptions.push(g.clone()),\n                }\n                self.obls.push(Obl { code: String::from(code), span: span, msg: String::from(msg), assumptions: assumptions, goal: String::from(goal), shown: None, sub: None });\n            } else {\n                self.trivial.push(Trivial { code: String::from(code), span: span });\n            }\n            let checking: bool = match &self.term_check {\n                None => false,\n                Some(tc) => true,\n            };\n            if !checking {\n                self.pc.push(String::from(goal));\n            }\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_exec",
+      "code": "    impl Exec {\n        #[effects(alloc)]\n        fn oblige(self: &mut Exec, code: &str, span: source::Span, msg: &str, goal: &str) -> () {\n            let none: Option<String> = None;\n            self.enc.oblige_given(span, code, msg, &none, goal);\n        }\n\n        #[effects(alloc)]\n        fn str_slice(self: &mut Exec, e: &ast::Expr, base: &ast::Expr, lo: &ast::Expr, hi: &ast::Expr, pg: &encode_spec::Prog, f: usize) -> encode_terms::Val\n            decreases f,\n        {\n            if f == 0 {\n                return encode_terms::Val::Unit;\n            }\n            let v: encode_terms::Val = self.eval(base, pg, f - 1);\n            let a: String = encode_terms::scalar_of(&self.eval(lo, pg, f - 1));\n            let b: String = encode_terms::scalar_of(&self.eval(hi, pg, f - 1));\n            let p: encode_terms::Pair = match encode_terms::parts(&v) {\n                None => { return encode_terms::Val::Unit; },\n                Some(found) => found,\n            };\n            let given: Option<String> = Some(types::cat5(\"(and \", self.utf8_window(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), \" \", self.utf8_window(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\"));\n            let goal: String = types::cat7(\"(and (<= \", a.as_str(), \" \", b.as_str(), \") \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), a.as_str()).as_str(), types::cat3(\" \", encode_terms::boundary(p.a.as_str(), p.b.as_str(), b.as_str()).as_str(), \")\").as_str());\n            self.enc.oblige_given(e.span, \"E0820\", \"the range may not lie on character boundaries of the string\", &given, goal.as_str());\n            encode_spec::sub_text(&v, a.as_str(), b.as_str())\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "encode_spec",
+      "remove": [
+       "encode_spec::Enc::oblige_given_swapped"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "        self.oblige_given(code, span, msg, None, goal);",
+      "new": "        self.oblige_given(span, code, msg, None, goal);"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "        code: &'static str,",
+      "new": "        span: Span,\n        code: &'static str,"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify.rs",
+      "old": "        span: Span,\n        msg: impl Into<String>,",
+      "new": "        msg: impl Into<String>,"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify/text.rs",
+      "old": "            \"E0820\",",
+      "new": "            e.span,\n            \"E0820\","
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/verify/text.rs",
+      "old": "            e.span,\n            \"the range may not lie on character boundaries of the string\",",
+      "new": "            \"the range may not lie on character boundaries of the string\","
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "done",
+   "bmb": [],
+   "rust": []
+  }
+ ]
+}

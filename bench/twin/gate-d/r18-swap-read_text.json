@@ -1,0 +1,306 @@
+{
+ "id": "r18-swap-read_text",
+ "kind": "change",
+ "family": "swap",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Change the signature of the function `identity::Ids::read_text`: its first two parameters after `self` change places (`pr` and `key`). Update every call of it. The program's behaviour must not change; change nothing else.",
+  "rust": "Change the signature of the function `identity::Ids::read_text`: its first two parameters after `self` change places (`key` and `res`). Update every call of it. The program's behaviour must not change; change nothing else."
+ },
+ "scope": {
+  "rust": [
+   "identity::Ids::read_text",
+   "incremental::nameless_reads"
+  ],
+  "bmb": [
+   "identity::Ids::read_text",
+   "incremental::read_of"
+  ]
+ },
+ "must_change": {
+  "rust": [
+   "identity::Ids::read_text",
+   "incremental::nameless_reads"
+  ],
+  "bmb": [
+   "identity::Ids::read_text",
+   "incremental::read_of"
+  ]
+ },
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/identity.rs",
+     "old": "    pub(crate) fn read_text(&self, key: &Key, res: &dyn Resolve, read: Read) -> Option<String> {",
+     "new": "    pub(crate) fn read_text(&self, res: &dyn Resolve, key: &Key, read: Read) -> Option<String> {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/incremental.rs",
+     "old": "                ids.read_text(&Key::Def(p.clone()), res, read)",
+     "new": "                ids.read_text(res, &Key::Def(p.clone()), read)"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/incremental.rs",
+     "old": "                .read_text(k, res, Read::Body)",
+     "new": "                .read_text(res, k, Read::Body)"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "identity",
+     "code": "    impl Ids {\n        #[effects(alloc)]\n        fn read_text_swapped(self: &Ids, key: &str, pr: &mut fmt::Printer, read: u8) -> Option<String> {\n            let at: usize = self.ents.find(key)?;\n            match &self.ents.items[at].kind {\n                EntKind::Def(d, c) => { let none: Vec<String> = Vec::new(); if read == 0 { Some(self.print(pr, key, &Part::Body, none.as_slice())) } else if read == 1 { Some(self.print(pr, key, &Part::Caller, none.as_slice())) } else { Some(self.print(pr, key, &Part::Iface, none.as_slice())) } },\n                EntKind::Type(td) => { fresh(pr, self.ents.items[at].unit.as_str()); pr.type_def_as(td, 0, \"_\"); Some(pr.out.clone()) },\n                EntKind::Trait(t) => Some(String::from(\"trait\")),\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "incremental",
+     "code": "    #[effects(alloc)]\n    fn read_of(ids: &identity::Ids, pr: &mut fmt::Printer, r: &str, path: &str, rd: &Reads) -> String {\n        if encode_terms::starts_at(r, 0, \"m:\") {\n            let rest: String = lexer::cut(r, 2, r.len());\n            let sp: usize = match encode_query::find_byte(rest.as_str(), 32, 0) {\n                None => rest.len(),\n                Some(x) => x,\n            };\n            let tr: String = lexer::cut(rest.as_str(), 0, sp);\n            let m: String = lexer::cut(rest.as_str(), sp.saturating_add(1), rest.len());\n            return match ids.method_read(pr, tr.as_str(), m.as_str()) { None => types::cat5(\"? \", tr.as_str(), \"::\", m.as_str(), \"\\n\"), Some(t) => t, };\n        }\n        let p: String = lexer::cut(r, 2, r.len());\n        let mut read: u8 = 0;\n        if encode_terms::starts_at(r, 0, \"0:\") && p != path {\n            read = 1;\n            match rd.kinds.find(p.as_str()) {\n                None => {},\n                Some(k) => { if body::is_spec(rd.kinds.items[k]) { if types::has(rd.uses.as_slice(), p.as_str()) || types::has(rd.comp.as_slice(), p.as_str()) || types::has(rd.invariants.as_slice(), p.as_str()) { read = 0; } else { read = 2; } } },\n            }\n        }\n        match ids.read_text_swapped(r, pr, read) {\n            None => types::cat3(\"? \", p.as_str(), \"\\n\"),\n            Some(t) => t,\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "identity",
+     "remove": [
+      "identity::Ids::read_text"
+     ]
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "identity",
+     "code": "    impl Ids {\n        #[effects(alloc)]\n        fn read_text(self: &Ids, key: &str, pr: &mut fmt::Printer, read: u8) -> Option<String> {\n            let at: usize = self.ents.find(key)?;\n            match &self.ents.items[at].kind {\n                EntKind::Def(d, c) => { let none: Vec<String> = Vec::new(); if read == 0 { Some(self.print(pr, key, &Part::Body, none.as_slice())) } else if read == 1 { Some(self.print(pr, key, &Part::Caller, none.as_slice())) } else { Some(self.print(pr, key, &Part::Iface, none.as_slice())) } },\n                EntKind::Type(td) => { fresh(pr, self.ents.items[at].unit.as_str()); pr.type_def_as(td, 0, \"_\"); Some(pr.out.clone()) },\n                EntKind::Trait(t) => Some(String::from(\"trait\")),\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "incremental",
+     "code": "    #[effects(alloc)]\n    fn read_of(ids: &identity::Ids, pr: &mut fmt::Printer, r: &str, path: &str, rd: &Reads) -> String {\n        if encode_terms::starts_at(r, 0, \"m:\") {\n            let rest: String = lexer::cut(r, 2, r.len());\n            let sp: usize = match encode_query::find_byte(rest.as_str(), 32, 0) {\n                None => rest.len(),\n                Some(x) => x,\n            };\n            let tr: String = lexer::cut(rest.as_str(), 0, sp);\n            let m: String = lexer::cut(rest.as_str(), sp.saturating_add(1), rest.len());\n            return match ids.method_read(pr, tr.as_str(), m.as_str()) { None => types::cat5(\"? \", tr.as_str(), \"::\", m.as_str(), \"\\n\"), Some(t) => t, };\n        }\n        let p: String = lexer::cut(r, 2, r.len());\n        let mut read: u8 = 0;\n        if encode_terms::starts_at(r, 0, \"0:\") && p != path {\n            read = 1;\n            match rd.kinds.find(p.as_str()) {\n                None => {},\n                Some(k) => { if body::is_spec(rd.kinds.items[k]) { if types::has(rd.uses.as_slice(), p.as_str()) || types::has(rd.comp.as_slice(), p.as_str()) || types::has(rd.invariants.as_slice(), p.as_str()) { read = 0; } else { read = 2; } } },\n            }\n        }\n        match ids.read_text(r, pr, read) {\n            None => types::cat3(\"? \", p.as_str(), \"\\n\"),\n            Some(t) => t,\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "identity",
+     "remove": [
+      "identity::Ids::read_text_swapped"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "scope",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "identity",
+      "code": "    impl Ids {\n        #[effects(alloc)]\n        fn read_text_swapped(self: &Ids, key: &str, pr: &mut fmt::Printer, read: u8) -> Option<String> {\n            let at: usize = self.ents.find(key)?;\n            match &self.ents.items[at].kind {\n                EntKind::Def(d, c) => { let none: Vec<String> = Vec::new(); if read == 0 { Some(self.print(pr, key, &Part::Body, none.as_slice())) } else if read == 1 { Some(self.print(pr, key, &Part::Caller, none.as_slice())) } else { Some(self.print(pr, key, &Part::Iface, none.as_slice())) } },\n                EntKind::Type(td) => { fresh(pr, self.ents.items[at].unit.as_str()); pr.type_def_as(td, 0, \"_\"); Some(pr.out.clone()) },\n                EntKind::Trait(t) => Some(String::from(\"trait\")),\n            }\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "code": "    #[effects(alloc)]\n    fn read_of(ids: &identity::Ids, pr: &mut fmt::Printer, r: &str, path: &str, rd: &Reads) -> String {\n        if encode_terms::starts_at(r, 0, \"m:\") {\n            let rest: String = lexer::cut(r, 2, r.len());\n            let sp: usize = match encode_query::find_byte(rest.as_str(), 32, 0) {\n                None => rest.len(),\n                Some(x) => x,\n            };\n            let tr: String = lexer::cut(rest.as_str(), 0, sp);\n            let m: String = lexer::cut(rest.as_str(), sp.saturating_add(1), rest.len());\n            return match ids.method_read(pr, tr.as_str(), m.as_str()) { None => types::cat5(\"? \", tr.as_str(), \"::\", m.as_str(), \"\\n\"), Some(t) => t, };\n        }\n        let p: String = lexer::cut(r, 2, r.len());\n        let mut read: u8 = 0;\n        if encode_terms::starts_at(r, 0, \"0:\") && p != path {\n            read = 1;\n            match rd.kinds.find(p.as_str()) {\n                None => {},\n                Some(k) => { if body::is_spec(rd.kinds.items[k]) { if types::has(rd.uses.as_slice(), p.as_str()) || types::has(rd.comp.as_slice(), p.as_str()) || types::has(rd.invariants.as_slice(), p.as_str()) { read = 0; } else { read = 2; } } },\n            }\n        }\n        match ids.read_text_swapped(r, pr, read) {\n            None => types::cat3(\"? \", p.as_str(), \"\\n\"),\n            Some(t) => t,\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "identity",
+      "remove": [
+       "identity::Ids::read_text"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "identity",
+      "code": "    impl Ids {\n        #[effects(alloc)]\n        fn read_text(self: &Ids, key: &str, pr: &mut fmt::Printer, read: u8) -> Option<String> {\n            let at: usize = self.ents.find(key)?;\n            match &self.ents.items[at].kind {\n                EntKind::Def(d, c) => { let none: Vec<String> = Vec::new(); if read == 0 { Some(self.print(pr, key, &Part::Body, none.as_slice())) } else if read == 1 { Some(self.print(pr, key, &Part::Caller, none.as_slice())) } else { Some(self.print(pr, key, &Part::Iface, none.as_slice())) } },\n                EntKind::Type(td) => { fresh(pr, self.ents.items[at].unit.as_str()); pr.type_def_as(td, 0, \"_\"); Some(pr.out.clone()) },\n                EntKind::Trait(t) => Some(String::from(\"trait\")),\n            }\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "code": "    #[effects(alloc)]\n    fn read_of(ids: &identity::Ids, pr: &mut fmt::Printer, r: &str, path: &str, rd: &Reads) -> String {\n        if encode_terms::starts_at(r, 0, \"m:\") {\n            let rest: String = lexer::cut(r, 2, r.len());\n            let sp: usize = match encode_query::find_byte(rest.as_str(), 32, 0) {\n                None => rest.len(),\n                Some(x) => x,\n            };\n            let tr: String = lexer::cut(rest.as_str(), 0, sp);\n            let m: String = lexer::cut(rest.as_str(), sp.saturating_add(1), rest.len());\n            return match ids.method_read(pr, tr.as_str(), m.as_str()) { None => types::cat5(\"? \", tr.as_str(), \"::\", m.as_str(), \"\\n\"), Some(t) => t, };\n        }\n        let p: String = lexer::cut(r, 2, r.len());\n        let mut read: u8 = 0;\n        if encode_terms::starts_at(r, 0, \"0:\") && p != path {\n            read = 1;\n            match rd.kinds.find(p.as_str()) {\n                None => {},\n                Some(k) => { if body::is_spec(rd.kinds.items[k]) { if types::has(rd.uses.as_slice(), p.as_str()) || types::has(rd.comp.as_slice(), p.as_str()) || types::has(rd.invariants.as_slice(), p.as_str()) { read = 0; } else { read = 2; } } },\n            }\n        }\n        match ids.read_text(r, pr, read) {\n            None => types::cat3(\"? \", p.as_str(), \"\\n\"),\n            Some(t) => t,\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "identity",
+      "remove": [
+       "identity::Ids::read_text_swapped"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/identity.rs",
+      "old": "    pub(crate) fn read_text(&self, key: &Key, res: &dyn Resolve, read: Read) -> Option<String> {",
+      "new": "    pub(crate) fn read_text(&self, res: &dyn Resolve, key: &Key, read: Read) -> Option<String> {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/incremental.rs",
+      "old": "                ids.read_text(&Key::Def(p.clone()), res, read)",
+      "new": "                ids.read_text(res, &Key::Def(p.clone()), read)"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/incremental.rs",
+      "old": "                .read_text(k, res, Read::Body)",
+      "new": "                .read_text(res, k, Read::Body)"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/sha256.rs",
+      "old": "    let mut s = String::from(\"sha256:\");",
+      "new": "    let mut s = \"sha256:\".to_string();"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "identity",
+      "code": "    impl Ids {\n        #[effects(alloc)]\n        fn read_text_swapped(self: &Ids, key: &str, pr: &mut fmt::Printer, read: u8) -> Option<String> {\n            let at: usize = self.ents.find(key)?;\n            match &self.ents.items[at].kind {\n                EntKind::Def(d, c) => { let none: Vec<String> = Vec::new(); if read == 0 { Some(self.print(pr, key, &Part::Body, none.as_slice())) } else if read == 1 { Some(self.print(pr, key, &Part::Caller, none.as_slice())) } else { Some(self.print(pr, key, &Part::Iface, none.as_slice())) } },\n                EntKind::Type(td) => { fresh(pr, self.ents.items[at].unit.as_str()); pr.type_def_as(td, 0, \"_\"); Some(pr.out.clone()) },\n                EntKind::Trait(t) => Some(String::from(\"trait\")),\n            }\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "code": "    #[effects(alloc)]\n    fn read_of(ids: &identity::Ids, pr: &mut fmt::Printer, r: &str, path: &str, rd: &Reads) -> String {\n        if encode_terms::starts_at(r, 0, \"m:\") {\n            let rest: String = lexer::cut(r, 2, r.len());\n            let sp: usize = match encode_query::find_byte(rest.as_str(), 32, 0) {\n                None => rest.len(),\n                Some(x) => x,\n            };\n            let tr: String = lexer::cut(rest.as_str(), 0, sp);\n            let m: String = lexer::cut(rest.as_str(), sp.saturating_add(1), rest.len());\n            return match ids.method_read(pr, tr.as_str(), m.as_str()) { None => types::cat5(\"? \", tr.as_str(), \"::\", m.as_str(), \"\\n\"), Some(t) => t, };\n        }\n        let p: String = lexer::cut(r, 2, r.len());\n        let mut read: u8 = 0;\n        if encode_terms::starts_at(r, 0, \"0:\") && p != path {\n            read = 1;\n            match rd.kinds.find(p.as_str()) {\n                None => {},\n                Some(k) => { if body::is_spec(rd.kinds.items[k]) { if types::has(rd.uses.as_slice(), p.as_str()) || types::has(rd.comp.as_slice(), p.as_str()) || types::has(rd.invariants.as_slice(), p.as_str()) { read = 0; } else { read = 2; } } },\n            }\n        }\n        match ids.read_text_swapped(r, pr, read) {\n            None => types::cat3(\"? \", p.as_str(), \"\\n\"),\n            Some(t) => t,\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "identity",
+      "remove": [
+       "identity::Ids::read_text"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "identity",
+      "code": "    impl Ids {\n        #[effects(alloc)]\n        fn read_text(self: &Ids, key: &str, pr: &mut fmt::Printer, read: u8) -> Option<String> {\n            let at: usize = self.ents.find(key)?;\n            match &self.ents.items[at].kind {\n                EntKind::Def(d, c) => { let none: Vec<String> = Vec::new(); if read == 0 { Some(self.print(pr, key, &Part::Body, none.as_slice())) } else if read == 1 { Some(self.print(pr, key, &Part::Caller, none.as_slice())) } else { Some(self.print(pr, key, &Part::Iface, none.as_slice())) } },\n                EntKind::Type(td) => { fresh(pr, self.ents.items[at].unit.as_str()); pr.type_def_as(td, 0, \"_\"); Some(pr.out.clone()) },\n                EntKind::Trait(t) => Some(String::from(\"trait\")),\n            }\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "code": "    #[effects(alloc)]\n    fn read_of(ids: &identity::Ids, pr: &mut fmt::Printer, r: &str, path: &str, rd: &Reads) -> String {\n        if encode_terms::starts_at(r, 0, \"m:\") {\n            let rest: String = lexer::cut(r, 2, r.len());\n            let sp: usize = match encode_query::find_byte(rest.as_str(), 32, 0) {\n                None => rest.len(),\n                Some(x) => x,\n            };\n            let tr: String = lexer::cut(rest.as_str(), 0, sp);\n            let m: String = lexer::cut(rest.as_str(), sp.saturating_add(1), rest.len());\n            return match ids.method_read(pr, tr.as_str(), m.as_str()) { None => types::cat5(\"? \", tr.as_str(), \"::\", m.as_str(), \"\\n\"), Some(t) => t, };\n        }\n        let p: String = lexer::cut(r, 2, r.len());\n        let mut read: u8 = 0;\n        if encode_terms::starts_at(r, 0, \"0:\") && p != path {\n            read = 1;\n            match rd.kinds.find(p.as_str()) {\n                None => {},\n                Some(k) => { if body::is_spec(rd.kinds.items[k]) { if types::has(rd.uses.as_slice(), p.as_str()) || types::has(rd.comp.as_slice(), p.as_str()) || types::has(rd.invariants.as_slice(), p.as_str()) { read = 0; } else { read = 2; } } },\n            }\n        }\n        match ids.read_text(r, pr, read) {\n            None => types::cat3(\"? \", p.as_str(), \"\\n\"),\n            Some(t) => t,\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "identity",
+      "remove": [
+       "identity::Ids::read_text_swapped"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/identity.rs",
+      "old": "    pub(crate) fn read_text(&self, key: &Key, res: &dyn Resolve, read: Read) -> Option<String> {",
+      "new": "    pub(crate) fn read_text(&self, res: &dyn Resolve, key: &Key, read: Read) -> Option<String> {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/incremental.rs",
+      "old": "                ids.read_text(&Key::Def(p.clone()), res, read)",
+      "new": "                ids.read_text(res, &Key::Def(p.clone()), read)"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/incremental.rs",
+      "old": "                .read_text(k, res, Read::Body)",
+      "new": "                .read_text(res, k, Read::Body)"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "done",
+   "bmb": [],
+   "rust": []
+  }
+ ]
+}

@@ -1,0 +1,93 @@
+{
+ "id": "c03-callers-elem_ptr",
+ "kind": "comprehend",
+ "family": "callers",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `codegen::Gen::elem_ptr` directly? Leave out `codegen::Gen::elem_ptr` itself unless it calls itself. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `codegen::Gen::elem_ptr` directly? Leave out `codegen::Gen::elem_ptr` itself unless it calls itself. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "codegen::Gen::expr",
+   "codegen::Gen::scalar_ref",
+   "codegen::Gen::stmt"
+  ],
+  "bmb": [
+   "codegen::Gen::assign",
+   "codegen::Gen::index_expr",
+   "codegen::Gen::scalar_ref_of"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "codegen::Gen::elem_ptr",
+      "in",
+      "1"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "codegen::Gen::assign",
+      "codegen::Gen::index_expr",
+      "codegen::Gen::scalar_ref_of"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])elem_ptr\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "codegen::Gen::expr",
+      "codegen::Gen::scalar_ref",
+      "codegen::Gen::stmt"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "codegen::Gen::index_expr",
+       "codegen::Gen::scalar_ref_of"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "codegen::Gen::scalar_ref",
+       "codegen::Gen::stmt"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

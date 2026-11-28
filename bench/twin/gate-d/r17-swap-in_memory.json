@@ -1,0 +1,282 @@
+{
+ "id": "r17-swap-in_memory",
+ "kind": "change",
+ "family": "swap",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Change the signature of the function `incremental::in_memory`: its first two parameters change places (`ck` and `pr`). Update every call of it. The program's behaviour must not change; change nothing else.",
+  "rust": "Change the signature of the function `incremental::Session::in_memory`: its first two parameters after `self` change places (`p` and `t`). Update every call of it. The program's behaviour must not change; change nothing else."
+ },
+ "scope": {
+  "rust": [
+   "incremental::Session::in_memory",
+   "uses_fill::run"
+  ],
+  "bmb": [
+   "incremental::in_memory",
+   "uses_fill::run"
+  ]
+ },
+ "must_change": {
+  "rust": [
+   "incremental::Session::in_memory",
+   "uses_fill::run"
+  ],
+  "bmb": [
+   "incremental::in_memory",
+   "uses_fill::run"
+  ]
+ },
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/incremental.rs",
+     "old": "    pub fn in_memory(p: &Program, t: &Tables, sm: &SourceMap) -> Session {",
+     "new": "    pub fn in_memory(t: &Tables, p: &Program, sm: &SourceMap) -> Session {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/uses_fill.rs",
+     "old": "            None => Session::in_memory(&fe.program, &fe.tables, &fe.sm),",
+     "new": "            None => Session::in_memory(&fe.tables, &fe.program, &fe.sm),"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "incremental",
+     "code": "    #[effects(alloc, io, nondet)]\n    fn in_memory_swapped(pr: &encode_decls::Prepared, ck: &body::Checked, bounded: bool) -> Session {\n        let whole: Option<Vec<String>> = None;\n        let keys: table::Table<String> = keys(ck, pr, &whole, bounded);\n        Session { dir: String::new(), id: compiler_id(), store: Store { entries: table::new::<Entry>(), pending: table::new::<Lines>(), changed: false, damaged: 0 }, audit: false, keys: keys, ir_keys: table::new::<String>(), adts: table::new::<AdtKey>(), stats: no_stats() }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "uses_fill",
+     "code": "    #[effects(alloc, io, nondet)]\n    fn run(files: &[lib::Input], proofs: &mut Option<cache::ProofCache>, defs: &mut Option<incremental::Session>, dir: &Option<String>, z3: &mut toolchain::Z3, bounded: bool) -> Option<table::Table<Seen>> {\n        let mut sm: source::SourceMap = source::SourceMap { files: Vec::new() };\n        let mut diags: diag::Diags = diag::Diags { items: Vec::new(), aliases: Vec::new() };\n        let fe: lib::Front = lib::frontend(files, &mut sm, &mut diags);\n        if diags.has_errors() {\n            return None;\n        }\n        let whole: Option<Vec<String>> = None;\n        let opts: prove::Opts = prove::Opts { only: None, bounded: bounded, seed: 0, rlimit: solver::rlimit(), query: solver::rlimit(), who: solver::Asker::Gate, stop: false, jobs: Vec::new() };\n        let pg: encode_spec::Prog = encode_spec::prog_of(&fe.ck);\n        if is_session(defs) {\n            match defs {\n                None => {},\n                Some(s) => { s.keys = incremental::keys(&fe.ck, &pg.pr, &whole, bounded); },\n            }\n        } else {\n            match dir {\n                None => { *defs = Some(incremental::in_memory_swapped(&pg.pr, &fe.ck, bounded)); },\n                Some(d) => { *defs = Some(incremental::new(d.as_str(), incremental::compiler_id().as_str(), &fe.ck, &pg.pr, &whole, bounded, false)); },\n            }\n        }\n        let outcome: prove::Outcome = prove::run_cached(&fe.ck, &pg, &opts, proofs, defs, z3, &mut diags);\n        let mut found: table::Table<Target> = table::new::<Target>();\n        for m in 0..fe.ck.program.mods.len()\n            invariant 0 <= m && m <= fe.ck.program.mods.len(),\n        {\n            walk(&fe.ck.program.mods[m], \"\", &mut found, 1000000000);\n        }\n        let mut seen: table::Table<Seen> = table::new::<Seen>();\n        for i in 0..outcome.statuses.len()\n            invariant 0 <= i && i <= outcome.statuses.len(),\n        {\n            match found.find(outcome.statuses[i].path.as_str()) {\n                None => {},\n                Some(at) => { let sp: source::Span = found.items[at].span; let mut mine: usize = 0; let mut hints: Vec<String> = Vec::new(); for k in 0..diags.items.len() invariant 0 <= k && k <= diags.items.len(), { if diags.items[k].span.file == sp.file && diags.items[k].span.lo >= sp.lo && diags.items[k].span.hi <= sp.hi { mine = mine.saturating_add(1); hints_of(&diags.items[k], found.items[at].mod_path.as_str(), &mut hints); } } seen.insert(outcome.statuses[i].path.as_str(), Seen { proved: outcome.statuses[i].failed == 0 && mine == 0, hints: body::sorted_set(hints.as_slice()) }); },\n            }\n        }\n        Some(seen)\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "incremental",
+     "remove": [
+      "incremental::in_memory"
+     ]
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "incremental",
+     "code": "    #[effects(alloc, io, nondet)]\n    fn in_memory(pr: &encode_decls::Prepared, ck: &body::Checked, bounded: bool) -> Session {\n        let whole: Option<Vec<String>> = None;\n        let keys: table::Table<String> = keys(ck, pr, &whole, bounded);\n        Session { dir: String::new(), id: compiler_id(), store: Store { entries: table::new::<Entry>(), pending: table::new::<Lines>(), changed: false, damaged: 0 }, audit: false, keys: keys, ir_keys: table::new::<String>(), adts: table::new::<AdtKey>(), stats: no_stats() }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "uses_fill",
+     "code": "    #[effects(alloc, io, nondet)]\n    fn run(files: &[lib::Input], proofs: &mut Option<cache::ProofCache>, defs: &mut Option<incremental::Session>, dir: &Option<String>, z3: &mut toolchain::Z3, bounded: bool) -> Option<table::Table<Seen>> {\n        let mut sm: source::SourceMap = source::SourceMap { files: Vec::new() };\n        let mut diags: diag::Diags = diag::Diags { items: Vec::new(), aliases: Vec::new() };\n        let fe: lib::Front = lib::frontend(files, &mut sm, &mut diags);\n        if diags.has_errors() {\n            return None;\n        }\n        let whole: Option<Vec<String>> = None;\n        let opts: prove::Opts = prove::Opts { only: None, bounded: bounded, seed: 0, rlimit: solver::rlimit(), query: solver::rlimit(), who: solver::Asker::Gate, stop: false, jobs: Vec::new() };\n        let pg: encode_spec::Prog = encode_spec::prog_of(&fe.ck);\n        if is_session(defs) {\n            match defs {\n                None => {},\n                Some(s) => { s.keys = incremental::keys(&fe.ck, &pg.pr, &whole, bounded); },\n            }\n        } else {\n            match dir {\n                None => { *defs = Some(incremental::in_memory(&pg.pr, &fe.ck, bounded)); },\n                Some(d) => { *defs = Some(incremental::new(d.as_str(), incremental::compiler_id().as_str(), &fe.ck, &pg.pr, &whole, bounded, false)); },\n            }\n        }\n        let outcome: prove::Outcome = prove::run_cached(&fe.ck, &pg, &opts, proofs, defs, z3, &mut diags);\n        let mut found: table::Table<Target> = table::new::<Target>();\n        for m in 0..fe.ck.program.mods.len()\n            invariant 0 <= m && m <= fe.ck.program.mods.len(),\n        {\n            walk(&fe.ck.program.mods[m], \"\", &mut found, 1000000000);\n        }\n        let mut seen: table::Table<Seen> = table::new::<Seen>();\n        for i in 0..outcome.statuses.len()\n            invariant 0 <= i && i <= outcome.statuses.len(),\n        {\n            match found.find(outcome.statuses[i].path.as_str()) {\n                None => {},\n                Some(at) => { let sp: source::Span = found.items[at].span; let mut mine: usize = 0; let mut hints: Vec<String> = Vec::new(); for k in 0..diags.items.len() invariant 0 <= k && k <= diags.items.len(), { if diags.items[k].span.file == sp.file && diags.items[k].span.lo >= sp.lo && diags.items[k].span.hi <= sp.hi { mine = mine.saturating_add(1); hints_of(&diags.items[k], found.items[at].mod_path.as_str(), &mut hints); } } seen.insert(outcome.statuses[i].path.as_str(), Seen { proved: outcome.statuses[i].failed == 0 && mine == 0, hints: body::sorted_set(hints.as_slice()) }); },\n            }\n        }\n        Some(seen)\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "incremental",
+     "remove": [
+      "incremental::in_memory_swapped"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "scope",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "code": "    #[effects(alloc, io, nondet)]\n    fn in_memory_swapped(pr: &encode_decls::Prepared, ck: &body::Checked, bounded: bool) -> Session {\n        let whole: Option<Vec<String>> = None;\n        let keys: table::Table<String> = keys(ck, pr, &whole, bounded);\n        Session { dir: String::new(), id: compiler_id(), store: Store { entries: table::new::<Entry>(), pending: table::new::<Lines>(), changed: false, damaged: 0 }, audit: false, keys: keys, ir_keys: table::new::<String>(), adts: table::new::<AdtKey>(), stats: no_stats() }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "uses_fill",
+      "code": "    #[effects(alloc, io, nondet)]\n    fn run(files: &[lib::Input], proofs: &mut Option<cache::ProofCache>, defs: &mut Option<incremental::Session>, dir: &Option<String>, z3: &mut toolchain::Z3, bounded: bool) -> Option<table::Table<Seen>> {\n        let mut sm: source::SourceMap = source::SourceMap { files: Vec::new() };\n        let mut diags: diag::Diags = diag::Diags { items: Vec::new(), aliases: Vec::new() };\n        let fe: lib::Front = lib::frontend(files, &mut sm, &mut diags);\n        if diags.has_errors() {\n            return None;\n        }\n        let whole: Option<Vec<String>> = None;\n        let opts: prove::Opts = prove::Opts { only: None, bounded: bounded, seed: 0, rlimit: solver::rlimit(), query: solver::rlimit(), who: solver::Asker::Gate, stop: false, jobs: Vec::new() };\n        let pg: encode_spec::Prog = encode_spec::prog_of(&fe.ck);\n        if is_session(defs) {\n            match defs {\n                None => {},\n                Some(s) => { s.keys = incremental::keys(&fe.ck, &pg.pr, &whole, bounded); },\n            }\n        } else {\n            match dir {\n                None => { *defs = Some(incremental::in_memory_swapped(&pg.pr, &fe.ck, bounded)); },\n                Some(d) => { *defs = Some(incremental::new(d.as_str(), incremental::compiler_id().as_str(), &fe.ck, &pg.pr, &whole, bounded, false)); },\n            }\n        }\n        let outcome: prove::Outcome = prove::run_cached(&fe.ck, &pg, &opts, proofs, defs, z3, &mut diags);\n        let mut found: table::Table<Target> = table::new::<Target>();\n        for m in 0..fe.ck.program.mods.len()\n            invariant 0 <= m && m <= fe.ck.program.mods.len(),\n        {\n            walk(&fe.ck.program.mods[m], \"\", &mut found, 1000000000);\n        }\n        let mut seen: table::Table<Seen> = table::new::<Seen>();\n        for i in 0..outcome.statuses.len()\n            invariant 0 <= i && i <= outcome.statuses.len(),\n        {\n            match found.find(outcome.statuses[i].path.as_str()) {\n                None => {},\n                Some(at) => { let sp: source::Span = found.items[at].span; let mut mine: usize = 0; let mut hints: Vec<String> = Vec::new(); for k in 0..diags.items.len() invariant 0 <= k && k <= diags.items.len(), { if diags.items[k].span.file == sp.file && diags.items[k].span.lo >= sp.lo && diags.items[k].span.hi <= sp.hi { mine = mine.saturating_add(1); hints_of(&diags.items[k], found.items[at].mod_path.as_str(), &mut hints); } } seen.insert(outcome.statuses[i].path.as_str(), Seen { proved: outcome.statuses[i].failed == 0 && mine == 0, hints: body::sorted_set(hints.as_slice()) }); },\n            }\n        }\n        Some(seen)\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "remove": [
+       "incremental::in_memory"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "code": "    #[effects(alloc, io, nondet)]\n    fn in_memory(pr: &encode_decls::Prepared, ck: &body::Checked, bounded: bool) -> Session {\n        let whole: Option<Vec<String>> = None;\n        let keys: table::Table<String> = keys(ck, pr, &whole, bounded);\n        Session { dir: String::new(), id: compiler_id(), store: Store { entries: table::new::<Entry>(), pending: table::new::<Lines>(), changed: false, damaged: 0 }, audit: false, keys: keys, ir_keys: table::new::<String>(), adts: table::new::<AdtKey>(), stats: no_stats() }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "uses_fill",
+      "code": "    #[effects(alloc, io, nondet)]\n    fn run(files: &[lib::Input], proofs: &mut Option<cache::ProofCache>, defs: &mut Option<incremental::Session>, dir: &Option<String>, z3: &mut toolchain::Z3, bounded: bool) -> Option<table::Table<Seen>> {\n        let mut sm: source::SourceMap = source::SourceMap { files: Vec::new() };\n        let mut diags: diag::Diags = diag::Diags { items: Vec::new(), aliases: Vec::new() };\n        let fe: lib::Front = lib::frontend(files, &mut sm, &mut diags);\n        if diags.has_errors() {\n            return None;\n        }\n        let whole: Option<Vec<String>> = None;\n        let opts: prove::Opts = prove::Opts { only: None, bounded: bounded, seed: 0, rlimit: solver::rlimit(), query: solver::rlimit(), who: solver::Asker::Gate, stop: false, jobs: Vec::new() };\n        let pg: encode_spec::Prog = encode_spec::prog_of(&fe.ck);\n        if is_session(defs) {\n            match defs {\n                None => {},\n                Some(s) => { s.keys = incremental::keys(&fe.ck, &pg.pr, &whole, bounded); },\n            }\n        } else {\n            match dir {\n                None => { *defs = Some(incremental::in_memory(&pg.pr, &fe.ck, bounded)); },\n                Some(d) => { *defs = Some(incremental::new(d.as_str(), incremental::compiler_id().as_str(), &fe.ck, &pg.pr, &whole, bounded, false)); },\n            }\n        }\n        let outcome: prove::Outcome = prove::run_cached(&fe.ck, &pg, &opts, proofs, defs, z3, &mut diags);\n        let mut found: table::Table<Target> = table::new::<Target>();\n        for m in 0..fe.ck.program.mods.len()\n            invariant 0 <= m && m <= fe.ck.program.mods.len(),\n        {\n            walk(&fe.ck.program.mods[m], \"\", &mut found, 1000000000);\n        }\n        let mut seen: table::Table<Seen> = table::new::<Seen>();\n        for i in 0..outcome.statuses.len()\n            invariant 0 <= i && i <= outcome.statuses.len(),\n        {\n            match found.find(outcome.statuses[i].path.as_str()) {\n                None => {},\n                Some(at) => { let sp: source::Span = found.items[at].span; let mut mine: usize = 0; let mut hints: Vec<String> = Vec::new(); for k in 0..diags.items.len() invariant 0 <= k && k <= diags.items.len(), { if diags.items[k].span.file == sp.file && diags.items[k].span.lo >= sp.lo && diags.items[k].span.hi <= sp.hi { mine = mine.saturating_add(1); hints_of(&diags.items[k], found.items[at].mod_path.as_str(), &mut hints); } } seen.insert(outcome.statuses[i].path.as_str(), Seen { proved: outcome.statuses[i].failed == 0 && mine == 0, hints: body::sorted_set(hints.as_slice()) }); },\n            }\n        }\n        Some(seen)\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "remove": [
+       "incremental::in_memory_swapped"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/incremental.rs",
+      "old": "    pub fn in_memory(p: &Program, t: &Tables, sm: &SourceMap) -> Session {",
+      "new": "    pub fn in_memory(t: &Tables, p: &Program, sm: &SourceMap) -> Session {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/uses_fill.rs",
+      "old": "            None => Session::in_memory(&fe.program, &fe.tables, &fe.sm),",
+      "new": "            None => Session::in_memory(&fe.tables, &fe.program, &fe.sm),"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/sha256.rs",
+      "old": "    let mut s = String::from(\"sha256:\");",
+      "new": "    let mut s = \"sha256:\".to_string();"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "code": "    #[effects(alloc, io, nondet)]\n    fn in_memory_swapped(pr: &encode_decls::Prepared, ck: &body::Checked, bounded: bool) -> Session {\n        let whole: Option<Vec<String>> = None;\n        let keys: table::Table<String> = keys(ck, pr, &whole, bounded);\n        Session { dir: String::new(), id: compiler_id(), store: Store { entries: table::new::<Entry>(), pending: table::new::<Lines>(), changed: false, damaged: 0 }, audit: false, keys: keys, ir_keys: table::new::<String>(), adts: table::new::<AdtKey>(), stats: no_stats() }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "uses_fill",
+      "code": "    #[effects(alloc, io, nondet)]\n    fn run(files: &[lib::Input], proofs: &mut Option<cache::ProofCache>, defs: &mut Option<incremental::Session>, dir: &Option<String>, z3: &mut toolchain::Z3, bounded: bool) -> Option<table::Table<Seen>> {\n        let mut sm: source::SourceMap = source::SourceMap { files: Vec::new() };\n        let mut diags: diag::Diags = diag::Diags { items: Vec::new(), aliases: Vec::new() };\n        let fe: lib::Front = lib::frontend(files, &mut sm, &mut diags);\n        if diags.has_errors() {\n            return None;\n        }\n        let whole: Option<Vec<String>> = None;\n        let opts: prove::Opts = prove::Opts { only: None, bounded: bounded, seed: 0, rlimit: solver::rlimit(), query: solver::rlimit(), who: solver::Asker::Gate, stop: false, jobs: Vec::new() };\n        let pg: encode_spec::Prog = encode_spec::prog_of(&fe.ck);\n        if is_session(defs) {\n            match defs {\n                None => {},\n                Some(s) => { s.keys = incremental::keys(&fe.ck, &pg.pr, &whole, bounded); },\n            }\n        } else {\n            match dir {\n                None => { *defs = Some(incremental::in_memory_swapped(&pg.pr, &fe.ck, bounded)); },\n                Some(d) => { *defs = Some(incremental::new(d.as_str(), incremental::compiler_id().as_str(), &fe.ck, &pg.pr, &whole, bounded, false)); },\n            }\n        }\n        let outcome: prove::Outcome = prove::run_cached(&fe.ck, &pg, &opts, proofs, defs, z3, &mut diags);\n        let mut found: table::Table<Target> = table::new::<Target>();\n        for m in 0..fe.ck.program.mods.len()\n            invariant 0 <= m && m <= fe.ck.program.mods.len(),\n        {\n            walk(&fe.ck.program.mods[m], \"\", &mut found, 1000000000);\n        }\n        let mut seen: table::Table<Seen> = table::new::<Seen>();\n        for i in 0..outcome.statuses.len()\n            invariant 0 <= i && i <= outcome.statuses.len(),\n        {\n            match found.find(outcome.statuses[i].path.as_str()) {\n                None => {},\n                Some(at) => { let sp: source::Span = found.items[at].span; let mut mine: usize = 0; let mut hints: Vec<String> = Vec::new(); for k in 0..diags.items.len() invariant 0 <= k && k <= diags.items.len(), { if diags.items[k].span.file == sp.file && diags.items[k].span.lo >= sp.lo && diags.items[k].span.hi <= sp.hi { mine = mine.saturating_add(1); hints_of(&diags.items[k], found.items[at].mod_path.as_str(), &mut hints); } } seen.insert(outcome.statuses[i].path.as_str(), Seen { proved: outcome.statuses[i].failed == 0 && mine == 0, hints: body::sorted_set(hints.as_slice()) }); },\n            }\n        }\n        Some(seen)\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "remove": [
+       "incremental::in_memory"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "code": "    #[effects(alloc, io, nondet)]\n    fn in_memory(pr: &encode_decls::Prepared, ck: &body::Checked, bounded: bool) -> Session {\n        let whole: Option<Vec<String>> = None;\n        let keys: table::Table<String> = keys(ck, pr, &whole, bounded);\n        Session { dir: String::new(), id: compiler_id(), store: Store { entries: table::new::<Entry>(), pending: table::new::<Lines>(), changed: false, damaged: 0 }, audit: false, keys: keys, ir_keys: table::new::<String>(), adts: table::new::<AdtKey>(), stats: no_stats() }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "uses_fill",
+      "code": "    #[effects(alloc, io, nondet)]\n    fn run(files: &[lib::Input], proofs: &mut Option<cache::ProofCache>, defs: &mut Option<incremental::Session>, dir: &Option<String>, z3: &mut toolchain::Z3, bounded: bool) -> Option<table::Table<Seen>> {\n        let mut sm: source::SourceMap = source::SourceMap { files: Vec::new() };\n        let mut diags: diag::Diags = diag::Diags { items: Vec::new(), aliases: Vec::new() };\n        let fe: lib::Front = lib::frontend(files, &mut sm, &mut diags);\n        if diags.has_errors() {\n            return None;\n        }\n        let whole: Option<Vec<String>> = None;\n        let opts: prove::Opts = prove::Opts { only: None, bounded: bounded, seed: 0, rlimit: solver::rlimit(), query: solver::rlimit(), who: solver::Asker::Gate, stop: false, jobs: Vec::new() };\n        let pg: encode_spec::Prog = encode_spec::prog_of(&fe.ck);\n        if is_session(defs) {\n            match defs {\n                None => {},\n                Some(s) => { s.keys = incremental::keys(&fe.ck, &pg.pr, &whole, bounded); },\n            }\n        } else {\n            match dir {\n                None => { *defs = Some(incremental::in_memory(&pg.pr, &fe.ck, bounded)); },\n                Some(d) => { *defs = Some(incremental::new(d.as_str(), incremental::compiler_id().as_str(), &fe.ck, &pg.pr, &whole, bounded, false)); },\n            }\n        }\n        let outcome: prove::Outcome = prove::run_cached(&fe.ck, &pg, &opts, proofs, defs, z3, &mut diags);\n        let mut found: table::Table<Target> = table::new::<Target>();\n        for m in 0..fe.ck.program.mods.len()\n            invariant 0 <= m && m <= fe.ck.program.mods.len(),\n        {\n            walk(&fe.ck.program.mods[m], \"\", &mut found, 1000000000);\n        }\n        let mut seen: table::Table<Seen> = table::new::<Seen>();\n        for i in 0..outcome.statuses.len()\n            invariant 0 <= i && i <= outcome.statuses.len(),\n        {\n            match found.find(outcome.statuses[i].path.as_str()) {\n                None => {},\n                Some(at) => { let sp: source::Span = found.items[at].span; let mut mine: usize = 0; let mut hints: Vec<String> = Vec::new(); for k in 0..diags.items.len() invariant 0 <= k && k <= diags.items.len(), { if diags.items[k].span.file == sp.file && diags.items[k].span.lo >= sp.lo && diags.items[k].span.hi <= sp.hi { mine = mine.saturating_add(1); hints_of(&diags.items[k], found.items[at].mod_path.as_str(), &mut hints); } } seen.insert(outcome.statuses[i].path.as_str(), Seen { proved: outcome.statuses[i].failed == 0 && mine == 0, hints: body::sorted_set(hints.as_slice()) }); },\n            }\n        }\n        Some(seen)\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "incremental",
+      "remove": [
+       "incremental::in_memory_swapped"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/incremental.rs",
+      "old": "    pub fn in_memory(p: &Program, t: &Tables, sm: &SourceMap) -> Session {",
+      "new": "    pub fn in_memory(t: &Tables, p: &Program, sm: &SourceMap) -> Session {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/uses_fill.rs",
+      "old": "            None => Session::in_memory(&fe.program, &fe.tables, &fe.sm),",
+      "new": "            None => Session::in_memory(&fe.tables, &fe.program, &fe.sm),"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "done",
+   "bmb": [],
+   "rust": []
+  }
+ ]
+}

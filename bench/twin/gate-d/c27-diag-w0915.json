@@ -1,0 +1,79 @@
+{
+ "id": "c27-diag-w0915",
+ "kind": "comprehend",
+ "family": "diag",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions report the diagnostic code `W0915`, that is, write the code in their own body? Leave out the table that lists every code. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions report the diagnostic code `W0915`, that is, write the code in their own body? Leave out the table that lists every code. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "lint::conversions",
+   "lint::lint_sources_selected"
+  ],
+  "bmb": [
+   "<lint_syntax::Casts as ast::ExprFn>::expr",
+   "lint::codes",
+   "lint::run"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "<lint_syntax::Casts as ast::ExprFn>::expr",
+      "lint::codes",
+      "lint::run"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\"W0915\""
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "lint::conversions",
+      "lint::lint_sources_selected"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "lint::codes",
+       "lint::run"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "lint::lint_sources_selected"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

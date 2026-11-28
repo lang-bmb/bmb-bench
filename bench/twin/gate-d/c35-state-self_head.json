@@ -1,0 +1,76 @@
+{
+ "id": "c35-state-self_head",
+ "kind": "comprehend",
+ "family": "state",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions change the field `self_head` of `decls::Checker`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions change the field `self_head` of `check::Checker`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "check::Checker::check_mod",
+   "check::Checker::collect_mod"
+  ],
+  "bmb": [
+   "body::Body::check_mod",
+   "decls::Checker::collect_trait_impl"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "body::Body::check_mod",
+      "decls::Checker::collect_trait_impl"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\\.self_head\\b"
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "check::Checker::check_mod",
+      "check::Checker::collect_mod"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "decls::Checker::collect_trait_impl"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "check::Checker::collect_mod"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

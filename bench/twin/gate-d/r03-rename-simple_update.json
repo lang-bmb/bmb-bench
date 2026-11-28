@@ -1,0 +1,273 @@
+{
+ "id": "r03-rename-simple_update",
+ "kind": "change",
+ "family": "rename",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Rename the function `lint_syntax::simple_update` to `simple_update_renamed` and update every use of it. The program's behaviour must not change; change nothing else.",
+  "rust": "Rename the function `lint::simple_update` to `simple_update_renamed` and update every use of it. The program's behaviour must not change; change nothing else."
+ },
+ "scope": {
+  "rust": [
+   "lint::io_loop_cores",
+   "lint::simple_update",
+   "lint::simple_update_renamed"
+  ],
+  "bmb": [
+   "lint_syntax::loop_core",
+   "lint_syntax::simple_update",
+   "lint_syntax::simple_update_renamed"
+  ]
+ },
+ "must_change": {
+  "rust": [
+   "lint::io_loop_cores",
+   "lint::simple_update",
+   "lint::simple_update_renamed"
+  ],
+  "bmb": [
+   "lint_syntax::loop_core",
+   "lint_syntax::simple_update",
+   "lint_syntax::simple_update_renamed"
+  ]
+ },
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/lint.rs",
+     "old": "                        .all(|(_, e)| simple_update(e) && !matches!(e.kind, ExprKind::Call { .. }))",
+     "new": "                        .all(|(_, e)| simple_update_renamed(e) && !matches!(e.kind, ExprKind::Call { .. }))"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/lint.rs",
+     "old": "            if !decides && updates.iter().all(|e| simple_update(e)) {",
+     "new": "            if !decides && updates.iter().all(|e| simple_update_renamed(e)) {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/lint.rs",
+     "old": "fn simple_update(e: &Expr) -> bool {",
+     "new": "fn simple_update_renamed(e: &Expr) -> bool {"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "lint_syntax",
+     "code": "    #[effects(alloc)]\n    fn loop_core(ck: &body::Checked, cx: &Io, path: &str, name: &str, l: &LoopRef) -> Option<diag::Diag> {\n        let mut lp: LoopParts = LoopParts { declared: Vec::new(), lets: Vec::new(), assigns: Vec::new(), conds: Vec::new(), prints: false };\n        loop_parts(&l.body, &mut lp, cx, 1000000000);\n        let mut in_cond: Vars = Vars { names: Vec::new() };\n        match &l.cond {\n            None => {},\n            Some(c) => each::<Vars>(c, &mut in_cond, 1000000000),\n        }\n        let mut complex: Vec<String> = Vec::new();\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            if !(simple_update_renamed(&lp.assigns[i].value) && ast::tag(&lp.assigns[i].value.kind) != 9) {\n                complex.push(lp.assigns[i].name.clone());\n            }\n        }\n        let mut state: Vec<String> = Vec::new();\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            let n: String = lp.assigns[i].name.clone();\n            if !types::has(lp.declared.as_slice(), n.as_str()) && !types::has(state.as_slice(), n.as_str()) && !(types::has(in_cond.names.as_slice(), n.as_str()) && !types::has(complex.as_slice(), n.as_str())) {\n                state.push(n.clone());\n            }\n        }\n        if !lp.prints || state.len() == 0 {\n            return None;\n        }\n        let mut simple: bool = true;\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            if types::has(state.as_slice(), lp.assigns[i].name.as_str()) {\n                if needs_io(&lp.assigns[i].value, cx) {\n                    return None;\n                }\n                if !simple_update_renamed(&lp.assigns[i].value) {\n                    simple = false;\n                }\n            }\n        }\n        let mut decides: bool = false;\n        for i in 0..lp.conds.len()\n            invariant 0 <= i && i <= lp.conds.len(),\n        {\n            if !decides && inline_logic(&lp.conds[i].cond, 1000000000) && shares(lp.conds[i].names.as_slice(), state.as_slice()) && !needs_io(&lp.conds[i].cond, cx) {\n                decides = true;\n            }\n        }\n        if !decides && simple {\n            return None;\n        }\n        let mut inputs: Vec<String> = Vec::new();\n        let mut results: Vec<String> = Vec::new();\n        for i in 0..lp.lets.len()\n            invariant 0 <= i && i <= lp.lets.len(),\n        {\n            if lp.lets[i].mutable {\n                let mut decided: bool = false;\n                for j in 0..lp.conds.len()\n                    invariant 0 <= j && j <= lp.conds.len(),\n                {\n                    if inline_logic(&lp.conds[j].cond, 1000000000) && types::has(lp.conds[j].names.as_slice(), lp.lets[i].name.as_str()) {\n                        decided = true;\n                    }\n                }\n                if decided {\n                    results.push(lp.lets[i].name.clone());\n                }\n            } else {\n                let mut seen: Vars = Vars { names: Vec::new() };\n                each::<Vars>(&lp.lets[i].init, &mut seen, 1000000000);\n                if !shares(seen.names.as_slice(), state.as_slice()) {\n                    inputs.push(lp.lets[i].name.clone());\n                }\n            }\n        }\n        let mut read: Vars = Vars { names: Vec::new() };\n        for i in 0..lp.conds.len()\n            invariant 0 <= i && i <= lp.conds.len(),\n        {\n            if shares(lp.conds[i].names.as_slice(), state.as_slice()) || shares(lp.conds[i].names.as_slice(), results.as_slice()) {\n                each::<Vars>(&lp.conds[i].cond, &mut read, 1000000000);\n            }\n        }\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            if types::has(state.as_slice(), lp.assigns[i].name.as_str()) || types::has(results.as_slice(), lp.assigns[i].name.as_str()) {\n                each::<Vars>(&lp.assigns[i].value, &mut read, 1000000000);\n            }\n        }\n        let mut reads: Vec<String> = Vec::new();\n        for i in 0..state.len()\n            invariant 0 <= i && i <= state.len(),\n        {\n            reads.push(state[i].clone());\n        }\n        for i in 0..read.names.len()\n            invariant 0 <= i && i <= read.names.len(),\n        {\n            let v: String = read.names[i].clone();\n            let is_loop_var: bool = match &l.var {\n                None => false,\n                Some(lv) => lv.as_str() == v.as_str(),\n            };\n            if !types::has(reads.as_slice(), v.as_str()) && (!types::has(lp.declared.as_slice(), v.as_str()) || types::has(inputs.as_slice(), v.as_str())) && !(types::has(in_cond.names.as_slice(), v.as_str()) && !types::has(complex.as_slice(), v.as_str())) && !is_loop_var {\n                reads.push(v.clone());\n            }\n        }\n        let mut typed: Vec<String> = Vec::new();\n        for i in 0..reads.len()\n            invariant 0 <= i && i <= reads.len(),\n        {\n            match local_type(ck, path, reads[i].as_str()) {\n                None => typed.push(reads[i].clone()),\n                Some(ty) => typed.push(types::cat3(reads[i].as_str(), \": \", ty.as_str())),\n            }\n        }\n        let mut outs: Vec<String> = Vec::new();\n        for i in 0..state.len()\n            invariant 0 <= i && i <= state.len(),\n        {\n            outs.push(type_or_name(ck, path, state[i].as_str()));\n        }\n        for i in 0..results.len()\n            invariant 0 <= i && i <= results.len(),\n        {\n            outs.push(type_or_name(ck, path, results[i].as_str()));\n        }\n        let ret: String = if outs.len() == 1 {\n            outs[0].clone()\n        } else {\n            types::cat3(\"(\", types::join(outs.as_slice(), \", \").as_str(), \")\")\n        };\n        let mut msg: String = types::cat5(\"this loop of `\", path, \"` prints and updates its state `\", types::join(state.as_slice(), \"`, `\").as_str(), \"` with pure expressions only: the update can be a pure function, proved by its contract, so that only the printing needs a test\");\n        let mut hint: String = types::cat5(\"move the update into `fn \", name, \"_step(\", types::join(typed.as_slice(), \", \").as_str(), \") -> \");\n        hint.push_str(ret.as_str());\n        hint.push_str(\"` with `#[effects(pure)]` and a contract, and assign its result here\");\n        Some(diag::fix(diag::new(\"W0910\", l.span, msg.as_str()), hint.as_str(), None))\n    }\n\n    #[effects(pure)]\n    fn simple_update_renamed(e: &ast::Expr) -> bool {\n        match &e.kind {\n            ast::ExprKind::Int(_, _) => atom(e),\n            ast::ExprKind::Float(_) => atom(e),\n            ast::ExprKind::ByteLit(_) => atom(e),\n            ast::ExprKind::ByteStr(_) => atom(e),\n            ast::ExprKind::StrLit(_) => atom(e),\n            ast::ExprKind::CharLit(_) => atom(e),\n            ast::ExprKind::Bool(_) => atom(e),\n            ast::ExprKind::Unit => atom(e),\n            ast::ExprKind::Var(_) => atom(e),\n            ast::ExprKind::Call(ca) => true,\n            ast::ExprKind::Method(_) => atom(e),\n            ast::ExprKind::Index(ib, ii) => true,\n            ast::ExprKind::Unary(_, _) => atom(e),\n            ast::ExprKind::Binary(bop, bl, br) => (match bop { ast::BinOp::Add => true, ast::BinOp::Sub => true, ast::BinOp::Mul => false, ast::BinOp::Div => false, ast::BinOp::Rem => false, ast::BinOp::Eq => false, ast::BinOp::Ne => false, ast::BinOp::Lt => false, ast::BinOp::Le => false, ast::BinOp::Gt => false, ast::BinOp::Ge => false, ast::BinOp::And => false, ast::BinOp::Or => false, ast::BinOp::Implies => false, ast::BinOp::BitAnd => false, ast::BinOp::BitOr => false, ast::BinOp::BitXor => false, ast::BinOp::Shl => false, ast::BinOp::Shr => false, }) && atom(&**bl) && ast::tag(&br.kind) == 0,\n            ast::ExprKind::Ref(_, _) => atom(e),\n            ast::ExprKind::If(_) => atom(e),\n            ast::ExprKind::Block(_) => atom(e),\n            ast::ExprKind::Array(_) => atom(e),\n            ast::ExprKind::Repeat(_) => atom(e),\n            ast::ExprKind::Old(_) => atom(e),\n            ast::ExprKind::Quant(_) => atom(e),\n            ast::ExprKind::Trigger(_) => atom(e),\n            ast::ExprKind::Closure(_) => atom(e),\n            ast::ExprKind::StructLit(_) => atom(e),\n            ast::ExprKind::Path(_) => atom(e),\n            ast::ExprKind::Deref(_) => atom(e),\n            ast::ExprKind::Field(fx, fnm) => true,\n            ast::ExprKind::Match(_) => atom(e),\n            ast::ExprKind::Return(_) => atom(e),\n            ast::ExprKind::Try(_) => atom(e),\n            ast::ExprKind::Loop(_) => atom(e),\n            ast::ExprKind::Break(_) => atom(e),\n            ast::ExprKind::Continue(_) => atom(e),\n            ast::ExprKind::Range(_) => atom(e),\n            ast::ExprKind::Error => atom(e),\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "lint_syntax",
+     "remove": [
+      "lint_syntax::simple_update"
+     ]
+    }
+   ]
+  ],
+  "bmb:port-rename": [
+   [
+    "write",
+    {
+     "rename": [
+      {
+       "def": "lint_syntax::simple_update",
+       "to": "simple_update_renamed"
+      }
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "scope",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "lint_syntax",
+      "code": "    #[effects(alloc)]\n    fn loop_core(ck: &body::Checked, cx: &Io, path: &str, name: &str, l: &LoopRef) -> Option<diag::Diag> {\n        let mut lp: LoopParts = LoopParts { declared: Vec::new(), lets: Vec::new(), assigns: Vec::new(), conds: Vec::new(), prints: false };\n        loop_parts(&l.body, &mut lp, cx, 1000000000);\n        let mut in_cond: Vars = Vars { names: Vec::new() };\n        match &l.cond {\n            None => {},\n            Some(c) => each::<Vars>(c, &mut in_cond, 1000000000),\n        }\n        let mut complex: Vec<String> = Vec::new();\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            if !(simple_update_renamed(&lp.assigns[i].value) && ast::tag(&lp.assigns[i].value.kind) != 9) {\n                complex.push(lp.assigns[i].name.clone());\n            }\n        }\n        let mut state: Vec<String> = Vec::new();\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            let n: String = lp.assigns[i].name.clone();\n            if !types::has(lp.declared.as_slice(), n.as_str()) && !types::has(state.as_slice(), n.as_str()) && !(types::has(in_cond.names.as_slice(), n.as_str()) && !types::has(complex.as_slice(), n.as_str())) {\n                state.push(n.clone());\n            }\n        }\n        if !lp.prints || state.len() == 0 {\n            return None;\n        }\n        let mut simple: bool = true;\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            if types::has(state.as_slice(), lp.assigns[i].name.as_str()) {\n                if needs_io(&lp.assigns[i].value, cx) {\n                    return None;\n                }\n                if !simple_update_renamed(&lp.assigns[i].value) {\n                    simple = false;\n                }\n            }\n        }\n        let mut decides: bool = false;\n        for i in 0..lp.conds.len()\n            invariant 0 <= i && i <= lp.conds.len(),\n        {\n            if !decides && inline_logic(&lp.conds[i].cond, 1000000000) && shares(lp.conds[i].names.as_slice(), state.as_slice()) && !needs_io(&lp.conds[i].cond, cx) {\n                decides = true;\n            }\n        }\n        if !decides && simple {\n            return None;\n        }\n        let mut inputs: Vec<String> = Vec::new();\n        let mut results: Vec<String> = Vec::new();\n        for i in 0..lp.lets.len()\n            invariant 0 <= i && i <= lp.lets.len(),\n        {\n            if lp.lets[i].mutable {\n                let mut decided: bool = false;\n                for j in 0..lp.conds.len()\n                    invariant 0 <= j && j <= lp.conds.len(),\n                {\n                    if inline_logic(&lp.conds[j].cond, 1000000000) && types::has(lp.conds[j].names.as_slice(), lp.lets[i].name.as_str()) {\n                        decided = true;\n                    }\n                }\n                if decided {\n                    results.push(lp.lets[i].name.clone());\n                }\n            } else {\n                let mut seen: Vars = Vars { names: Vec::new() };\n                each::<Vars>(&lp.lets[i].init, &mut seen, 1000000000);\n                if !shares(seen.names.as_slice(), state.as_slice()) {\n                    inputs.push(lp.lets[i].name.clone());\n                }\n            }\n        }\n        let mut read: Vars = Vars { names: Vec::new() };\n        for i in 0..lp.conds.len()\n            invariant 0 <= i && i <= lp.conds.len(),\n        {\n            if shares(lp.conds[i].names.as_slice(), state.as_slice()) || shares(lp.conds[i].names.as_slice(), results.as_slice()) {\n                each::<Vars>(&lp.conds[i].cond, &mut read, 1000000000);\n            }\n        }\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            if types::has(state.as_slice(), lp.assigns[i].name.as_str()) || types::has(results.as_slice(), lp.assigns[i].name.as_str()) {\n                each::<Vars>(&lp.assigns[i].value, &mut read, 1000000000);\n            }\n        }\n        let mut reads: Vec<String> = Vec::new();\n        for i in 0..state.len()\n            invariant 0 <= i && i <= state.len(),\n        {\n            reads.push(state[i].clone());\n        }\n        for i in 0..read.names.len()\n            invariant 0 <= i && i <= read.names.len(),\n        {\n            let v: String = read.names[i].clone();\n            let is_loop_var: bool = match &l.var {\n                None => false,\n                Some(lv) => lv.as_str() == v.as_str(),\n            };\n            if !types::has(reads.as_slice(), v.as_str()) && (!types::has(lp.declared.as_slice(), v.as_str()) || types::has(inputs.as_slice(), v.as_str())) && !(types::has(in_cond.names.as_slice(), v.as_str()) && !types::has(complex.as_slice(), v.as_str())) && !is_loop_var {\n                reads.push(v.clone());\n            }\n        }\n        let mut typed: Vec<String> = Vec::new();\n        for i in 0..reads.len()\n            invariant 0 <= i && i <= reads.len(),\n        {\n            match local_type(ck, path, reads[i].as_str()) {\n                None => typed.push(reads[i].clone()),\n                Some(ty) => typed.push(types::cat3(reads[i].as_str(), \": \", ty.as_str())),\n            }\n        }\n        let mut outs: Vec<String> = Vec::new();\n        for i in 0..state.len()\n            invariant 0 <= i && i <= state.len(),\n        {\n            outs.push(type_or_name(ck, path, state[i].as_str()));\n        }\n        for i in 0..results.len()\n            invariant 0 <= i && i <= results.len(),\n        {\n            outs.push(type_or_name(ck, path, results[i].as_str()));\n        }\n        let ret: String = if outs.len() == 1 {\n            outs[0].clone()\n        } else {\n            types::cat3(\"(\", types::join(outs.as_slice(), \", \").as_str(), \")\")\n        };\n        let mut msg: String = types::cat5(\"this loop of `\", path, \"` prints and updates its state `\", types::join(state.as_slice(), \"`, `\").as_str(), \"` with pure expressions only: the update can be a pure function, proved by its contract, so that only the printing needs a test\");\n        let mut hint: String = types::cat5(\"move the update into `fn \", name, \"_step(\", types::join(typed.as_slice(), \", \").as_str(), \") -> \");\n        hint.push_str(ret.as_str());\n        hint.push_str(\"` with `#[effects(pure)]` and a contract, and assign its result here\");\n        Some(diag::fix(diag::new(\"W0910\", l.span, msg.as_str()), hint.as_str(), None))\n    }\n\n    #[effects(pure)]\n    fn simple_update_renamed(e: &ast::Expr) -> bool {\n        match &e.kind {\n            ast::ExprKind::Int(_, _) => atom(e),\n            ast::ExprKind::Float(_) => atom(e),\n            ast::ExprKind::ByteLit(_) => atom(e),\n            ast::ExprKind::ByteStr(_) => atom(e),\n            ast::ExprKind::StrLit(_) => atom(e),\n            ast::ExprKind::CharLit(_) => atom(e),\n            ast::ExprKind::Bool(_) => atom(e),\n            ast::ExprKind::Unit => atom(e),\n            ast::ExprKind::Var(_) => atom(e),\n            ast::ExprKind::Call(ca) => true,\n            ast::ExprKind::Method(_) => atom(e),\n            ast::ExprKind::Index(ib, ii) => true,\n            ast::ExprKind::Unary(_, _) => atom(e),\n            ast::ExprKind::Binary(bop, bl, br) => (match bop { ast::BinOp::Add => true, ast::BinOp::Sub => true, ast::BinOp::Mul => false, ast::BinOp::Div => false, ast::BinOp::Rem => false, ast::BinOp::Eq => false, ast::BinOp::Ne => false, ast::BinOp::Lt => false, ast::BinOp::Le => false, ast::BinOp::Gt => false, ast::BinOp::Ge => false, ast::BinOp::And => false, ast::BinOp::Or => false, ast::BinOp::Implies => false, ast::BinOp::BitAnd => false, ast::BinOp::BitOr => false, ast::BinOp::BitXor => false, ast::BinOp::Shl => false, ast::BinOp::Shr => false, }) && atom(&**bl) && ast::tag(&br.kind) == 0,\n            ast::ExprKind::Ref(_, _) => atom(e),\n            ast::ExprKind::If(_) => atom(e),\n            ast::ExprKind::Block(_) => atom(e),\n            ast::ExprKind::Array(_) => atom(e),\n            ast::ExprKind::Repeat(_) => atom(e),\n            ast::ExprKind::Old(_) => atom(e),\n            ast::ExprKind::Quant(_) => atom(e),\n            ast::ExprKind::Trigger(_) => atom(e),\n            ast::ExprKind::Closure(_) => atom(e),\n            ast::ExprKind::StructLit(_) => atom(e),\n            ast::ExprKind::Path(_) => atom(e),\n            ast::ExprKind::Deref(_) => atom(e),\n            ast::ExprKind::Field(fx, fnm) => true,\n            ast::ExprKind::Match(_) => atom(e),\n            ast::ExprKind::Return(_) => atom(e),\n            ast::ExprKind::Try(_) => atom(e),\n            ast::ExprKind::Loop(_) => atom(e),\n            ast::ExprKind::Break(_) => atom(e),\n            ast::ExprKind::Continue(_) => atom(e),\n            ast::ExprKind::Range(_) => atom(e),\n            ast::ExprKind::Error => atom(e),\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "lint_syntax",
+      "remove": [
+       "lint_syntax::simple_update"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/lint.rs",
+      "old": "                        .all(|(_, e)| simple_update(e) && !matches!(e.kind, ExprKind::Call { .. }))",
+      "new": "                        .all(|(_, e)| simple_update_renamed(e) && !matches!(e.kind, ExprKind::Call { .. }))"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/lint.rs",
+      "old": "            if !decides && updates.iter().all(|e| simple_update(e)) {",
+      "new": "            if !decides && updates.iter().all(|e| simple_update_renamed(e)) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/lint.rs",
+      "old": "fn simple_update(e: &Expr) -> bool {",
+      "new": "fn simple_update_renamed(e: &Expr) -> bool {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/sha256.rs",
+      "old": "    let mut s = String::from(\"sha256:\");",
+      "new": "    let mut s = \"sha256:\".to_string();"
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "lint_syntax::simple_update",
+        "to": "simple_update_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "lint_syntax",
+      "code": "    #[effects(alloc)]\n    fn loop_core(ck: &body::Checked, cx: &Io, path: &str, name: &str, l: &LoopRef) -> Option<diag::Diag> {\n        let mut lp: LoopParts = LoopParts { declared: Vec::new(), lets: Vec::new(), assigns: Vec::new(), conds: Vec::new(), prints: false };\n        loop_parts(&l.body, &mut lp, cx, 1000000000);\n        let mut in_cond: Vars = Vars { names: Vec::new() };\n        match &l.cond {\n            None => {},\n            Some(c) => each::<Vars>(c, &mut in_cond, 1000000000),\n        }\n        let mut complex: Vec<String> = Vec::new();\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            if !(simple_update_renamed(&lp.assigns[i].value) && ast::tag(&lp.assigns[i].value.kind) != 9) {\n                complex.push(lp.assigns[i].name.clone());\n            }\n        }\n        let mut state: Vec<String> = Vec::new();\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            let n: String = lp.assigns[i].name.clone();\n            if !types::has(lp.declared.as_slice(), n.as_str()) && !types::has(state.as_slice(), n.as_str()) && !(types::has(in_cond.names.as_slice(), n.as_str()) && !types::has(complex.as_slice(), n.as_str())) {\n                state.push(n.clone());\n            }\n        }\n        if !lp.prints || state.len() == 0 {\n            return None;\n        }\n        let mut simple: bool = true;\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            if types::has(state.as_slice(), lp.assigns[i].name.as_str()) {\n                if needs_io(&lp.assigns[i].value, cx) {\n                    return None;\n                }\n                if !simple_update_renamed(&lp.assigns[i].value) {\n                    simple = false;\n                }\n            }\n        }\n        let mut decides: bool = false;\n        for i in 0..lp.conds.len()\n            invariant 0 <= i && i <= lp.conds.len(),\n        {\n            if !decides && inline_logic(&lp.conds[i].cond, 1000000000) && shares(lp.conds[i].names.as_slice(), state.as_slice()) && !needs_io(&lp.conds[i].cond, cx) {\n                decides = true;\n            }\n        }\n        if !decides && simple {\n            return None;\n        }\n        let mut inputs: Vec<String> = Vec::new();\n        let mut results: Vec<String> = Vec::new();\n        for i in 0..lp.lets.len()\n            invariant 0 <= i && i <= lp.lets.len(),\n        {\n            if lp.lets[i].mutable {\n                let mut decided: bool = false;\n                for j in 0..lp.conds.len()\n                    invariant 0 <= j && j <= lp.conds.len(),\n                {\n                    if inline_logic(&lp.conds[j].cond, 1000000000) && types::has(lp.conds[j].names.as_slice(), lp.lets[i].name.as_str()) {\n                        decided = true;\n                    }\n                }\n                if decided {\n                    results.push(lp.lets[i].name.clone());\n                }\n            } else {\n                let mut seen: Vars = Vars { names: Vec::new() };\n                each::<Vars>(&lp.lets[i].init, &mut seen, 1000000000);\n                if !shares(seen.names.as_slice(), state.as_slice()) {\n                    inputs.push(lp.lets[i].name.clone());\n                }\n            }\n        }\n        let mut read: Vars = Vars { names: Vec::new() };\n        for i in 0..lp.conds.len()\n            invariant 0 <= i && i <= lp.conds.len(),\n        {\n            if shares(lp.conds[i].names.as_slice(), state.as_slice()) || shares(lp.conds[i].names.as_slice(), results.as_slice()) {\n                each::<Vars>(&lp.conds[i].cond, &mut read, 1000000000);\n            }\n        }\n        for i in 0..lp.assigns.len()\n            invariant 0 <= i && i <= lp.assigns.len(),\n        {\n            if types::has(state.as_slice(), lp.assigns[i].name.as_str()) || types::has(results.as_slice(), lp.assigns[i].name.as_str()) {\n                each::<Vars>(&lp.assigns[i].value, &mut read, 1000000000);\n            }\n        }\n        let mut reads: Vec<String> = Vec::new();\n        for i in 0..state.len()\n            invariant 0 <= i && i <= state.len(),\n        {\n            reads.push(state[i].clone());\n        }\n        for i in 0..read.names.len()\n            invariant 0 <= i && i <= read.names.len(),\n        {\n            let v: String = read.names[i].clone();\n            let is_loop_var: bool = match &l.var {\n                None => false,\n                Some(lv) => lv.as_str() == v.as_str(),\n            };\n            if !types::has(reads.as_slice(), v.as_str()) && (!types::has(lp.declared.as_slice(), v.as_str()) || types::has(inputs.as_slice(), v.as_str())) && !(types::has(in_cond.names.as_slice(), v.as_str()) && !types::has(complex.as_slice(), v.as_str())) && !is_loop_var {\n                reads.push(v.clone());\n            }\n        }\n        let mut typed: Vec<String> = Vec::new();\n        for i in 0..reads.len()\n            invariant 0 <= i && i <= reads.len(),\n        {\n            match local_type(ck, path, reads[i].as_str()) {\n                None => typed.push(reads[i].clone()),\n                Some(ty) => typed.push(types::cat3(reads[i].as_str(), \": \", ty.as_str())),\n            }\n        }\n        let mut outs: Vec<String> = Vec::new();\n        for i in 0..state.len()\n            invariant 0 <= i && i <= state.len(),\n        {\n            outs.push(type_or_name(ck, path, state[i].as_str()));\n        }\n        for i in 0..results.len()\n            invariant 0 <= i && i <= results.len(),\n        {\n            outs.push(type_or_name(ck, path, results[i].as_str()));\n        }\n        let ret: String = if outs.len() == 1 {\n            outs[0].clone()\n        } else {\n            types::cat3(\"(\", types::join(outs.as_slice(), \", \").as_str(), \")\")\n        };\n        let mut msg: String = types::cat5(\"this loop of `\", path, \"` prints and updates its state `\", types::join(state.as_slice(), \"`, `\").as_str(), \"` with pure expressions only: the update can be a pure function, proved by its contract, so that only the printing needs a test\");\n        let mut hint: String = types::cat5(\"move the update into `fn \", name, \"_step(\", types::join(typed.as_slice(), \", \").as_str(), \") -> \");\n        hint.push_str(ret.as_str());\n        hint.push_str(\"` with `#[effects(pure)]` and a contract, and assign its result here\");\n        Some(diag::fix(diag::new(\"W0910\", l.span, msg.as_str()), hint.as_str(), None))\n    }\n\n    #[effects(pure)]\n    fn simple_update_renamed(e: &ast::Expr) -> bool {\n        match &e.kind {\n            ast::ExprKind::Int(_, _) => atom(e),\n            ast::ExprKind::Float(_) => atom(e),\n            ast::ExprKind::ByteLit(_) => atom(e),\n            ast::ExprKind::ByteStr(_) => atom(e),\n            ast::ExprKind::StrLit(_) => atom(e),\n            ast::ExprKind::CharLit(_) => atom(e),\n            ast::ExprKind::Bool(_) => atom(e),\n            ast::ExprKind::Unit => atom(e),\n            ast::ExprKind::Var(_) => atom(e),\n            ast::ExprKind::Call(ca) => true,\n            ast::ExprKind::Method(_) => atom(e),\n            ast::ExprKind::Index(ib, ii) => true,\n            ast::ExprKind::Unary(_, _) => atom(e),\n            ast::ExprKind::Binary(bop, bl, br) => (match bop { ast::BinOp::Add => true, ast::BinOp::Sub => true, ast::BinOp::Mul => false, ast::BinOp::Div => false, ast::BinOp::Rem => false, ast::BinOp::Eq => false, ast::BinOp::Ne => false, ast::BinOp::Lt => false, ast::BinOp::Le => false, ast::BinOp::Gt => false, ast::BinOp::Ge => false, ast::BinOp::And => false, ast::BinOp::Or => false, ast::BinOp::Implies => false, ast::BinOp::BitAnd => false, ast::BinOp::BitOr => false, ast::BinOp::BitXor => false, ast::BinOp::Shl => false, ast::BinOp::Shr => false, }) && atom(&**bl) && ast::tag(&br.kind) == 0,\n            ast::ExprKind::Ref(_, _) => atom(e),\n            ast::ExprKind::If(_) => atom(e),\n            ast::ExprKind::Block(_) => atom(e),\n            ast::ExprKind::Array(_) => atom(e),\n            ast::ExprKind::Repeat(_) => atom(e),\n            ast::ExprKind::Old(_) => atom(e),\n            ast::ExprKind::Quant(_) => atom(e),\n            ast::ExprKind::Trigger(_) => atom(e),\n            ast::ExprKind::Closure(_) => atom(e),\n            ast::ExprKind::StructLit(_) => atom(e),\n            ast::ExprKind::Path(_) => atom(e),\n            ast::ExprKind::Deref(_) => atom(e),\n            ast::ExprKind::Field(fx, fnm) => true,\n            ast::ExprKind::Match(_) => atom(e),\n            ast::ExprKind::Return(_) => atom(e),\n            ast::ExprKind::Try(_) => atom(e),\n            ast::ExprKind::Loop(_) => atom(e),\n            ast::ExprKind::Break(_) => atom(e),\n            ast::ExprKind::Continue(_) => atom(e),\n            ast::ExprKind::Range(_) => atom(e),\n            ast::ExprKind::Error => atom(e),\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "lint_syntax",
+      "remove": [
+       "lint_syntax::simple_update"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/lint.rs",
+      "old": "                        .all(|(_, e)| simple_update(e) && !matches!(e.kind, ExprKind::Call { .. }))",
+      "new": "                        .all(|(_, e)| simple_update_renamed(e) && !matches!(e.kind, ExprKind::Call { .. }))"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/lint.rs",
+      "old": "            if !decides && updates.iter().all(|e| simple_update(e)) {",
+      "new": "            if !decides && updates.iter().all(|e| simple_update_renamed(e)) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/lint.rs",
+      "old": "fn simple_update(e: &Expr) -> bool {",
+      "new": "fn simple_update_renamed(e: &Expr) -> bool {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "lint_syntax::simple_update",
+        "to": "simple_update_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "done",
+   "bmb": [],
+   "rust": []
+  }
+ ]
+}

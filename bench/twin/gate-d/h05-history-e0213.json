@@ -1,0 +1,852 @@
+{
+ "id": "h05-history-e0213",
+ "family": "history",
+ "kind": "change",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "scope": "any",
+ "setup": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.err(\n                    \"E0302\",\n                    m.name.span,\n                    format!(\"unit `{}` is defined more than once\", m.name.name),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    self.err(\n                        \"E0302\",\n                        f.name.span,\n                        format!(\n                            \"`{}` is defined more than once in trait `{}`\",\n                            f.name.name, t.name.name\n                        ),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                            self.err(\n                                \"E0302\",\n                                f.name.span,\n                                format!(\n                                    \"field `{}` is defined more than once in `{path}`\",\n                                    f.name.name\n                                ),\n                            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                            self.err(\n                                \"E0302\",\n                                v.name.span,\n                                format!(\n                                    \"variant `{}` is defined more than once in `{path}`\",\n                                    v.name.name\n                                ),\n                            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.diags.push(\n                    Diag::new(\n                        \"E0302\",\n                        g.name.span,\n                        format!(\"type parameter `{}` is declared twice\", g.name.name),\n                    )\n                    .fix(\"give each type parameter its own name\", None),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.err(\n                    \"E0302\",\n                    t.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", t.name.name),\n                );\n            }\n        }\n        for t in &m.traits {",
+     "new": "            }\n        }\n        for t in &m.traits {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.err(\n                    \"E0302\",\n                    t.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", t.name.name),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.err(\n                    \"E0302\",\n                    sub.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", sub.name.name),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.err(\n                    \"E0302\",\n                    f.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", f.name.name),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    self.diags.push(\n                        Diag::new(\n                            \"E0302\",\n                            f.name.span,\n                            format!(\n                                \"`{}` is defined more than once in the `impl` blocks of `{}`\",\n                                f.name.name, i.ty.name\n                            ),\n                        )\n                        .fix(\n                            \"a name is one function of the type, whichever block holds it: rename one or remove it\",\n                            None,\n                        ),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    self.err(\n                        \"E0302\",\n                        f.name.span,\n                        format!(\"`{}` is defined more than once in this `impl`\", f.name.name),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.err(\n                    \"E0302\",\n                    g.name.span,\n                    format!(\"type parameter `{}` is already the `impl`'s\", p.name),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "            self.diags.push(\n                Diag::new(\"E0704\", a.span, \"`#[summary(..)]` takes exactly one string\").fix(\n                    \"write the summary as one string: `#[summary(\\\"..\\\")]`\",\n                    None,\n                ),\n            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.err(\"E0704\", a.span, \"`#[summary(..)]` takes exactly one string\");",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "            self.diags.push(\n                Diag::new(\n                    \"E0704\",\n                    m.name.span,\n                    format!(\"unit `{}` has no summary\", m.name.name),\n                )\n                .fix(\"add `#[summary(\\\"one line\\\")]` above `mod`\", None),\n            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "        self.diags.push(\n            Diag::new(\n                \"E0314\",\n                span,\n                format!(\"`{callee}` is not called as a method: {why}\"),\n            )\n            .fix(format!(\"call it by path: `{call}`\"), None),\n        );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.diags\n                    .push(Diag::new(\"E0213\", span, \"write `.unwrap()`\").fix(\n                        \"a conversion has one form (its range is proved)\",\n                        Some(unwrapped),\n                    ));",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/consts.rs",
+     "old": "                diags.push(Diag::new(\n                    \"E0302\",\n                    c.name.span,\n                    format!(\"`{}` is defined more than once in `{unit}`\", c.name.name),\n                ));",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "            self.diags\n                .push(Diag::new(\"E0232\", sp.to(self.prev_span()), msg).fix(fix, None));",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "        self.diags\n            .push(Diag::new(\"E0232\", span, msg).fix(fix, None));",
+     "new": ""
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "body",
+     "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_mod(self: &mut Body, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = types::cat2(prefix, m.name.name.as_str());\n            let mut has_summary: bool = false;\n            for i in 0..m.attrs.len()\n                invariant 0 <= i && i <= m.attrs.len(),\n            {\n                if m.attrs[i].name.name == \"summary\" && m.attrs[i].args.len() == 1 && str_arg(&m.attrs[i].args[0]) {\n                    if has_summary {\n                        self.c.fixed(\"E0605\", m.attrs[i].span, \"duplicate `#[summary(..)]` attribute\", \"keep one: join the text\", \"\");\n                    }\n                    has_summary = true;\n                } else if m.attrs[i].name.name == \"summary\" {\n                    has_summary = true;\n                } else {\n                    self.c.fixed(\"E0605\", m.attrs[i].span, types::cat3(\"unknown attribute `\", m.attrs[i].name.name.as_str(), \"` on a unit\").as_str(), \"remove it: units take `#[summary(\\\"..\\\")]`\", \"\");\n                }\n            }\n            if !has_summary {\n            }\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for i in 0..m.mods.len()\n                invariant 0 <= i && i <= m.mods.len(),\n            {\n                self.check_mod(&m.mods[i], sub.as_str(), f - 1);\n            }\n            for i in 0..m.consts.len()\n                invariant 0 <= i && i <= m.consts.len(),\n            {\n                for j in 0..m.consts[i].attrs.len()\n                    invariant 0 <= j && j <= m.consts[i].attrs.len(),\n                {\n                    if m.consts[i].attrs[j].name.name == \"summary\" {\n                        self.c.check_summary(&m.consts[i].attrs[j], m.consts[i].attrs.as_slice());\n                    } else {\n                        self.c.fixed(\"E0605\", m.consts[i].attrs[j].span, types::cat3(\"unknown attribute `\", m.consts[i].attrs[j].name.name.as_str(), \"` on a constant\").as_str(), \"constants take `#[summary(\\\"..\\\")]`\", \"\");\n                    }\n                }\n                self.check_const(&m.consts[i], mp.as_str());\n            }\n            for i in 0..m.fns.len()\n                invariant 0 <= i && i <= m.fns.len(),\n            {\n                let path: String = types::cat3(mp.as_str(), \"::\", m.fns[i].name.name.as_str());\n                self.check_fn(&m.fns[i], mp.as_str(), path.as_str());\n            }\n            for i in 0..m.impls.len()\n                invariant 0 <= i && i <= m.impls.len(),\n            {\n                for j in 0..m.impls[i].fns.len()\n                    invariant 0 <= j && j <= m.impls[i].fns.len(),\n                {\n                    let path: String = types::cat5(mp.as_str(), \"::\", m.impls[i].ty.name.as_str(), \"::\", m.impls[i].fns[j].name.name.as_str());\n                    self.check_fn(&m.impls[i].fns[j], mp.as_str(), path.as_str());\n                }\n            }\n            for i in 0..m.traits.len()\n                invariant 0 <= i && i <= m.traits.len(),\n            {\n                for j in 0..m.traits[i].fns.len()\n                    invariant 0 <= j && j <= m.traits[i].fns.len(),\n                {\n                    let path: String = types::cat5(mp.as_str(), \"::\", m.traits[i].name.name.as_str(), \"::\", m.traits[i].fns[j].f.name.name.as_str());\n                    if self.declared_at(path.as_str(), m.traits[i].fns[j].f.span) {\n                        self.check_fn(&m.traits[i].fns[j].f, mp.as_str(), path.as_str());\n                    }\n                }\n            }\n            for i in 0..m.trait_impls.len()\n                invariant 0 <= i && i <= m.trait_impls.len(),\n            {\n                match self.c.impl_info(m.trait_impls[i].span) {\n                    None => {},\n                    Some(found) => { self.c.self_head = Some(decls::SelfHead { head: found.info.head.clone(), text: types::text_in(&found.info.head, mp.as_str()) }); for j in 0..m.trait_impls[i].fns.len() invariant 0 <= j && j <= m.trait_impls[i].fns.len(), { let path: String = types::fn_path(&found.info, m.trait_impls[i].fns[j].name.name.as_str()); if self.declared_at(path.as_str(), m.trait_impls[i].fns[j].span) { self.check_fn(&m.trait_impls[i].fns[j], mp.as_str(), path.as_str()); } } self.c.self_head = None; },\n                }\n            }\n        }\n\n        #[effects(alloc)]\n        fn conversion(self: &mut Body, cx: &mut FnCtx, recv: &ast::Expr, name: &ast::Ident, margs: &[ast::Expr], span: source::Span, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let no: Option<ast::TypeKind> = None;\n            let c: ast::Call = match call_of(recv) {\n                None => { return ast::TypeKind::Error; },\n                Some(found) => found,\n            };\n            if c.path.len() != 2 {\n                return ast::TypeKind::Error;\n            }\n            let target: ast::TypeKind = match ast::int_of(c.path[0].name.as_str()) {\n                None => { return ast::TypeKind::Error; },\n                Some(it) => ast::TypeKind::Int(it),\n            };\n            if c.args.len() != 1 {\n                self.c.err(\"E0405\", recv.span, \"`try_from` takes one value\");\n                return ast::TypeKind::Error;\n            }\n            let st: ast::TypeKind = self.expr(cx, &c.args[0], &no, mode, f - 1);\n            for i in 0..margs.len()\n                invariant 0 <= i && i <= margs.len(),\n            {\n                self.expr(cx, &margs[i], &no, mode, f - 1);\n            }\n            let x: String = fmt::expr_text(&c.args[0]);\n            let tt: String = types::text(&target);\n            let unwrapped: String = types::cat4(tt.as_str(), \"::try_from(\", x.as_str(), \").unwrap()\");\n            if !exec_mode(mode) && name.name == \"unwrap\" && widens(&st, &target) {\n                let v: String = if fmt::prec(&c.args[0]) < 11 {\n                    types::cat3(\"(\", x.as_str(), \")\")\n                } else {\n                    x.clone()\n                };\n                self.aliases.push(diag::fix(diag::new(\"W0917\", span, types::cat7(\"`\", x.as_str(), \" as \", tt.as_str(), \"` in a specification: every value fits, so it is `\", x.as_str(), \"` (ADR-0099)\").as_str()), \"remove the conversion\", Some(v)));\n                return target;\n            }\n            if !exec_mode(mode) {\n                self.c.fixed(\"E0513\", span, \"conversions are not used in specifications\", \"integer types mix in specifications (ADR-0022): write the value\", x.as_str());\n                return st;\n            }\n            if !types::is_int(&st) {\n                if !types::is_error(&st) {\n                    let msg: String = types::cat3(\"`try_from` converts between integer types, found `\", types::text(&st).as_str(), \"`\");\n                    if is_bool(&st) && name.name == \"unwrap\" {\n                        self.c.fixed(\"E0412\", span, msg.as_str(), \"choose the values\", types::cat3(\"if \", x.as_str(), \" { 1 } else { 0 }\").as_str());\n                    } else if is_f64(&st) {\n                        self.c.help(\"E0412\", c.args[0].span, msg.as_str(), \"`f64` does not convert to an integer type yet (ADR-0061 §4, open question 1)\");\n                    } else {\n                        self.c.err(\"E0412\", c.args[0].span, msg.as_str());\n                    }\n                }\n                return ast::TypeKind::Error;\n            }\n            if name.name == \"unwrap\" && margs.len() == 0 {\n                return target;\n            }\n            if name.name == \"ok\" && margs.len() == 0 {\n                return option_of(target);\n            }\n            if name.name == \"expect\" {\n                return target;\n            }\n            self.c.fixed(\"E0412\", span, \"`T::try_from(x)` is used as `.unwrap()` or `.ok()`\", \"`.unwrap()`: the value, with a range obligation\", unwrapped.as_str());\n            ast::TypeKind::Error\n        }\n\n        #[effects(alloc)]\n        fn not_a_method(self: &mut Body, cx: &FnCtx, owner: &str, recv: &ast::Expr, name: &ast::Ident, args: &[ast::Expr], span: source::Span, no_receiver: bool, adjust: Option<ast::Adjust>) -> () {\n            let callee: String = variant_text(owner, name.name.as_str(), cx.mod_path.as_str());\n            let x: String = fmt::expr_text(recv);\n            let mut all: Vec<String> = Vec::new();\n            match adjust {\n                None => {},\n                Some(a) => { match a { ast::Adjust::Value => { all.push(x.clone()); }, ast::Adjust::Ref => { all.push(types::cat2(\"&\", x.as_str())); }, ast::Adjust::RefMut => { all.push(types::cat2(\"&mut \", x.as_str())); }, ast::Adjust::AsStr => { all.push(types::cat2(x.as_str(), \".as_str()\")); }, } },\n            }\n            for i in 0..args.len()\n                invariant 0 <= i && i <= args.len(),\n            {\n                all.push(fmt::expr_text(&args[i]));\n            }\n            let list: String = types::join(all.as_slice(), \", \");\n            if no_receiver {\n            } else {\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "consts",
+     "code": "    #[effects(alloc)]\n    fn collect(m: &ast::Mod, prefix: &str, ev: &mut Eval, f: usize) -> ()\n        decreases f,\n    {\n        if f == 0 {\n            return;\n        }\n        let mut unit: String = String::from(prefix);\n        unit.push_str(m.name.name.as_str());\n        let mut names: Vec<String> = Vec::new();\n        for a in 0..m.fns.len() {\n            names.push(m.fns[a].name.name.clone());\n        }\n        for i in 0..m.types.len() {\n            names.push(m.types[i].name.name.clone());\n            let mut gs: Vec<String> = Vec::new();\n            for g in 0..m.types[i].generics.len() {\n                gs.push(m.types[i].generics[g].name.name.clone());\n            }\n            let mut key: String = unit.clone();\n            key.push_str(\"::\");\n            key.push_str(m.types[i].name.name.as_str());\n            ev.tydefs.insert(key.as_str(), TyDef { unit: unit.clone(), generics: gs, kind: tydef_kind(&m.types[i].kind) });\n        }\n        for c in 0..m.consts.len() {\n            if has(names.as_slice(), m.consts[c].name.name.as_str()) {\n                let mut msg: String = String::from(\"`\");\n                msg.push_str(m.consts[c].name.name.as_str());\n                msg.push_str(\"` is defined more than once in `\");\n                msg.push_str(unit.as_str());\n                msg.push_str(\"`\");\n            } else {\n                names.push(m.consts[c].name.name.clone());\n                let mut ck: String = unit.clone();\n                ck.push_str(\"::\");\n                ck.push_str(m.consts[c].name.name.as_str());\n                ev.defs.insert(ck.as_str(), Def { unit: unit.clone(), c: m.consts[c].clone() });\n            }\n        }\n        for l in 0..m.lens.len() {\n            let mut path: Vec<String> = Vec::new();\n            for q in 0..m.lens[l].path.len() {\n                path.push(m.lens[l].path[q].name.clone());\n            }\n            ev.named.push(LenAt { at: m.lens[l].at, path: path, unit: unit.clone() });\n        }\n        let mut sub: String = unit.clone();\n        sub.push_str(\"::\");\n        for s in 0..m.mods.len() {\n            collect(&m.mods[s], sub.as_str(), ev, f - 1);\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "decls",
+     "code": "    impl Checker {\n        #[effects(alloc)]\n        fn check_summary(self: &mut Checker, a: &ast::Attr, all: &[ast::Attr]) -> () {\n            if !(a.args.len() == 1 && is_str_arg(&a.args[0])) {\n                return;\n            }\n            for i in 0..all.len()\n                invariant 0 <= i && i <= all.len(),\n            {\n                if all[i].name.name.as_str() == \"summary\" {\n                    if !span_eq(all[i].span, a.span) {\n                        self.fixed(\"E0605\", a.span, \"duplicate `#[summary(..)]` attribute\", \"keep one: join the text\", \"\");\n                    }\n                    return;\n                }\n            }\n        }\n\n        #[effects(alloc)]\n        fn collect(self: &mut Checker, p: &ast::Program) -> () {\n            self.elem_params = elem_params(p);\n            let mut seen: Vec<String> = Vec::new();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                if !types::add(&mut seen, p.mods[i].name.name.as_str()) {\n                }\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.trait_names(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.collect_types(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.impl_heads(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.resolve_types(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.check_owned_fields(&p.mods[i], \"\", 1000000000);\n            }\n            self.check_type_cycles();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.trait_sigs(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.collect_mod(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.check_invariants(&p.mods[i], \"\", 1000000000);\n            }\n        }\n\n        #[effects(alloc)]\n        fn collect_fn(self: &mut Checker, f: &ast::FnDef, path: &str, mp: &str, in_impl: bool, ig: &[types::TParam]) -> () {\n            let own: Vec<types::TParam> = self.tparams_of(f.generics.as_slice(), true, mp);\n            for g in 0..own.len()\n                invariant 0 <= g && g <= own.len(),\n            {\n                if g < f.generics.len() && types::is_tparam(ig, own[g].name.as_str()) {\n                }\n            }\n            let mut generics: Vec<types::TParam> = Vec::new();\n            for i in 0..ig.len()\n                invariant 0 <= i && i <= ig.len(),\n            {\n                generics.push(ig[i].clone());\n            }\n            ast::append::<types::TParam>(&mut generics, own);\n            self.tparams = generics.clone();\n            let mut params: Vec<ast::TypeKind> = Vec::new();\n            for p in 0..f.params.len()\n                invariant 0 <= p && p <= f.params.len(),\n            {\n                let t: ast::TypeKind = self.canon(&f.params[p].ty, mp, false, 100000);\n                params.push(t);\n            }\n            let ret: ast::TypeKind = self.canon(&f.ret.ty, mp, false, 100000);\n            self.tparams = Vec::new();\n            let effect: types::Effects = self.fn_effect(f);\n            let vacuous: bool = is_spec(&f.kind) && f.body.stmts.len() == 0 && tail_true(&f.body);\n            self.fns.insert(path, types::FnSig { path: String::from(path), kind: kind_copy(&f.kind), generics: generics, impl_generics: ig.len(), params: params, ret: ret, effect: effect, vacuous: vacuous, builtin: false, in_impl: in_impl, trait_of: None, default: false, span: f.span });\n        }\n\n        #[effects(alloc)]\n        fn collect_impl(self: &mut Checker, m: &ast::Mod, i: usize, mp: &str, with_impl: &mut Vec<String>, impl_tys: &mut Vec<String>, impl_names: &mut Vec<Vec<String>>) -> ()\n            requires i < m.impls.len() && impl_tys.len() == impl_names.len(),\n            ensures impl_tys.len() == impl_names.len(),\n        {\n            let tyname: String = m.impls[i].ty.name.clone();\n            let ty: String = types::cat3(mp, \"::\", tyname.as_str());\n            let mut declared: bool = false;\n            for t in 0..m.types.len()\n                invariant 0 <= t && t <= m.types.len(),\n            {\n                if m.types[t].name.name.as_str() == tyname.as_str() {\n                    declared = true;\n                }\n            }\n            if !declared {\n                self.err(\"E0308\", m.impls[i].ty.span, types::cat5(\"`impl \", tyname.as_str(), \"` needs the type declared in the same unit `\", mp, \"`\").as_str());\n                return;\n            }\n            let ig: Vec<types::TParam> = self.tparams_of(m.impls[i].generics.as_slice(), true, mp);\n            let key: String = types::cat3(ty.as_str(), \"\\n\", bounds_key(ig.as_slice()).as_str());\n            if !types::add(with_impl, key.as_str()) {\n                self.help(\"E0308\", m.impls[i].ty.span, types::cat3(\"`\", tyname.as_str(), \"` already has an `impl` block with these bounds; one per list of bounds\").as_str(), \"move these functions into the first block with the same bounds (ADR-0097)\");\n                return;\n            }\n            let ps: Vec<String> = match self.adts.find(ty.as_str()) {\n                None => Vec::new(),\n                Some(at) => tparam_names(self.adts.items[at].generics.as_slice()),\n            };\n            let mut in_order: bool = ig.len() == ps.len() && m.impls[i].ty_args.len() == ig.len();\n            for a in 0..m.impls[i].ty_args.len()\n                invariant 0 <= a && a <= m.impls[i].ty_args.len() && i < m.impls.len(),\n            {\n                if a < ig.len() {\n                    match plain_name(&m.impls[i].ty_args[a].kind) {\n                        None => { in_order = false; },\n                        Some(w) => { if w.as_str() != ig[a].name.as_str() { in_order = false; } },\n                    }\n                }\n            }\n            if !in_order {\n                let r: String = if ps.len() == 0 {\n                    types::cat2(\"impl \", tyname.as_str())\n                } else {\n                    types::cat7(\"impl<\", copy_list(ps.as_slice()).as_str(), \"> \", tyname.as_str(), \"<\", types::join(ps.as_slice(), \", \").as_str(), \">\")\n                };\n                self.help(\"E0420\", m.impls[i].ty.span, types::cat3(\"the `impl` of `\", tyname.as_str(), \"` takes its type parameters in order\").as_str(), types::cat3(\"write `\", r.as_str(), \"`\").as_str());\n                return;\n            }\n            let mut slot: usize = impl_tys.len();\n            for s in 0..impl_tys.len()\n                invariant 0 <= s && s <= impl_tys.len() && slot <= impl_tys.len(),\n            {\n                if impl_tys[s].as_str() == ty.as_str() {\n                    slot = s;\n                }\n            }\n            if slot == impl_tys.len() {\n                impl_tys.push(ty.clone());\n                impl_names.push(Vec::new());\n            }\n            let mut dup: Vec<source::Span> = Vec::new();\n            for k in 0..m.impls[i].fns.len()\n                invariant 0 <= k && k <= m.impls[i].fns.len() && i < m.impls.len() && slot < impl_names.len() && impl_tys.len() == impl_names.len(),\n            {\n                if !types::add(&mut impl_names[slot], m.impls[i].fns[k].name.name.as_str()) {\n                    dup.push(m.impls[i].fns[k].name.span);\n                }\n            }\n            for k in 0..m.impls[i].fns.len()\n                invariant 0 <= k && k <= m.impls[i].fns.len() && i < m.impls.len(),\n            {\n                let fname: String = m.impls[i].fns[k].name.name.clone();\n                if has_span(dup.as_slice(), m.impls[i].fns[k].name.span) {\n                } else {\n                    let fg: Vec<types::TParam> = self.tparams_of(m.impls[i].fns[k].generics.as_slice(), false, mp);\n                    let mut tps: Vec<types::TParam> = ig.clone();\n                    ast::append::<types::TParam>(&mut tps, fg);\n                    self.tparams = tps;\n                    self.receiver_rule(&m.impls[i].fns[k], ty.as_str(), true, mp);\n                    self.tparams = Vec::new();\n                    self.collect_fn(&m.impls[i].fns[k], types::cat3(ty.as_str(), \"::\", fname.as_str()).as_str(), mp, true, ig.as_slice());\n                }\n            }\n        }\n\n        #[effects(alloc)]\n        fn collect_mod(self: &mut Checker, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = unit_path(prefix, m);\n            for u in 0..m.uses.len()\n                invariant 0 <= u && u <= m.uses.len(),\n            {\n                if m.uses[u].path.len() > 0 {\n                    let full: String = path_text(m.uses[u].path.as_slice());\n                    let last: String = m.uses[u].path[m.uses[u].path.len() - 1].name.clone();\n                    if !self.imports.has(mp.as_str()) {\n                        self.imports.insert(mp.as_str(), table::new::<String>());\n                    }\n                    match self.imports.find(mp.as_str()) {\n                        None => {},\n                        Some(at) => self.imports.items[at].insert(last.as_str(), full.clone()),\n                    }\n                    self.fixed(\"E0214\", m.uses[u].span, types::cat5(\"`use \", full.as_str(), \";` is not used: write `\", full.as_str(), \"` where it is used\").as_str(), \"delete the `use`; its names are rewritten to full paths\", \"\");\n                }\n            }\n            let mut names: Vec<String> = Vec::new();\n            for t in 0..m.traits.len()\n                invariant 0 <= t && t <= m.traits.len(),\n            {\n                if types::reserved_name(m.traits[t].name.name.as_str()) {\n                    self.err(\"E0309\", m.traits[t].name.span, types::cat3(\"`\", m.traits[t].name.name.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n            }\n            for c in 0..m.consts.len()\n                invariant 0 <= c && c <= m.consts.len(),\n            {\n                if types::reserved_name(m.consts[c].name.name.as_str()) {\n                    self.err(\"E0309\", m.consts[c].name.span, types::cat3(\"`\", m.consts[c].name.name.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n            }\n            for t in 0..m.types.len()\n                invariant 0 <= t && t <= m.types.len(),\n            {\n                if types::reserved_name(m.types[t].name.name.as_str()) {\n                    self.err(\"E0309\", m.types[t].name.span, types::cat3(\"`\", m.types[t].name.name.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n                if !types::add(&mut names, m.types[t].name.name.as_str()) {\n                }\n            }\n            for t in 0..m.traits.len()\n                invariant 0 <= t && t <= m.traits.len(),\n            {\n                if !types::add(&mut names, m.traits[t].name.name.as_str()) {\n                }\n            }\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for s in 0..m.mods.len()\n                invariant 0 <= s && s <= m.mods.len(),\n            {\n                if !types::add(&mut names, m.mods[s].name.name.as_str()) {\n                }\n                self.collect_mod(&m.mods[s], sub.as_str(), f - 1);\n            }\n            let none: Vec<types::TParam> = Vec::new();\n            for k in 0..m.fns.len()\n                invariant 0 <= k && k <= m.fns.len(),\n            {\n                let fname: String = m.fns[k].name.name.clone();\n                if types::builtin_name(fname.as_str()) {\n                    self.err(\"E0309\", m.fns[k].name.span, types::cat3(\"`\", fname.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n                if !types::add(&mut names, fname.as_str()) {\n                } else {\n                    self.collect_fn(&m.fns[k], types::cat3(mp.as_str(), \"::\", fname.as_str()).as_str(), mp.as_str(), false, none.as_slice());\n                }\n            }\n            let mut with_impl: Vec<String> = Vec::new();\n            let mut impl_tys: Vec<String> = Vec::new();\n            let mut impl_names: Vec<Vec<String>> = Vec::new();\n            for i in 0..m.impls.len()\n                invariant 0 <= i && i <= m.impls.len() && impl_tys.len() == impl_names.len(),\n            {\n                self.collect_impl(m, i, mp.as_str(), &mut with_impl, &mut impl_tys, &mut impl_names);\n            }\n            for k in 0..m.fns.len()\n                invariant 0 <= k && k <= m.fns.len(),\n            {\n                let tps: Vec<types::TParam> = self.tparams_of(m.fns[k].generics.as_slice(), false, mp.as_str());\n                self.tparams = tps;\n                self.receiver_rule(&m.fns[k], \"\", false, mp.as_str());\n                self.tparams = Vec::new();\n            }\n            for t in 0..m.trait_impls.len()\n                invariant 0 <= t && t <= m.trait_impls.len(),\n            {\n                self.collect_trait_impl(&m.trait_impls[t], mp.as_str());\n            }\n        }\n\n        #[effects(alloc)]\n        fn collect_trait_impl(self: &mut Checker, ti: &ast::TraitImpl, mp: &str) -> () {\n            let found: Found = match self.impl_info(ti.span) {\n                None => { return; },\n                Some(x) => x,\n            };\n            let recv: String = match types::named_path(&found.info.head) {\n                None => types::text(&found.info.head),\n                Some(np) => np,\n            };\n            self.self_head = Some(SelfHead { head: found.info.head.clone(), text: types::text_in(&found.info.head, mp) });\n            let mut fnames: Vec<String> = Vec::new();\n            for k in 0..ti.fns.len()\n                invariant 0 <= k && k <= ti.fns.len(),\n            {\n                let fname: String = ti.fns[k].name.name.clone();\n                let fp: String = types::fn_path(&found.info, fname.as_str());\n                if !types::add(&mut fnames, fname.as_str()) {\n                } else if found.rejected && self.fns.has(fp.as_str()) {} else {\n                    let fg: Vec<types::TParam> = self.tparams_of(ti.fns[k].generics.as_slice(), false, mp);\n                    let mut tps: Vec<types::TParam> = found.info.generics.clone();\n                    ast::append::<types::TParam>(&mut tps, fg);\n                    self.tparams = tps;\n                    self.receiver_rule(&ti.fns[k], recv.as_str(), true, mp);\n                    self.tparams = Vec::new();\n                    self.collect_fn(&ti.fns[k], fp.as_str(), mp, true, found.info.generics.as_slice());\n                }\n            }\n            if !has_span(self.overlapping_impls.as_slice(), ti.span) {\n                self.conform(&found.info, ti, mp);\n            }\n            self.self_head = None;\n        }\n\n        #[effects(alloc)]\n        fn resolve_kind(self: &mut Checker, t: &ast::TypeDef, path: &str, mp: &str) -> types::AdtKind {\n            match &t.kind {\n                ast::TypeDefKind::Struct(fields) => { if fields.len() == 0 { self.err(\"E0420\", t.name.span, \"a struct needs at least one field\"); } let mut seen: Vec<String> = Vec::new(); let mut out: Vec<types::FieldSig> = Vec::new(); for i in 0..fields.len() invariant 0 <= i && i <= fields.len(), { if !types::add(&mut seen, fields[i].name.name.as_str()) { } let ty: ast::TypeKind = self.field_type(&fields[i].ty, mp); out.push(types::FieldSig { name: fields[i].name.name.clone(), ty: ty }); } types::AdtKind::Struct(out) },\n                ast::TypeDefKind::Enum(variants) => { if variants.len() == 0 { self.err(\"E0420\", t.name.span, \"an enum needs at least one variant\"); } let mut seen: Vec<String> = Vec::new(); let mut vout: Vec<types::VariantSig> = Vec::new(); for i in 0..variants.len() invariant 0 <= i && i <= variants.len(), { if !types::add(&mut seen, variants[i].name.name.as_str()) { } let mut tys: Vec<ast::TypeKind> = Vec::new(); for j in 0..variants[i].payload.len() invariant 0 <= j && j <= variants[i].payload.len() && i < variants.len(), { let ty: ast::TypeKind = self.field_type(&variants[i].payload[j], mp); tys.push(ty); } vout.push(types::VariantSig { name: variants[i].name.name.clone(), tys: tys }); } types::AdtKind::Enum(vout) },\n            }\n        }\n\n        #[effects(alloc)]\n        fn tparams_of(self: &mut Checker, gs: &[ast::TypeParam], report: bool, mp: &str) -> Vec<types::TParam> {\n            let mut out: Vec<types::TParam> = Vec::new();\n            for g in 0..gs.len()\n                invariant 0 <= g && g <= gs.len(),\n            {\n                let mut bounds: Vec<String> = Vec::new();\n                for b in 0..gs[g].bounds.len()\n                    invariant 0 <= b && b <= gs[g].bounds.len() && g < gs.len(),\n                {\n                    let name: String = path_text(gs[g].bounds[b].as_slice());\n                    if name.as_str() == \"Copy\" || name.as_str() == \"Eq\" || name.as_str() == \"Ord\" {\n                        bounds.push(name);\n                    } else {\n                        match self.trait_path(gs[g].bounds[b].as_slice(), mp) {\n                            None => { let dropped: String = name; if report && gs[g].bounds[b].len() > 0 { let last: usize = gs[g].bounds[b].len() - 1; let span: source::Span = span_to(gs[g].bounds[b][0].span, gs[g].bounds[b][last].span); let d: diag::Diag = self.unknown_trait(dropped.as_str(), span, mp, \"the built-in bounds are `Copy`, `Eq` and `Ord`; a trait of another unit is named by full path, e.g. `unit::Shape`\"); self.diags.push(d); } },\n                            Some(tr) => { let dropped: String = name; bounds.push(tr); },\n                        }\n                    }\n                }\n                if report && types::is_tparam(out.as_slice(), gs[g].name.name.as_str()) {\n                }\n                if has_span(self.elem_params.as_slice(), gs[g].span) {\n                    bounds.push(String::from(\"elem\"));\n                }\n                out.push(types::TParam { name: gs[g].name.name.clone(), bounds: bounds });\n            }\n            out\n        }\n\n        #[effects(alloc)]\n        fn trait_sigs(self: &mut Checker, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = unit_path(prefix, m);\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for s in 0..m.mods.len()\n                invariant 0 <= s && s <= m.mods.len(),\n            {\n                self.trait_sigs(&m.mods[s], sub.as_str(), f - 1);\n            }\n            for i in 0..m.traits.len()\n                invariant 0 <= i && i <= m.traits.len(),\n            {\n                let path: String = types::cat3(mp.as_str(), \"::\", m.traits[i].name.name.as_str());\n                let mine: bool = match self.traits.find(path.as_str()) {\n                    None => false,\n                    Some(at) => span_eq(self.traits.items[at].span, m.traits[i].name.span),\n                };\n                if mine {\n                    let mut sb: Vec<String> = Vec::new();\n                    sb.push(path.clone());\n                    let selfp: types::TParam = types::TParam { name: String::from(\"Self\"), bounds: sb };\n                    let mut ig: Vec<types::TParam> = Vec::new();\n                    ig.push(selfp.clone());\n                    let mut names: Vec<String> = Vec::new();\n                    for k in 0..m.traits[i].fns.len()\n                        invariant 0 <= k && k <= m.traits[i].fns.len() && i < m.traits.len(),\n                    {\n                        let fname: String = m.traits[i].fns[k].f.name.name.clone();\n                        if types::has(names.as_slice(), fname.as_str()) {\n                        } else {\n                            names.push(fname.clone());\n                            match &m.traits[i].fns[k].f.measure {\n                                None => {},\n                                Some(d) => { self.help(\"E0207\", d.span, \"a trait method takes no `decreases`: recursion through a bound is not supported\", \"remove it; an impl's function may recurse on its own type with its own `decreases`\"); },\n                            }\n                            let own: Vec<types::TParam> = self.tparams_of(m.traits[i].fns[k].f.generics.as_slice(), false, mp.as_str());\n                            let mut tps: Vec<types::TParam> = Vec::new();\n                            tps.push(selfp.clone());\n                            ast::append::<types::TParam>(&mut tps, own);\n                            self.tparams = tps;\n                            self.receiver_rule(&m.traits[i].fns[k].f, \"Self\", true, mp.as_str());\n                            self.tparams = Vec::new();\n                            let fp: String = types::cat3(path.as_str(), \"::\", fname.as_str());\n                            self.collect_fn(&m.traits[i].fns[k].f, fp.as_str(), mp.as_str(), false, ig.as_slice());\n                            match self.fns.find(fp.as_str()) {\n                                None => {},\n                                Some(at) => { self.fns.items[at].trait_of = Some(path.clone()); self.fns.items[at].default = m.traits[i].fns[k].has_body; },\n                            }\n                        }\n                    }\n                    match self.traits.find(path.as_str()) {\n                        None => { let dropped: Vec<String> = names; },\n                        Some(at) => { self.traits.items[at].methods = names; },\n                    }\n                }\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "parser",
+     "code": "    impl Parser {\n        #[effects(alloc)]\n        fn parse_pat(self: &mut Parser) -> Option<ast::Pat> {\n            let lo: source::Span = self.span();\n            let k: u8 = self.t.kind(0);\n            let literal: bool = k >= 1 && k <= 6 || self.is_p(\"-\") || self.is_kw(\"true\") || self.is_kw(\"false\");\n            if literal || self.is_p(\"(\") || self.is_p(\"[\") || self.is_p(\"&\") {\n                return Some(self.rejected_pat(lo, \"literal, tuple and reference patterns are not allowed\", \"`match` an enum value; compare other values with `if`\"));\n            }\n            let mut path: Vec<ast::Ident> = Vec::new();\n            path.push(self.ident(\"variant\")?);\n            let mut n: usize = self.left();\n            while n > 0 && self.is_p(\"::\")\n                decreases n,\n            {\n                n = n - 1;\n                self.bump();\n                path.push(self.ident(\"variant\")?);\n            }\n            if self.is_p(\"{\") {\n                return Some(self.rejected_pat(lo, \"struct patterns are not allowed\", \"bind the value and read its fields: `p.x`\"));\n            }\n            let mut binds: Vec<Option<ast::Ident>> = Vec::new();\n            let parens: bool = self.eat_p(\"(\");\n            if parens {\n                let mut m: usize = self.left();\n                while m > 0 && !self.is_p(\")\")\n                    decreases m,\n                {\n                    m = m - 1;\n                    let nested: bool = self.t.kind(0) != 0 || self.t.is_p(1, \"::\") || self.t.is_p(1, \"(\") || self.t.is_p(1, \"{\");\n                    if nested {\n                        return Some(self.rejected_pat(lo, \"nested patterns are not allowed\", \"bind a name and `match` it in the arm body\"));\n                    }\n                    let b: ast::Ident = self.ident(\"binding or `_`\")?;\n                    if b.name == \"_\" {\n                        binds.push(None);\n                    } else {\n                        binds.push(Some(b));\n                    }\n                    if !self.eat_p(\",\") {\n                        m = 0;\n                    }\n                }\n                self.expect_p(\")\")?;\n            }\n            let pspan: source::Span = lo.to(self.prev_span());\n            let mut origin: ast::PatOrigin = ast::PatOrigin::Written;\n            if self.is_p(\"|\") {\n                let osp: source::Span = self.span();\n                self.skip_to_arrow();\n                origin = ast::PatOrigin::Rejected;\n            } else if self.is_kw(\"if\") {\n                let gsp: source::Span = self.span();\n                self.skip_to_arrow();\n                origin = ast::PatOrigin::Rejected;\n            }\n            Some(ast::Pat { path: path, binds: binds, parens: parens, origin: origin, span: pspan })\n        }\n\n        #[effects(alloc)]\n        fn rejected_pat(self: &mut Parser, lo: source::Span, msg: &str, fix: &str) -> ast::Pat {\n            self.skip_to_arrow();\n            let span: source::Span = lo.to(self.prev_span());\n            let mut path: Vec<ast::Ident> = Vec::new();\n            path.push(ast::Ident { name: String::from(\"_\"), span: span });\n            ast::Pat { path: path, binds: Vec::new(), parens: false, origin: ast::PatOrigin::Rejected, span: span }\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "steps": [
+  {
+   "source": {
+    "code": "E0213",
+    "commit": "12f4a94ba",
+    "subject": "2C-02: integer conversions — T::try_from(x).unwrap() with the E0815 range obligation, .ok() as Option<T>, print_u64"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0213 yet: `T::try_from(x).expect(..)` is written `.unwrap()`. It came with the commit \"2C-02: integer conversions — T::try_from(x).unwrap() with the E0815 range obligation, .ok() as Option<T>, print_u64\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    fn expects(x: u64) -> i64 { i64::try_from(x).expect(\"fits\") }\n    {\"code\": \"E0213\", \"severity\": \"error\", \"message\": \"write `.unwrap()`\", \"file\": \"err/conversions.bmb\", \"line\": 28, \"col\": 33, \"end_line\": 28, \"end_col\": 64, \"fix\": {\"message\": \"a conversion has one form (its range is proved)\", \"replacement\": \"i64::try_from(x).unwrap()\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-conversions",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/conversions.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                target\n            }",
+       "new": "                self.diags\n                    .push(Diag::new(\"E0213\", span, \"write `.unwrap()`\").fix(\n                        \"a conversion has one form (its range is proved)\",\n                        Some(unwrapped),\n                    ));\n                target\n            }"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn conversion(self: &mut Body, cx: &mut FnCtx, recv: &ast::Expr, name: &ast::Ident, margs: &[ast::Expr], span: source::Span, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let no: Option<ast::TypeKind> = None;\n            let c: ast::Call = match call_of(recv) {\n                None => { return ast::TypeKind::Error; },\n                Some(found) => found,\n            };\n            if c.path.len() != 2 {\n                return ast::TypeKind::Error;\n            }\n            let target: ast::TypeKind = match ast::int_of(c.path[0].name.as_str()) {\n                None => { return ast::TypeKind::Error; },\n                Some(it) => ast::TypeKind::Int(it),\n            };\n            if c.args.len() != 1 {\n                self.c.err(\"E0405\", recv.span, \"`try_from` takes one value\");\n                return ast::TypeKind::Error;\n            }\n            let st: ast::TypeKind = self.expr(cx, &c.args[0], &no, mode, f - 1);\n            for i in 0..margs.len()\n                invariant 0 <= i && i <= margs.len(),\n            {\n                self.expr(cx, &margs[i], &no, mode, f - 1);\n            }\n            let x: String = fmt::expr_text(&c.args[0]);\n            let tt: String = types::text(&target);\n            let unwrapped: String = types::cat4(tt.as_str(), \"::try_from(\", x.as_str(), \").unwrap()\");\n            if !exec_mode(mode) && name.name == \"unwrap\" && widens(&st, &target) {\n                let v: String = if fmt::prec(&c.args[0]) < 11 {\n                    types::cat3(\"(\", x.as_str(), \")\")\n                } else {\n                    x.clone()\n                };\n                self.aliases.push(diag::fix(diag::new(\"W0917\", span, types::cat7(\"`\", x.as_str(), \" as \", tt.as_str(), \"` in a specification: every value fits, so it is `\", x.as_str(), \"` (ADR-0099)\").as_str()), \"remove the conversion\", Some(v)));\n                return target;\n            }\n            if !exec_mode(mode) {\n                self.c.fixed(\"E0513\", span, \"conversions are not used in specifications\", \"integer types mix in specifications (ADR-0022): write the value\", x.as_str());\n                return st;\n            }\n            if !types::is_int(&st) {\n                if !types::is_error(&st) {\n                    let msg: String = types::cat3(\"`try_from` converts between integer types, found `\", types::text(&st).as_str(), \"`\");\n                    if is_bool(&st) && name.name == \"unwrap\" {\n                        self.c.fixed(\"E0412\", span, msg.as_str(), \"choose the values\", types::cat3(\"if \", x.as_str(), \" { 1 } else { 0 }\").as_str());\n                    } else if is_f64(&st) {\n                        self.c.help(\"E0412\", c.args[0].span, msg.as_str(), \"`f64` does not convert to an integer type yet (ADR-0061 §4, open question 1)\");\n                    } else {\n                        self.c.err(\"E0412\", c.args[0].span, msg.as_str());\n                    }\n                }\n                return ast::TypeKind::Error;\n            }\n            if name.name == \"unwrap\" && margs.len() == 0 {\n                return target;\n            }\n            if name.name == \"ok\" && margs.len() == 0 {\n                return option_of(target);\n            }\n            if name.name == \"expect\" {\n                self.c.fixed(\"E0213\", span, \"write `.unwrap()`\", \"a conversion has one form (its range is proved)\", unwrapped.as_str());\n                return target;\n            }\n            self.c.fixed(\"E0412\", span, \"`T::try_from(x)` is used as `.unwrap()` or `.ok()`\", \"`.unwrap()`: the value, with a range obligation\", unwrapped.as_str());\n            ast::TypeKind::Error\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0232",
+    "commit": "58573af29",
+    "subject": "2B-04d: Rust habits around data types, with mechanical fixes (E0220-E0233)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0232 yet: pattern form not allowed (guard, or, literal, nested, struct). It came with the commit \"2B-04d: Rust habits around data types, with mechanical fixes (E0220-E0233)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    Some(v) if v > 0 => v,\n    {\"code\": \"E0232\", \"severity\": \"error\", \"message\": \"guards are not allowed\", \"file\": \"err/habits.bmb\", \"line\": 109, \"col\": 21, \"end_line\": 109, \"end_col\": 29, \"fix\": {\"message\": \"test the condition in the arm body: `V(x) => if c { .. } else { .. }`\"}}\n\n    Shape::Dot | Shape::Square(_) => 0,\n    {\"code\": \"E0232\", \"severity\": \"error\", \"message\": \"or-patterns are not allowed\", \"file\": \"err/habits.bmb\", \"line\": 116, \"col\": 24, \"end_line\": 116, \"end_col\": 42, \"fix\": {\"message\": \"one arm per variant, with the same body\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-habits",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/habits.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "            pat.origin = PatOrigin::Rejected;",
+       "new": "            self.diags\n                .push(Diag::new(\"E0232\", sp.to(self.prev_span()), msg).fix(fix, None));\n            pat.origin = PatOrigin::Rejected;"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "        Pat {",
+       "new": "        self.diags\n            .push(Diag::new(\"E0232\", span, msg).fix(fix, None));\n        Pat {"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "parser",
+       "code": "    impl Parser {\n        #[effects(alloc)]\n        fn parse_pat(self: &mut Parser) -> Option<ast::Pat> {\n            let lo: source::Span = self.span();\n            let k: u8 = self.t.kind(0);\n            let literal: bool = k >= 1 && k <= 6 || self.is_p(\"-\") || self.is_kw(\"true\") || self.is_kw(\"false\");\n            if literal || self.is_p(\"(\") || self.is_p(\"[\") || self.is_p(\"&\") {\n                return Some(self.rejected_pat(lo, \"literal, tuple and reference patterns are not allowed\", \"`match` an enum value; compare other values with `if`\"));\n            }\n            let mut path: Vec<ast::Ident> = Vec::new();\n            path.push(self.ident(\"variant\")?);\n            let mut n: usize = self.left();\n            while n > 0 && self.is_p(\"::\")\n                decreases n,\n            {\n                n = n - 1;\n                self.bump();\n                path.push(self.ident(\"variant\")?);\n            }\n            if self.is_p(\"{\") {\n                return Some(self.rejected_pat(lo, \"struct patterns are not allowed\", \"bind the value and read its fields: `p.x`\"));\n            }\n            let mut binds: Vec<Option<ast::Ident>> = Vec::new();\n            let parens: bool = self.eat_p(\"(\");\n            if parens {\n                let mut m: usize = self.left();\n                while m > 0 && !self.is_p(\")\")\n                    decreases m,\n                {\n                    m = m - 1;\n                    let nested: bool = self.t.kind(0) != 0 || self.t.is_p(1, \"::\") || self.t.is_p(1, \"(\") || self.t.is_p(1, \"{\");\n                    if nested {\n                        return Some(self.rejected_pat(lo, \"nested patterns are not allowed\", \"bind a name and `match` it in the arm body\"));\n                    }\n                    let b: ast::Ident = self.ident(\"binding or `_`\")?;\n                    if b.name == \"_\" {\n                        binds.push(None);\n                    } else {\n                        binds.push(Some(b));\n                    }\n                    if !self.eat_p(\",\") {\n                        m = 0;\n                    }\n                }\n                self.expect_p(\")\")?;\n            }\n            let pspan: source::Span = lo.to(self.prev_span());\n            let mut origin: ast::PatOrigin = ast::PatOrigin::Written;\n            if self.is_p(\"|\") {\n                let osp: source::Span = self.span();\n                self.skip_to_arrow();\n                self.err_fix_to(\"E0232\", osp, \"or-patterns are not allowed\", \"one arm per variant, with the same body\");\n                origin = ast::PatOrigin::Rejected;\n            } else if self.is_kw(\"if\") {\n                let gsp: source::Span = self.span();\n                self.skip_to_arrow();\n                self.err_fix_to(\"E0232\", gsp, \"guards are not allowed\", \"test the condition in the arm body: `V(x) => if c { .. } else { .. }`\");\n                origin = ast::PatOrigin::Rejected;\n            }\n            Some(ast::Pat { path: path, binds: binds, parens: parens, origin: origin, span: pspan })\n        }\n\n        #[effects(alloc)]\n        fn rejected_pat(self: &mut Parser, lo: source::Span, msg: &str, fix: &str) -> ast::Pat {\n            self.skip_to_arrow();\n            let span: source::Span = lo.to(self.prev_span());\n            self.err_fix(\"E0232\", span, msg, fix);\n            let mut path: Vec<ast::Ident> = Vec::new();\n            path.push(ast::Ident { name: String::from(\"_\"), span: span });\n            ast::Pat { path: path, binds: Vec::new(), parens: false, origin: ast::PatOrigin::Rejected, span: span }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0704",
+    "commit": "d3949466e",
+    "subject": "compiler: M1 front end (parse, check, JSONL diagnostics)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0704 yet: `mod` requires a `#[summary(\"..\")]` attribute. It came with the commit \"compiler: M1 front end (parse, check, JSONL diagnostics)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    #[summary(unquoted)]\n    {\"code\": \"E0704\", \"severity\": \"error\", \"message\": \"`#[summary(..)]` takes exactly one string\", \"file\": \"err/attrs.bmb\", \"line\": 9, \"col\": 1, \"end_line\": 9, \"end_col\": 21}\n\n    mod no_summary {\n    {\"code\": \"E0704\", \"severity\": \"error\", \"message\": \"unit `no_summary` has no summary\", \"file\": \"err/items.bmb\", \"line\": 3, \"col\": 5, \"end_line\": 3, \"end_col\": 15, \"fix\": {\"message\": \"add `#[summary(\\\"one line\\\")]` above `mod`\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-attrs",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/attrs.bmb"
+     ]
+    },
+    {
+     "name": "replay-summaries",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/summaries.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        } else if all",
+       "new": "            self.diags.push(\n                Diag::new(\"E0704\", a.span, \"`#[summary(..)]` takes exactly one string\").fix(\n                    \"write the summary as one string: `#[summary(\\\"..\\\")]`\",\n                    None,\n                ),\n            );\n        } else if all"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                has_summary = true;\n            } else {",
+       "new": "                self.err(\"E0704\", a.span, \"`#[summary(..)]` takes exactly one string\");\n                has_summary = true;\n            } else {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        }\n        for sub in &m.mods {\n            self.check_mod(sub, &format!(\"{mp}::\"));",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E0704\",\n                    m.name.span,\n                    format!(\"unit `{}` has no summary\", m.name.name),\n                )\n                .fix(\"add `#[summary(\\\"one line\\\")]` above `mod`\", None),\n            );\n        }\n        for sub in &m.mods {\n            self.check_mod(sub, &format!(\"{mp}::\"));"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_mod(self: &mut Body, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = types::cat2(prefix, m.name.name.as_str());\n            let mut has_summary: bool = false;\n            for i in 0..m.attrs.len()\n                invariant 0 <= i && i <= m.attrs.len(),\n            {\n                if m.attrs[i].name.name == \"summary\" && m.attrs[i].args.len() == 1 && str_arg(&m.attrs[i].args[0]) {\n                    if has_summary {\n                        self.c.fixed(\"E0605\", m.attrs[i].span, \"duplicate `#[summary(..)]` attribute\", \"keep one: join the text\", \"\");\n                    }\n                    has_summary = true;\n                } else if m.attrs[i].name.name == \"summary\" {\n                    self.c.err(\"E0704\", m.attrs[i].span, \"`#[summary(..)]` takes exactly one string\");\n                    has_summary = true;\n                } else {\n                    self.c.fixed(\"E0605\", m.attrs[i].span, types::cat3(\"unknown attribute `\", m.attrs[i].name.name.as_str(), \"` on a unit\").as_str(), \"remove it: units take `#[summary(\\\"..\\\")]`\", \"\");\n                }\n            }\n            if !has_summary {\n                self.c.help(\"E0704\", m.name.span, types::cat3(\"unit `\", m.name.name.as_str(), \"` has no summary\").as_str(), \"add `#[summary(\\\"one line\\\")]` above `mod`\");\n            }\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for i in 0..m.mods.len()\n                invariant 0 <= i && i <= m.mods.len(),\n            {\n                self.check_mod(&m.mods[i], sub.as_str(), f - 1);\n            }\n            for i in 0..m.consts.len()\n                invariant 0 <= i && i <= m.consts.len(),\n            {\n                for j in 0..m.consts[i].attrs.len()\n                    invariant 0 <= j && j <= m.consts[i].attrs.len(),\n                {\n                    if m.consts[i].attrs[j].name.name == \"summary\" {\n                        self.c.check_summary(&m.consts[i].attrs[j], m.consts[i].attrs.as_slice());\n                    } else {\n                        self.c.fixed(\"E0605\", m.consts[i].attrs[j].span, types::cat3(\"unknown attribute `\", m.consts[i].attrs[j].name.name.as_str(), \"` on a constant\").as_str(), \"constants take `#[summary(\\\"..\\\")]`\", \"\");\n                    }\n                }\n                self.check_const(&m.consts[i], mp.as_str());\n            }\n            for i in 0..m.fns.len()\n                invariant 0 <= i && i <= m.fns.len(),\n            {\n                let path: String = types::cat3(mp.as_str(), \"::\", m.fns[i].name.name.as_str());\n                self.check_fn(&m.fns[i], mp.as_str(), path.as_str());\n            }\n            for i in 0..m.impls.len()\n                invariant 0 <= i && i <= m.impls.len(),\n            {\n                for j in 0..m.impls[i].fns.len()\n                    invariant 0 <= j && j <= m.impls[i].fns.len(),\n                {\n                    let path: String = types::cat5(mp.as_str(), \"::\", m.impls[i].ty.name.as_str(), \"::\", m.impls[i].fns[j].name.name.as_str());\n                    self.check_fn(&m.impls[i].fns[j], mp.as_str(), path.as_str());\n                }\n            }\n            for i in 0..m.traits.len()\n                invariant 0 <= i && i <= m.traits.len(),\n            {\n                for j in 0..m.traits[i].fns.len()\n                    invariant 0 <= j && j <= m.traits[i].fns.len(),\n                {\n                    let path: String = types::cat5(mp.as_str(), \"::\", m.traits[i].name.name.as_str(), \"::\", m.traits[i].fns[j].f.name.name.as_str());\n                    if self.declared_at(path.as_str(), m.traits[i].fns[j].f.span) {\n                        self.check_fn(&m.traits[i].fns[j].f, mp.as_str(), path.as_str());\n                    }\n                }\n            }\n            for i in 0..m.trait_impls.len()\n                invariant 0 <= i && i <= m.trait_impls.len(),\n            {\n                match self.c.impl_info(m.trait_impls[i].span) {\n                    None => {},\n                    Some(found) => { self.c.self_head = Some(decls::SelfHead { head: found.info.head.clone(), text: types::text_in(&found.info.head, mp.as_str()) }); for j in 0..m.trait_impls[i].fns.len() invariant 0 <= j && j <= m.trait_impls[i].fns.len(), { let path: String = types::fn_path(&found.info, m.trait_impls[i].fns[j].name.name.as_str()); if self.declared_at(path.as_str(), m.trait_impls[i].fns[j].span) { self.check_fn(&m.trait_impls[i].fns[j], mp.as_str(), path.as_str()); } } self.c.self_head = None; },\n                }\n            }\n        }\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "decls",
+       "code": "    impl Checker {\n        #[effects(alloc)]\n        fn check_summary(self: &mut Checker, a: &ast::Attr, all: &[ast::Attr]) -> () {\n            if !(a.args.len() == 1 && is_str_arg(&a.args[0])) {\n                self.help(\"E0704\", a.span, \"`#[summary(..)]` takes exactly one string\", \"write the summary as one string: `#[summary(\\\"..\\\")]`\");\n                return;\n            }\n            for i in 0..all.len()\n                invariant 0 <= i && i <= all.len(),\n            {\n                if all[i].name.name.as_str() == \"summary\" {\n                    if !span_eq(all[i].span, a.span) {\n                        self.fixed(\"E0605\", a.span, \"duplicate `#[summary(..)]` attribute\", \"keep one: join the text\", \"\");\n                    }\n                    return;\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0302",
+    "commit": "d3949466e",
+    "subject": "compiler: M1 front end (parse, check, JSONL diagnostics)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0302 yet: duplicate definition. It came with the commit \"compiler: M1 front end (parse, check, JSONL diagnostics)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    struct Twice { a: i64, a: bool }\n    {\"code\": \"E0302\", \"severity\": \"error\", \"message\": \"field `a` is defined more than once in `shapes::Twice`\", \"file\": \"err/data_types.bmb\", \"line\": 11, \"col\": 28, \"end_line\": 11, \"end_col\": 29}\n\n    fn two<T: Copy, T: Copy>(x: T) -> T {\n    {\"code\": \"E0302\", \"severity\": \"error\", \"message\": \"type parameter `T` is declared twice\", \"file\": \"err/generics.bmb\", \"line\": 15, \"col\": 21, \"end_line\": 15, \"end_col\": 22, \"fix\": {\"message\": \"give each type parameter its own name\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-data_types",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/data_types.bmb"
+     ]
+    },
+    {
+     "name": "replay-generics",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/generics.bmb"
+     ]
+    },
+    {
+     "name": "replay-impl_blocks",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/impl_blocks.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n        for m in &p.mods {",
+       "new": "                self.err(\n                    \"E0302\",\n                    m.name.span,\n                    format!(\"unit `{}` is defined more than once\", m.name.name),\n                );\n            }\n        }\n        for m in &p.mods {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    continue;\n                }\n                names.push(f.name.name.clone());",
+       "new": "                    self.err(\n                        \"E0302\",\n                        f.name.span,\n                        format!(\n                            \"`{}` is defined more than once in trait `{}`\",\n                            f.name.name, t.name.name\n                        ),\n                    );\n                    continue;\n                }\n                names.push(f.name.name.clone());"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        }\n                        let ty = self.field_type(&f.ty, &mp);",
+       "new": "                            self.err(\n                                \"E0302\",\n                                f.name.span,\n                                format!(\n                                    \"field `{}` is defined more than once in `{path}`\",\n                                    f.name.name\n                                ),\n                            );\n                        }\n                        let ty = self.field_type(&f.ty, &mp);"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        }\n                        let tys = v",
+       "new": "                            self.err(\n                                \"E0302\",\n                                v.name.span,\n                                format!(\n                                    \"variant `{}` is defined more than once in `{path}`\",\n                                    v.name.name\n                                ),\n                            );\n                        }\n                        let tys = v"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n            if self\n                .elem_params",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0302\",\n                        g.name.span,\n                        format!(\"type parameter `{}` is declared twice\", g.name.name),\n                    )\n                    .fix(\"give each type parameter its own name\", None),\n                );\n            }\n            if self\n                .elem_params"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n        for t in &m.traits {\n            if !names.insert(t.name.name.clone()) {",
+       "new": "                self.err(\n                    \"E0302\",\n                    t.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", t.name.name),\n                );\n            }\n        }\n        for t in &m.traits {\n            if !names.insert(t.name.name.clone()) {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n        for sub in &m.mods {",
+       "new": "                self.err(\n                    \"E0302\",\n                    t.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", t.name.name),\n                );\n            }\n        }\n        for sub in &m.mods {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n            self.collect_mod(sub, &format!(\"{mp}::\"));",
+       "new": "                self.err(\n                    \"E0302\",\n                    sub.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", sub.name.name),\n                );\n            }\n            self.collect_mod(sub, &format!(\"{mp}::\"));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                continue;\n            }\n            let path = format!(\"{mp}::{}\", f.name.name);",
+       "new": "                self.err(\n                    \"E0302\",\n                    f.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", f.name.name),\n                );\n                continue;\n            }\n            let path = format!(\"{mp}::{}\", f.name.name);"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    continue;\n                }\n                let fg = self.tparams_of(&f.generics, false, &mp);\n                self.tparams = ig.clone();",
+       "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0302\",\n                            f.name.span,\n                            format!(\n                                \"`{}` is defined more than once in the `impl` blocks of `{}`\",\n                                f.name.name, i.ty.name\n                            ),\n                        )\n                        .fix(\n                            \"a name is one function of the type, whichever block holds it: rename one or remove it\",\n                            None,\n                        ),\n                    );\n                    continue;\n                }\n                let fg = self.tparams_of(&f.generics, false, &mp);\n                self.tparams = ig.clone();"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    continue;\n                }\n                if rejected && self.fns.contains_key(&info.fn_path(&f.name.name)) {",
+       "new": "                    self.err(\n                        \"E0302\",\n                        f.name.span,\n                        format!(\"`{}` is defined more than once in this `impl`\", f.name.name),\n                    );\n                    continue;\n                }\n                if rejected && self.fns.contains_key(&info.fn_path(&f.name.name)) {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n        let mut generics = ig.to_vec();",
+       "new": "                self.err(\n                    \"E0302\",\n                    g.name.span,\n                    format!(\"type parameter `{}` is already the `impl`'s\", p.name),\n                );\n            }\n        }\n        let mut generics = ig.to_vec();"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/consts.rs",
+       "old": "                continue;\n            }",
+       "new": "                diags.push(Diag::new(\n                    \"E0302\",\n                    c.name.span,\n                    format!(\"`{}` is defined more than once in `{unit}`\", c.name.name),\n                ));\n                continue;\n            }"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "consts",
+       "code": "    #[effects(alloc)]\n    fn collect(m: &ast::Mod, prefix: &str, ev: &mut Eval, f: usize) -> ()\n        decreases f,\n    {\n        if f == 0 {\n            return;\n        }\n        let mut unit: String = String::from(prefix);\n        unit.push_str(m.name.name.as_str());\n        let mut names: Vec<String> = Vec::new();\n        for a in 0..m.fns.len() {\n            names.push(m.fns[a].name.name.clone());\n        }\n        for i in 0..m.types.len() {\n            names.push(m.types[i].name.name.clone());\n            let mut gs: Vec<String> = Vec::new();\n            for g in 0..m.types[i].generics.len() {\n                gs.push(m.types[i].generics[g].name.name.clone());\n            }\n            let mut key: String = unit.clone();\n            key.push_str(\"::\");\n            key.push_str(m.types[i].name.name.as_str());\n            ev.tydefs.insert(key.as_str(), TyDef { unit: unit.clone(), generics: gs, kind: tydef_kind(&m.types[i].kind) });\n        }\n        for c in 0..m.consts.len() {\n            if has(names.as_slice(), m.consts[c].name.name.as_str()) {\n                let mut msg: String = String::from(\"`\");\n                msg.push_str(m.consts[c].name.name.as_str());\n                msg.push_str(\"` is defined more than once in `\");\n                msg.push_str(unit.as_str());\n                msg.push_str(\"`\");\n                ev.diags.push(diag::new(\"E0302\", m.consts[c].name.span, msg.as_str()));\n            } else {\n                names.push(m.consts[c].name.name.clone());\n                let mut ck: String = unit.clone();\n                ck.push_str(\"::\");\n                ck.push_str(m.consts[c].name.name.as_str());\n                ev.defs.insert(ck.as_str(), Def { unit: unit.clone(), c: m.consts[c].clone() });\n            }\n        }\n        for l in 0..m.lens.len() {\n            let mut path: Vec<String> = Vec::new();\n            for q in 0..m.lens[l].path.len() {\n                path.push(m.lens[l].path[q].name.clone());\n            }\n            ev.named.push(LenAt { at: m.lens[l].at, path: path, unit: unit.clone() });\n        }\n        let mut sub: String = unit.clone();\n        sub.push_str(\"::\");\n        for s in 0..m.mods.len() {\n            collect(&m.mods[s], sub.as_str(), ev, f - 1);\n        }\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "decls",
+       "code": "    impl Checker {\n        #[effects(alloc)]\n        fn collect(self: &mut Checker, p: &ast::Program) -> () {\n            self.elem_params = elem_params(p);\n            let mut seen: Vec<String> = Vec::new();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                if !types::add(&mut seen, p.mods[i].name.name.as_str()) {\n                    self.err(\"E0302\", p.mods[i].name.span, types::cat3(\"unit `\", p.mods[i].name.name.as_str(), \"` is defined more than once\").as_str());\n                }\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.trait_names(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.collect_types(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.impl_heads(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.resolve_types(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.check_owned_fields(&p.mods[i], \"\", 1000000000);\n            }\n            self.check_type_cycles();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.trait_sigs(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.collect_mod(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.check_invariants(&p.mods[i], \"\", 1000000000);\n            }\n        }\n\n        #[effects(alloc)]\n        fn collect_fn(self: &mut Checker, f: &ast::FnDef, path: &str, mp: &str, in_impl: bool, ig: &[types::TParam]) -> () {\n            let own: Vec<types::TParam> = self.tparams_of(f.generics.as_slice(), true, mp);\n            for g in 0..own.len()\n                invariant 0 <= g && g <= own.len(),\n            {\n                if g < f.generics.len() && types::is_tparam(ig, own[g].name.as_str()) {\n                    self.err(\"E0302\", f.generics[g].name.span, types::cat3(\"type parameter `\", own[g].name.as_str(), \"` is already the `impl`'s\").as_str());\n                }\n            }\n            let mut generics: Vec<types::TParam> = Vec::new();\n            for i in 0..ig.len()\n                invariant 0 <= i && i <= ig.len(),\n            {\n                generics.push(ig[i].clone());\n            }\n            ast::append::<types::TParam>(&mut generics, own);\n            self.tparams = generics.clone();\n            let mut params: Vec<ast::TypeKind> = Vec::new();\n            for p in 0..f.params.len()\n                invariant 0 <= p && p <= f.params.len(),\n            {\n                let t: ast::TypeKind = self.canon(&f.params[p].ty, mp, false, 100000);\n                params.push(t);\n            }\n            let ret: ast::TypeKind = self.canon(&f.ret.ty, mp, false, 100000);\n            self.tparams = Vec::new();\n            let effect: types::Effects = self.fn_effect(f);\n            let vacuous: bool = is_spec(&f.kind) && f.body.stmts.len() == 0 && tail_true(&f.body);\n            self.fns.insert(path, types::FnSig { path: String::from(path), kind: kind_copy(&f.kind), generics: generics, impl_generics: ig.len(), params: params, ret: ret, effect: effect, vacuous: vacuous, builtin: false, in_impl: in_impl, trait_of: None, default: false, span: f.span });\n        }\n\n        #[effects(alloc)]\n        fn collect_impl(self: &mut Checker, m: &ast::Mod, i: usize, mp: &str, with_impl: &mut Vec<String>, impl_tys: &mut Vec<String>, impl_names: &mut Vec<Vec<String>>) -> ()\n            requires i < m.impls.len() && impl_tys.len() == impl_names.len(),\n            ensures impl_tys.len() == impl_names.len(),\n        {\n            let tyname: String = m.impls[i].ty.name.clone();\n            let ty: String = types::cat3(mp, \"::\", tyname.as_str());\n            let mut declared: bool = false;\n            for t in 0..m.types.len()\n                invariant 0 <= t && t <= m.types.len(),\n            {\n                if m.types[t].name.name.as_str() == tyname.as_str() {\n                    declared = true;\n                }\n            }\n            if !declared {\n                self.err(\"E0308\", m.impls[i].ty.span, types::cat5(\"`impl \", tyname.as_str(), \"` needs the type declared in the same unit `\", mp, \"`\").as_str());\n                return;\n            }\n            let ig: Vec<types::TParam> = self.tparams_of(m.impls[i].generics.as_slice(), true, mp);\n            let key: String = types::cat3(ty.as_str(), \"\\n\", bounds_key(ig.as_slice()).as_str());\n            if !types::add(with_impl, key.as_str()) {\n                self.help(\"E0308\", m.impls[i].ty.span, types::cat3(\"`\", tyname.as_str(), \"` already has an `impl` block with these bounds; one per list of bounds\").as_str(), \"move these functions into the first block with the same bounds (ADR-0097)\");\n                return;\n            }\n            let ps: Vec<String> = match self.adts.find(ty.as_str()) {\n                None => Vec::new(),\n                Some(at) => tparam_names(self.adts.items[at].generics.as_slice()),\n            };\n            let mut in_order: bool = ig.len() == ps.len() && m.impls[i].ty_args.len() == ig.len();\n            for a in 0..m.impls[i].ty_args.len()\n                invariant 0 <= a && a <= m.impls[i].ty_args.len() && i < m.impls.len(),\n            {\n                if a < ig.len() {\n                    match plain_name(&m.impls[i].ty_args[a].kind) {\n                        None => { in_order = false; },\n                        Some(w) => { if w.as_str() != ig[a].name.as_str() { in_order = false; } },\n                    }\n                }\n            }\n            if !in_order {\n                let r: String = if ps.len() == 0 {\n                    types::cat2(\"impl \", tyname.as_str())\n                } else {\n                    types::cat7(\"impl<\", copy_list(ps.as_slice()).as_str(), \"> \", tyname.as_str(), \"<\", types::join(ps.as_slice(), \", \").as_str(), \">\")\n                };\n                self.help(\"E0420\", m.impls[i].ty.span, types::cat3(\"the `impl` of `\", tyname.as_str(), \"` takes its type parameters in order\").as_str(), types::cat3(\"write `\", r.as_str(), \"`\").as_str());\n                return;\n            }\n            let mut slot: usize = impl_tys.len();\n            for s in 0..impl_tys.len()\n                invariant 0 <= s && s <= impl_tys.len() && slot <= impl_tys.len(),\n            {\n                if impl_tys[s].as_str() == ty.as_str() {\n                    slot = s;\n                }\n            }\n            if slot == impl_tys.len() {\n                impl_tys.push(ty.clone());\n                impl_names.push(Vec::new());\n            }\n            let mut dup: Vec<source::Span> = Vec::new();\n            for k in 0..m.impls[i].fns.len()\n                invariant 0 <= k && k <= m.impls[i].fns.len() && i < m.impls.len() && slot < impl_names.len() && impl_tys.len() == impl_names.len(),\n            {\n                if !types::add(&mut impl_names[slot], m.impls[i].fns[k].name.name.as_str()) {\n                    dup.push(m.impls[i].fns[k].name.span);\n                }\n            }\n            for k in 0..m.impls[i].fns.len()\n                invariant 0 <= k && k <= m.impls[i].fns.len() && i < m.impls.len(),\n            {\n                let fname: String = m.impls[i].fns[k].name.name.clone();\n                if has_span(dup.as_slice(), m.impls[i].fns[k].name.span) {\n                    self.help(\"E0302\", m.impls[i].fns[k].name.span, types::cat5(\"`\", fname.as_str(), \"` is defined more than once in the `impl` blocks of `\", tyname.as_str(), \"`\").as_str(), \"a name is one function of the type, whichever block holds it: rename one or remove it\");\n                } else {\n                    let fg: Vec<types::TParam> = self.tparams_of(m.impls[i].fns[k].generics.as_slice(), false, mp);\n                    let mut tps: Vec<types::TParam> = ig.clone();\n                    ast::append::<types::TParam>(&mut tps, fg);\n                    self.tparams = tps;\n                    self.receiver_rule(&m.impls[i].fns[k], ty.as_str(), true, mp);\n                    self.tparams = Vec::new();\n                    self.collect_fn(&m.impls[i].fns[k], types::cat3(ty.as_str(), \"::\", fname.as_str()).as_str(), mp, true, ig.as_slice());\n                }\n            }\n        }\n\n        #[effects(alloc)]\n        fn collect_mod(self: &mut Checker, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = unit_path(prefix, m);\n            for u in 0..m.uses.len()\n                invariant 0 <= u && u <= m.uses.len(),\n            {\n                if m.uses[u].path.len() > 0 {\n                    let full: String = path_text(m.uses[u].path.as_slice());\n                    let last: String = m.uses[u].path[m.uses[u].path.len() - 1].name.clone();\n                    if !self.imports.has(mp.as_str()) {\n                        self.imports.insert(mp.as_str(), table::new::<String>());\n                    }\n                    match self.imports.find(mp.as_str()) {\n                        None => {},\n                        Some(at) => self.imports.items[at].insert(last.as_str(), full.clone()),\n                    }\n                    self.fixed(\"E0214\", m.uses[u].span, types::cat5(\"`use \", full.as_str(), \";` is not used: write `\", full.as_str(), \"` where it is used\").as_str(), \"delete the `use`; its names are rewritten to full paths\", \"\");\n                }\n            }\n            let mut names: Vec<String> = Vec::new();\n            for t in 0..m.traits.len()\n                invariant 0 <= t && t <= m.traits.len(),\n            {\n                if types::reserved_name(m.traits[t].name.name.as_str()) {\n                    self.err(\"E0309\", m.traits[t].name.span, types::cat3(\"`\", m.traits[t].name.name.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n            }\n            for c in 0..m.consts.len()\n                invariant 0 <= c && c <= m.consts.len(),\n            {\n                if types::reserved_name(m.consts[c].name.name.as_str()) {\n                    self.err(\"E0309\", m.consts[c].name.span, types::cat3(\"`\", m.consts[c].name.name.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n            }\n            for t in 0..m.types.len()\n                invariant 0 <= t && t <= m.types.len(),\n            {\n                if types::reserved_name(m.types[t].name.name.as_str()) {\n                    self.err(\"E0309\", m.types[t].name.span, types::cat3(\"`\", m.types[t].name.name.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n                if !types::add(&mut names, m.types[t].name.name.as_str()) {\n                    self.err(\"E0302\", m.types[t].name.span, types::cat5(\"`\", m.types[t].name.name.as_str(), \"` is defined more than once in `\", mp.as_str(), \"`\").as_str());\n                }\n            }\n            for t in 0..m.traits.len()\n                invariant 0 <= t && t <= m.traits.len(),\n            {\n                if !types::add(&mut names, m.traits[t].name.name.as_str()) {\n                    self.err(\"E0302\", m.traits[t].name.span, types::cat5(\"`\", m.traits[t].name.name.as_str(), \"` is defined more than once in `\", mp.as_str(), \"`\").as_str());\n                }\n            }\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for s in 0..m.mods.len()\n                invariant 0 <= s && s <= m.mods.len(),\n            {\n                if !types::add(&mut names, m.mods[s].name.name.as_str()) {\n                    self.err(\"E0302\", m.mods[s].name.span, types::cat5(\"`\", m.mods[s].name.name.as_str(), \"` is defined more than once in `\", mp.as_str(), \"`\").as_str());\n                }\n                self.collect_mod(&m.mods[s], sub.as_str(), f - 1);\n            }\n            let none: Vec<types::TParam> = Vec::new();\n            for k in 0..m.fns.len()\n                invariant 0 <= k && k <= m.fns.len(),\n            {\n                let fname: String = m.fns[k].name.name.clone();\n                if types::builtin_name(fname.as_str()) {\n                    self.err(\"E0309\", m.fns[k].name.span, types::cat3(\"`\", fname.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n                if !types::add(&mut names, fname.as_str()) {\n                    self.err(\"E0302\", m.fns[k].name.span, types::cat5(\"`\", fname.as_str(), \"` is defined more than once in `\", mp.as_str(), \"`\").as_str());\n                } else {\n                    self.collect_fn(&m.fns[k], types::cat3(mp.as_str(), \"::\", fname.as_str()).as_str(), mp.as_str(), false, none.as_slice());\n                }\n            }\n            let mut with_impl: Vec<String> = Vec::new();\n            let mut impl_tys: Vec<String> = Vec::new();\n            let mut impl_names: Vec<Vec<String>> = Vec::new();\n            for i in 0..m.impls.len()\n                invariant 0 <= i && i <= m.impls.len() && impl_tys.len() == impl_names.len(),\n            {\n                self.collect_impl(m, i, mp.as_str(), &mut with_impl, &mut impl_tys, &mut impl_names);\n            }\n            for k in 0..m.fns.len()\n                invariant 0 <= k && k <= m.fns.len(),\n            {\n                let tps: Vec<types::TParam> = self.tparams_of(m.fns[k].generics.as_slice(), false, mp.as_str());\n                self.tparams = tps;\n                self.receiver_rule(&m.fns[k], \"\", false, mp.as_str());\n                self.tparams = Vec::new();\n            }\n            for t in 0..m.trait_impls.len()\n                invariant 0 <= t && t <= m.trait_impls.len(),\n            {\n                self.collect_trait_impl(&m.trait_impls[t], mp.as_str());\n            }\n        }\n\n        #[effects(alloc)]\n        fn collect_trait_impl(self: &mut Checker, ti: &ast::TraitImpl, mp: &str) -> () {\n            let found: Found = match self.impl_info(ti.span) {\n                None => { return; },\n                Some(x) => x,\n            };\n            let recv: String = match types::named_path(&found.info.head) {\n                None => types::text(&found.info.head),\n                Some(np) => np,\n            };\n            self.self_head = Some(SelfHead { head: found.info.head.clone(), text: types::text_in(&found.info.head, mp) });\n            let mut fnames: Vec<String> = Vec::new();\n            for k in 0..ti.fns.len()\n                invariant 0 <= k && k <= ti.fns.len(),\n            {\n                let fname: String = ti.fns[k].name.name.clone();\n                let fp: String = types::fn_path(&found.info, fname.as_str());\n                if !types::add(&mut fnames, fname.as_str()) {\n                    self.err(\"E0302\", ti.fns[k].name.span, types::cat3(\"`\", fname.as_str(), \"` is defined more than once in this `impl`\").as_str());\n                } else if found.rejected && self.fns.has(fp.as_str()) {} else {\n                    let fg: Vec<types::TParam> = self.tparams_of(ti.fns[k].generics.as_slice(), false, mp);\n                    let mut tps: Vec<types::TParam> = found.info.generics.clone();\n                    ast::append::<types::TParam>(&mut tps, fg);\n                    self.tparams = tps;\n                    self.receiver_rule(&ti.fns[k], recv.as_str(), true, mp);\n                    self.tparams = Vec::new();\n                    self.collect_fn(&ti.fns[k], fp.as_str(), mp, true, found.info.generics.as_slice());\n                }\n            }\n            if !has_span(self.overlapping_impls.as_slice(), ti.span) {\n                self.conform(&found.info, ti, mp);\n            }\n            self.self_head = None;\n        }\n\n        #[effects(alloc)]\n        fn resolve_kind(self: &mut Checker, t: &ast::TypeDef, path: &str, mp: &str) -> types::AdtKind {\n            match &t.kind {\n                ast::TypeDefKind::Struct(fields) => { if fields.len() == 0 { self.err(\"E0420\", t.name.span, \"a struct needs at least one field\"); } let mut seen: Vec<String> = Vec::new(); let mut out: Vec<types::FieldSig> = Vec::new(); for i in 0..fields.len() invariant 0 <= i && i <= fields.len(), { if !types::add(&mut seen, fields[i].name.name.as_str()) { self.err(\"E0302\", fields[i].name.span, types::cat5(\"field `\", fields[i].name.name.as_str(), \"` is defined more than once in `\", path, \"`\").as_str()); } let ty: ast::TypeKind = self.field_type(&fields[i].ty, mp); out.push(types::FieldSig { name: fields[i].name.name.clone(), ty: ty }); } types::AdtKind::Struct(out) },\n                ast::TypeDefKind::Enum(variants) => { if variants.len() == 0 { self.err(\"E0420\", t.name.span, \"an enum needs at least one variant\"); } let mut seen: Vec<String> = Vec::new(); let mut vout: Vec<types::VariantSig> = Vec::new(); for i in 0..variants.len() invariant 0 <= i && i <= variants.len(), { if !types::add(&mut seen, variants[i].name.name.as_str()) { self.err(\"E0302\", variants[i].name.span, types::cat5(\"variant `\", variants[i].name.name.as_str(), \"` is defined more than once in `\", path, \"`\").as_str()); } let mut tys: Vec<ast::TypeKind> = Vec::new(); for j in 0..variants[i].payload.len() invariant 0 <= j && j <= variants[i].payload.len() && i < variants.len(), { let ty: ast::TypeKind = self.field_type(&variants[i].payload[j], mp); tys.push(ty); } vout.push(types::VariantSig { name: variants[i].name.name.clone(), tys: tys }); } types::AdtKind::Enum(vout) },\n            }\n        }\n\n        #[effects(alloc)]\n        fn tparams_of(self: &mut Checker, gs: &[ast::TypeParam], report: bool, mp: &str) -> Vec<types::TParam> {\n            let mut out: Vec<types::TParam> = Vec::new();\n            for g in 0..gs.len()\n                invariant 0 <= g && g <= gs.len(),\n            {\n                let mut bounds: Vec<String> = Vec::new();\n                for b in 0..gs[g].bounds.len()\n                    invariant 0 <= b && b <= gs[g].bounds.len() && g < gs.len(),\n                {\n                    let name: String = path_text(gs[g].bounds[b].as_slice());\n                    if name.as_str() == \"Copy\" || name.as_str() == \"Eq\" || name.as_str() == \"Ord\" {\n                        bounds.push(name);\n                    } else {\n                        match self.trait_path(gs[g].bounds[b].as_slice(), mp) {\n                            None => { let dropped: String = name; if report && gs[g].bounds[b].len() > 0 { let last: usize = gs[g].bounds[b].len() - 1; let span: source::Span = span_to(gs[g].bounds[b][0].span, gs[g].bounds[b][last].span); let d: diag::Diag = self.unknown_trait(dropped.as_str(), span, mp, \"the built-in bounds are `Copy`, `Eq` and `Ord`; a trait of another unit is named by full path, e.g. `unit::Shape`\"); self.diags.push(d); } },\n                            Some(tr) => { let dropped: String = name; bounds.push(tr); },\n                        }\n                    }\n                }\n                if report && types::is_tparam(out.as_slice(), gs[g].name.name.as_str()) {\n                    self.help(\"E0302\", gs[g].name.span, types::cat3(\"type parameter `\", gs[g].name.name.as_str(), \"` is declared twice\").as_str(), \"give each type parameter its own name\");\n                }\n                if has_span(self.elem_params.as_slice(), gs[g].span) {\n                    bounds.push(String::from(\"elem\"));\n                }\n                out.push(types::TParam { name: gs[g].name.name.clone(), bounds: bounds });\n            }\n            out\n        }\n\n        #[effects(alloc)]\n        fn trait_sigs(self: &mut Checker, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = unit_path(prefix, m);\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for s in 0..m.mods.len()\n                invariant 0 <= s && s <= m.mods.len(),\n            {\n                self.trait_sigs(&m.mods[s], sub.as_str(), f - 1);\n            }\n            for i in 0..m.traits.len()\n                invariant 0 <= i && i <= m.traits.len(),\n            {\n                let path: String = types::cat3(mp.as_str(), \"::\", m.traits[i].name.name.as_str());\n                let mine: bool = match self.traits.find(path.as_str()) {\n                    None => false,\n                    Some(at) => span_eq(self.traits.items[at].span, m.traits[i].name.span),\n                };\n                if mine {\n                    let mut sb: Vec<String> = Vec::new();\n                    sb.push(path.clone());\n                    let selfp: types::TParam = types::TParam { name: String::from(\"Self\"), bounds: sb };\n                    let mut ig: Vec<types::TParam> = Vec::new();\n                    ig.push(selfp.clone());\n                    let mut names: Vec<String> = Vec::new();\n                    for k in 0..m.traits[i].fns.len()\n                        invariant 0 <= k && k <= m.traits[i].fns.len() && i < m.traits.len(),\n                    {\n                        let fname: String = m.traits[i].fns[k].f.name.name.clone();\n                        if types::has(names.as_slice(), fname.as_str()) {\n                            self.err(\"E0302\", m.traits[i].fns[k].f.name.span, types::cat5(\"`\", fname.as_str(), \"` is defined more than once in trait `\", m.traits[i].name.name.as_str(), \"`\").as_str());\n                        } else {\n                            names.push(fname.clone());\n                            match &m.traits[i].fns[k].f.measure {\n                                None => {},\n                                Some(d) => { self.help(\"E0207\", d.span, \"a trait method takes no `decreases`: recursion through a bound is not supported\", \"remove it; an impl's function may recurse on its own type with its own `decreases`\"); },\n                            }\n                            let own: Vec<types::TParam> = self.tparams_of(m.traits[i].fns[k].f.generics.as_slice(), false, mp.as_str());\n                            let mut tps: Vec<types::TParam> = Vec::new();\n                            tps.push(selfp.clone());\n                            ast::append::<types::TParam>(&mut tps, own);\n                            self.tparams = tps;\n                            self.receiver_rule(&m.traits[i].fns[k].f, \"Self\", true, mp.as_str());\n                            self.tparams = Vec::new();\n                            let fp: String = types::cat3(path.as_str(), \"::\", fname.as_str());\n                            self.collect_fn(&m.traits[i].fns[k].f, fp.as_str(), mp.as_str(), false, ig.as_slice());\n                            match self.fns.find(fp.as_str()) {\n                                None => {},\n                                Some(at) => { self.fns.items[at].trait_of = Some(path.clone()); self.fns.items[at].default = m.traits[i].fns[k].has_body; },\n                            }\n                        }\n                    }\n                    match self.traits.find(path.as_str()) {\n                        None => { let dropped: Vec<String> = names; },\n                        Some(at) => { self.traits.items[at].methods = names; },\n                    }\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0314",
+    "commit": "3ef88eac5",
+    "subject": "2M-01: method calls resolve to impl and trait functions (ADR-0051)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0314 yet: a method call names a function that has no receiver or type parameters of its own; call by path. It came with the commit \"2M-01: method calls resolve to impl and trait functions (ADR-0051)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    let q: P = p.new(3);\n    {\"code\": \"E0314\", \"severity\": \"error\", \"message\": \"`P::new` is not called as a method: it has no receiver\", \"file\": \"err/methods.bmb\", \"line\": 59, \"col\": 20, \"end_line\": 59, \"end_col\": 28, \"fix\": {\"message\": \"call it by path: `P::new(3)`\"}}\n\n    p.pick(4)\n    {\"code\": \"E0314\", \"severity\": \"error\", \"message\": \"`P::pick` is not called as a method: it has type parameters of its own\", \"file\": \"err/methods.bmb\", \"line\": 65, \"col\": 9, \"end_line\": 65, \"end_col\": 18, \"fix\": {\"message\": \"call it by path: `P::pick::<..>(p, 4)`\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-methods",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/methods.bmb"
+     ]
+    },
+    {
+     "name": "replay-items",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/items.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "    }\n\n    fn f64_method(",
+       "new": "        self.diags.push(\n            Diag::new(\n                \"E0314\",\n                span,\n                format!(\"`{callee}` is not called as a method: {why}\"),\n            )\n            .fix(format!(\"call it by path: `{call}`\"), None),\n        );\n    }\n\n    fn f64_method("
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn not_a_method(self: &mut Body, cx: &FnCtx, owner: &str, recv: &ast::Expr, name: &ast::Ident, args: &[ast::Expr], span: source::Span, no_receiver: bool, adjust: Option<ast::Adjust>) -> () {\n            let callee: String = variant_text(owner, name.name.as_str(), cx.mod_path.as_str());\n            let x: String = fmt::expr_text(recv);\n            let mut all: Vec<String> = Vec::new();\n            match adjust {\n                None => {},\n                Some(a) => { match a { ast::Adjust::Value => { all.push(x.clone()); }, ast::Adjust::Ref => { all.push(types::cat2(\"&\", x.as_str())); }, ast::Adjust::RefMut => { all.push(types::cat2(\"&mut \", x.as_str())); }, ast::Adjust::AsStr => { all.push(types::cat2(x.as_str(), \".as_str()\")); }, } },\n            }\n            for i in 0..args.len()\n                invariant 0 <= i && i <= args.len(),\n            {\n                all.push(fmt::expr_text(&args[i]));\n            }\n            let list: String = types::join(all.as_slice(), \", \");\n            if no_receiver {\n                self.c.help(\"E0314\", span, types::cat3(\"`\", callee.as_str(), \"` is not called as a method: it has no receiver\").as_str(), types::cat5(\"call it by path: `\", callee.as_str(), \"(\", list.as_str(), \")`\").as_str());\n            } else {\n                self.c.help(\"E0314\", span, types::cat3(\"`\", callee.as_str(), \"` is not called as a method: it has type parameters of its own\").as_str(), types::cat5(\"call it by path: `\", callee.as_str(), \"::<..>(\", list.as_str(), \")`\").as_str());\n            }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  }
+ ],
+ "weak": [
+  {
+   "fails": "corpus",
+   "bmb": [
+    [],
+    [],
+    [],
+    [],
+    []
+   ],
+   "rust": [
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn conversion(self: &mut Body, cx: &mut FnCtx, recv: &ast::Expr, name: &ast::Ident, margs: &[ast::Expr], span: source::Span, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let no: Option<ast::TypeKind> = None;\n            let c: ast::Call = match call_of(recv) {\n                None => { return ast::TypeKind::Error; },\n                Some(found) => found,\n            };\n            if c.path.len() != 2 {\n                return ast::TypeKind::Error;\n            }\n            let target: ast::TypeKind = match ast::int_of(c.path[0].name.as_str()) {\n                None => { return ast::TypeKind::Error; },\n                Some(it) => ast::TypeKind::Int(it),\n            };\n            if c.args.len() != 1 {\n                self.c.err(\"E0405\", recv.span, \"`try_from` takes one value\");\n                return ast::TypeKind::Error;\n            }\n            let st: ast::TypeKind = self.expr(cx, &c.args[0], &no, mode, f - 1);\n            for i in 0..margs.len()\n                invariant 0 <= i && i <= margs.len(),\n            {\n                self.expr(cx, &margs[i], &no, mode, f - 1);\n            }\n            let x: String = fmt::expr_text(&c.args[0]);\n            let tt: String = types::text(&target);\n            let unwrapped: String = types::cat4(tt.as_str(), \"::try_from(\", x.as_str(), \").unwrap()\");\n            if !exec_mode(mode) && name.name == \"unwrap\" && widens(&st, &target) {\n                let v: String = if fmt::prec(&c.args[0]) < 11 {\n                    types::cat3(\"(\", x.as_str(), \")\")\n                } else {\n                    x.clone()\n                };\n                self.aliases.push(diag::fix(diag::new(\"W0917\", span, types::cat7(\"`\", x.as_str(), \" as \", tt.as_str(), \"` in a specification: every value fits, so it is `\", x.as_str(), \"` (ADR-0099)\").as_str()), \"remove the conversion\", Some(v)));\n                return target;\n            }\n            if !exec_mode(mode) {\n                self.c.fixed(\"E0513\", span, \"conversions are not used in specifications\", \"integer types mix in specifications (ADR-0022): write the value\", x.as_str());\n                return st;\n            }\n            if !types::is_int(&st) {\n                if !types::is_error(&st) {\n                    let msg: String = types::cat3(\"`try_from` converts between integer types, found `\", types::text(&st).as_str(), \"`\");\n                    if is_bool(&st) && name.name == \"unwrap\" {\n                        self.c.fixed(\"E0412\", span, msg.as_str(), \"choose the values\", types::cat3(\"if \", x.as_str(), \" { 1 } else { 0 }\").as_str());\n                    } else if is_f64(&st) {\n                        self.c.help(\"E0412\", c.args[0].span, msg.as_str(), \"`f64` does not convert to an integer type yet (ADR-0061 §4, open question 1)\");\n                    } else {\n                        self.c.err(\"E0412\", c.args[0].span, msg.as_str());\n                    }\n                }\n                return ast::TypeKind::Error;\n            }\n            if name.name == \"unwrap\" && margs.len() == 0 {\n                return target;\n            }\n            if name.name == \"ok\" && margs.len() == 0 {\n                return option_of(target);\n            }\n            if name.name == \"expect\" {\n                self.c.fixed(\"E0213\", span, \"write `.unwrap()`\", \"a conversion has one form (its range is proved)\", unwrapped.as_str());\n                return target;\n            }\n            self.c.fixed(\"E0412\", span, \"`T::try_from(x)` is used as `.unwrap()` or `.ok()`\", \"`.unwrap()`: the value, with a range obligation\", unwrapped.as_str());\n            ast::TypeKind::Error\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "parser",
+       "code": "    impl Parser {\n        #[effects(alloc)]\n        fn parse_pat(self: &mut Parser) -> Option<ast::Pat> {\n            let lo: source::Span = self.span();\n            let k: u8 = self.t.kind(0);\n            let literal: bool = k >= 1 && k <= 6 || self.is_p(\"-\") || self.is_kw(\"true\") || self.is_kw(\"false\");\n            if literal || self.is_p(\"(\") || self.is_p(\"[\") || self.is_p(\"&\") {\n                return Some(self.rejected_pat(lo, \"literal, tuple and reference patterns are not allowed\", \"`match` an enum value; compare other values with `if`\"));\n            }\n            let mut path: Vec<ast::Ident> = Vec::new();\n            path.push(self.ident(\"variant\")?);\n            let mut n: usize = self.left();\n            while n > 0 && self.is_p(\"::\")\n                decreases n,\n            {\n                n = n - 1;\n                self.bump();\n                path.push(self.ident(\"variant\")?);\n            }\n            if self.is_p(\"{\") {\n                return Some(self.rejected_pat(lo, \"struct patterns are not allowed\", \"bind the value and read its fields: `p.x`\"));\n            }\n            let mut binds: Vec<Option<ast::Ident>> = Vec::new();\n            let parens: bool = self.eat_p(\"(\");\n            if parens {\n                let mut m: usize = self.left();\n                while m > 0 && !self.is_p(\")\")\n                    decreases m,\n                {\n                    m = m - 1;\n                    let nested: bool = self.t.kind(0) != 0 || self.t.is_p(1, \"::\") || self.t.is_p(1, \"(\") || self.t.is_p(1, \"{\");\n                    if nested {\n                        return Some(self.rejected_pat(lo, \"nested patterns are not allowed\", \"bind a name and `match` it in the arm body\"));\n                    }\n                    let b: ast::Ident = self.ident(\"binding or `_`\")?;\n                    if b.name == \"_\" {\n                        binds.push(None);\n                    } else {\n                        binds.push(Some(b));\n                    }\n                    if !self.eat_p(\",\") {\n                        m = 0;\n                    }\n                }\n                self.expect_p(\")\")?;\n            }\n            let pspan: source::Span = lo.to(self.prev_span());\n            let mut origin: ast::PatOrigin = ast::PatOrigin::Written;\n            if self.is_p(\"|\") {\n                let osp: source::Span = self.span();\n                self.skip_to_arrow();\n                self.err_fix_to(\"E0232\", osp, \"or-patterns are not allowed\", \"one arm per variant, with the same body\");\n                origin = ast::PatOrigin::Rejected;\n            } else if self.is_kw(\"if\") {\n                let gsp: source::Span = self.span();\n                self.skip_to_arrow();\n                self.err_fix_to(\"E0232\", gsp, \"guards are not allowed\", \"test the condition in the arm body: `V(x) => if c { .. } else { .. }`\");\n                origin = ast::PatOrigin::Rejected;\n            }\n            Some(ast::Pat { path: path, binds: binds, parens: parens, origin: origin, span: pspan })\n        }\n\n        #[effects(alloc)]\n        fn rejected_pat(self: &mut Parser, lo: source::Span, msg: &str, fix: &str) -> ast::Pat {\n            self.skip_to_arrow();\n            let span: source::Span = lo.to(self.prev_span());\n            self.err_fix(\"E0232\", span, msg, fix);\n            let mut path: Vec<ast::Ident> = Vec::new();\n            path.push(ast::Ident { name: String::from(\"_\"), span: span });\n            ast::Pat { path: path, binds: Vec::new(), parens: false, origin: ast::PatOrigin::Rejected, span: span }\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_mod(self: &mut Body, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = types::cat2(prefix, m.name.name.as_str());\n            let mut has_summary: bool = false;\n            for i in 0..m.attrs.len()\n                invariant 0 <= i && i <= m.attrs.len(),\n            {\n                if m.attrs[i].name.name == \"summary\" && m.attrs[i].args.len() == 1 && str_arg(&m.attrs[i].args[0]) {\n                    if has_summary {\n                        self.c.fixed(\"E0605\", m.attrs[i].span, \"duplicate `#[summary(..)]` attribute\", \"keep one: join the text\", \"\");\n                    }\n                    has_summary = true;\n                } else if m.attrs[i].name.name == \"summary\" {\n                    self.c.err(\"E0704\", m.attrs[i].span, \"`#[summary(..)]` takes exactly one string\");\n                    has_summary = true;\n                } else {\n                    self.c.fixed(\"E0605\", m.attrs[i].span, types::cat3(\"unknown attribute `\", m.attrs[i].name.name.as_str(), \"` on a unit\").as_str(), \"remove it: units take `#[summary(\\\"..\\\")]`\", \"\");\n                }\n            }\n            if !has_summary {\n                self.c.help(\"E0704\", m.name.span, types::cat3(\"unit `\", m.name.name.as_str(), \"` has no summary\").as_str(), \"add `#[summary(\\\"one line\\\")]` above `mod`\");\n            }\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for i in 0..m.mods.len()\n                invariant 0 <= i && i <= m.mods.len(),\n            {\n                self.check_mod(&m.mods[i], sub.as_str(), f - 1);\n            }\n            for i in 0..m.consts.len()\n                invariant 0 <= i && i <= m.consts.len(),\n            {\n                for j in 0..m.consts[i].attrs.len()\n                    invariant 0 <= j && j <= m.consts[i].attrs.len(),\n                {\n                    if m.consts[i].attrs[j].name.name == \"summary\" {\n                        self.c.check_summary(&m.consts[i].attrs[j], m.consts[i].attrs.as_slice());\n                    } else {\n                        self.c.fixed(\"E0605\", m.consts[i].attrs[j].span, types::cat3(\"unknown attribute `\", m.consts[i].attrs[j].name.name.as_str(), \"` on a constant\").as_str(), \"constants take `#[summary(\\\"..\\\")]`\", \"\");\n                    }\n                }\n                self.check_const(&m.consts[i], mp.as_str());\n            }\n            for i in 0..m.fns.len()\n                invariant 0 <= i && i <= m.fns.len(),\n            {\n                let path: String = types::cat3(mp.as_str(), \"::\", m.fns[i].name.name.as_str());\n                self.check_fn(&m.fns[i], mp.as_str(), path.as_str());\n            }\n            for i in 0..m.impls.len()\n                invariant 0 <= i && i <= m.impls.len(),\n            {\n                for j in 0..m.impls[i].fns.len()\n                    invariant 0 <= j && j <= m.impls[i].fns.len(),\n                {\n                    let path: String = types::cat5(mp.as_str(), \"::\", m.impls[i].ty.name.as_str(), \"::\", m.impls[i].fns[j].name.name.as_str());\n                    self.check_fn(&m.impls[i].fns[j], mp.as_str(), path.as_str());\n                }\n            }\n            for i in 0..m.traits.len()\n                invariant 0 <= i && i <= m.traits.len(),\n            {\n                for j in 0..m.traits[i].fns.len()\n                    invariant 0 <= j && j <= m.traits[i].fns.len(),\n                {\n                    let path: String = types::cat5(mp.as_str(), \"::\", m.traits[i].name.name.as_str(), \"::\", m.traits[i].fns[j].f.name.name.as_str());\n                    if self.declared_at(path.as_str(), m.traits[i].fns[j].f.span) {\n                        self.check_fn(&m.traits[i].fns[j].f, mp.as_str(), path.as_str());\n                    }\n                }\n            }\n            for i in 0..m.trait_impls.len()\n                invariant 0 <= i && i <= m.trait_impls.len(),\n            {\n                match self.c.impl_info(m.trait_impls[i].span) {\n                    None => {},\n                    Some(found) => { self.c.self_head = Some(decls::SelfHead { head: found.info.head.clone(), text: types::text_in(&found.info.head, mp.as_str()) }); for j in 0..m.trait_impls[i].fns.len() invariant 0 <= j && j <= m.trait_impls[i].fns.len(), { let path: String = types::fn_path(&found.info, m.trait_impls[i].fns[j].name.name.as_str()); if self.declared_at(path.as_str(), m.trait_impls[i].fns[j].span) { self.check_fn(&m.trait_impls[i].fns[j], mp.as_str(), path.as_str()); } } self.c.self_head = None; },\n                }\n            }\n        }\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "decls",
+       "code": "    impl Checker {\n        #[effects(alloc)]\n        fn check_summary(self: &mut Checker, a: &ast::Attr, all: &[ast::Attr]) -> () {\n            if !(a.args.len() == 1 && is_str_arg(&a.args[0])) {\n                self.help(\"E0704\", a.span, \"`#[summary(..)]` takes exactly one string\", \"write the summary as one string: `#[summary(\\\"..\\\")]`\");\n                return;\n            }\n            for i in 0..all.len()\n                invariant 0 <= i && i <= all.len(),\n            {\n                if all[i].name.name.as_str() == \"summary\" {\n                    if !span_eq(all[i].span, a.span) {\n                        self.fixed(\"E0605\", a.span, \"duplicate `#[summary(..)]` attribute\", \"keep one: join the text\", \"\");\n                    }\n                    return;\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "consts",
+       "code": "    #[effects(alloc)]\n    fn collect(m: &ast::Mod, prefix: &str, ev: &mut Eval, f: usize) -> ()\n        decreases f,\n    {\n        if f == 0 {\n            return;\n        }\n        let mut unit: String = String::from(prefix);\n        unit.push_str(m.name.name.as_str());\n        let mut names: Vec<String> = Vec::new();\n        for a in 0..m.fns.len() {\n            names.push(m.fns[a].name.name.clone());\n        }\n        for i in 0..m.types.len() {\n            names.push(m.types[i].name.name.clone());\n            let mut gs: Vec<String> = Vec::new();\n            for g in 0..m.types[i].generics.len() {\n                gs.push(m.types[i].generics[g].name.name.clone());\n            }\n            let mut key: String = unit.clone();\n            key.push_str(\"::\");\n            key.push_str(m.types[i].name.name.as_str());\n            ev.tydefs.insert(key.as_str(), TyDef { unit: unit.clone(), generics: gs, kind: tydef_kind(&m.types[i].kind) });\n        }\n        for c in 0..m.consts.len() {\n            if has(names.as_slice(), m.consts[c].name.name.as_str()) {\n                let mut msg: String = String::from(\"`\");\n                msg.push_str(m.consts[c].name.name.as_str());\n                msg.push_str(\"` is defined more than once in `\");\n                msg.push_str(unit.as_str());\n                msg.push_str(\"`\");\n                ev.diags.push(diag::new(\"E0302\", m.consts[c].name.span, msg.as_str()));\n            } else {\n                names.push(m.consts[c].name.name.clone());\n                let mut ck: String = unit.clone();\n                ck.push_str(\"::\");\n                ck.push_str(m.consts[c].name.name.as_str());\n                ev.defs.insert(ck.as_str(), Def { unit: unit.clone(), c: m.consts[c].clone() });\n            }\n        }\n        for l in 0..m.lens.len() {\n            let mut path: Vec<String> = Vec::new();\n            for q in 0..m.lens[l].path.len() {\n                path.push(m.lens[l].path[q].name.clone());\n            }\n            ev.named.push(LenAt { at: m.lens[l].at, path: path, unit: unit.clone() });\n        }\n        let mut sub: String = unit.clone();\n        sub.push_str(\"::\");\n        for s in 0..m.mods.len() {\n            collect(&m.mods[s], sub.as_str(), ev, f - 1);\n        }\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "decls",
+       "code": "    impl Checker {\n        #[effects(alloc)]\n        fn collect(self: &mut Checker, p: &ast::Program) -> () {\n            self.elem_params = elem_params(p);\n            let mut seen: Vec<String> = Vec::new();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                if !types::add(&mut seen, p.mods[i].name.name.as_str()) {\n                    self.err(\"E0302\", p.mods[i].name.span, types::cat3(\"unit `\", p.mods[i].name.name.as_str(), \"` is defined more than once\").as_str());\n                }\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.trait_names(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.collect_types(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.impl_heads(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.resolve_types(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.check_owned_fields(&p.mods[i], \"\", 1000000000);\n            }\n            self.check_type_cycles();\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.trait_sigs(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.collect_mod(&p.mods[i], \"\", 1000000000);\n            }\n            for i in 0..p.mods.len()\n                invariant 0 <= i && i <= p.mods.len(),\n            {\n                self.check_invariants(&p.mods[i], \"\", 1000000000);\n            }\n        }\n\n        #[effects(alloc)]\n        fn collect_fn(self: &mut Checker, f: &ast::FnDef, path: &str, mp: &str, in_impl: bool, ig: &[types::TParam]) -> () {\n            let own: Vec<types::TParam> = self.tparams_of(f.generics.as_slice(), true, mp);\n            for g in 0..own.len()\n                invariant 0 <= g && g <= own.len(),\n            {\n                if g < f.generics.len() && types::is_tparam(ig, own[g].name.as_str()) {\n                    self.err(\"E0302\", f.generics[g].name.span, types::cat3(\"type parameter `\", own[g].name.as_str(), \"` is already the `impl`'s\").as_str());\n                }\n            }\n            let mut generics: Vec<types::TParam> = Vec::new();\n            for i in 0..ig.len()\n                invariant 0 <= i && i <= ig.len(),\n            {\n                generics.push(ig[i].clone());\n            }\n            ast::append::<types::TParam>(&mut generics, own);\n            self.tparams = generics.clone();\n            let mut params: Vec<ast::TypeKind> = Vec::new();\n            for p in 0..f.params.len()\n                invariant 0 <= p && p <= f.params.len(),\n            {\n                let t: ast::TypeKind = self.canon(&f.params[p].ty, mp, false, 100000);\n                params.push(t);\n            }\n            let ret: ast::TypeKind = self.canon(&f.ret.ty, mp, false, 100000);\n            self.tparams = Vec::new();\n            let effect: types::Effects = self.fn_effect(f);\n            let vacuous: bool = is_spec(&f.kind) && f.body.stmts.len() == 0 && tail_true(&f.body);\n            self.fns.insert(path, types::FnSig { path: String::from(path), kind: kind_copy(&f.kind), generics: generics, impl_generics: ig.len(), params: params, ret: ret, effect: effect, vacuous: vacuous, builtin: false, in_impl: in_impl, trait_of: None, default: false, span: f.span });\n        }\n\n        #[effects(alloc)]\n        fn collect_impl(self: &mut Checker, m: &ast::Mod, i: usize, mp: &str, with_impl: &mut Vec<String>, impl_tys: &mut Vec<String>, impl_names: &mut Vec<Vec<String>>) -> ()\n            requires i < m.impls.len() && impl_tys.len() == impl_names.len(),\n            ensures impl_tys.len() == impl_names.len(),\n        {\n            let tyname: String = m.impls[i].ty.name.clone();\n            let ty: String = types::cat3(mp, \"::\", tyname.as_str());\n            let mut declared: bool = false;\n            for t in 0..m.types.len()\n                invariant 0 <= t && t <= m.types.len(),\n            {\n                if m.types[t].name.name.as_str() == tyname.as_str() {\n                    declared = true;\n                }\n            }\n            if !declared {\n                self.err(\"E0308\", m.impls[i].ty.span, types::cat5(\"`impl \", tyname.as_str(), \"` needs the type declared in the same unit `\", mp, \"`\").as_str());\n                return;\n            }\n            let ig: Vec<types::TParam> = self.tparams_of(m.impls[i].generics.as_slice(), true, mp);\n            let key: String = types::cat3(ty.as_str(), \"\\n\", bounds_key(ig.as_slice()).as_str());\n            if !types::add(with_impl, key.as_str()) {\n                self.help(\"E0308\", m.impls[i].ty.span, types::cat3(\"`\", tyname.as_str(), \"` already has an `impl` block with these bounds; one per list of bounds\").as_str(), \"move these functions into the first block with the same bounds (ADR-0097)\");\n                return;\n            }\n            let ps: Vec<String> = match self.adts.find(ty.as_str()) {\n                None => Vec::new(),\n                Some(at) => tparam_names(self.adts.items[at].generics.as_slice()),\n            };\n            let mut in_order: bool = ig.len() == ps.len() && m.impls[i].ty_args.len() == ig.len();\n            for a in 0..m.impls[i].ty_args.len()\n                invariant 0 <= a && a <= m.impls[i].ty_args.len() && i < m.impls.len(),\n            {\n                if a < ig.len() {\n                    match plain_name(&m.impls[i].ty_args[a].kind) {\n                        None => { in_order = false; },\n                        Some(w) => { if w.as_str() != ig[a].name.as_str() { in_order = false; } },\n                    }\n                }\n            }\n            if !in_order {\n                let r: String = if ps.len() == 0 {\n                    types::cat2(\"impl \", tyname.as_str())\n                } else {\n                    types::cat7(\"impl<\", copy_list(ps.as_slice()).as_str(), \"> \", tyname.as_str(), \"<\", types::join(ps.as_slice(), \", \").as_str(), \">\")\n                };\n                self.help(\"E0420\", m.impls[i].ty.span, types::cat3(\"the `impl` of `\", tyname.as_str(), \"` takes its type parameters in order\").as_str(), types::cat3(\"write `\", r.as_str(), \"`\").as_str());\n                return;\n            }\n            let mut slot: usize = impl_tys.len();\n            for s in 0..impl_tys.len()\n                invariant 0 <= s && s <= impl_tys.len() && slot <= impl_tys.len(),\n            {\n                if impl_tys[s].as_str() == ty.as_str() {\n                    slot = s;\n                }\n            }\n            if slot == impl_tys.len() {\n                impl_tys.push(ty.clone());\n                impl_names.push(Vec::new());\n            }\n            let mut dup: Vec<source::Span> = Vec::new();\n            for k in 0..m.impls[i].fns.len()\n                invariant 0 <= k && k <= m.impls[i].fns.len() && i < m.impls.len() && slot < impl_names.len() && impl_tys.len() == impl_names.len(),\n            {\n                if !types::add(&mut impl_names[slot], m.impls[i].fns[k].name.name.as_str()) {\n                    dup.push(m.impls[i].fns[k].name.span);\n                }\n            }\n            for k in 0..m.impls[i].fns.len()\n                invariant 0 <= k && k <= m.impls[i].fns.len() && i < m.impls.len(),\n            {\n                let fname: String = m.impls[i].fns[k].name.name.clone();\n                if has_span(dup.as_slice(), m.impls[i].fns[k].name.span) {\n                    self.help(\"E0302\", m.impls[i].fns[k].name.span, types::cat5(\"`\", fname.as_str(), \"` is defined more than once in the `impl` blocks of `\", tyname.as_str(), \"`\").as_str(), \"a name is one function of the type, whichever block holds it: rename one or remove it\");\n                } else {\n                    let fg: Vec<types::TParam> = self.tparams_of(m.impls[i].fns[k].generics.as_slice(), false, mp);\n                    let mut tps: Vec<types::TParam> = ig.clone();\n                    ast::append::<types::TParam>(&mut tps, fg);\n                    self.tparams = tps;\n                    self.receiver_rule(&m.impls[i].fns[k], ty.as_str(), true, mp);\n                    self.tparams = Vec::new();\n                    self.collect_fn(&m.impls[i].fns[k], types::cat3(ty.as_str(), \"::\", fname.as_str()).as_str(), mp, true, ig.as_slice());\n                }\n            }\n        }\n\n        #[effects(alloc)]\n        fn collect_mod(self: &mut Checker, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = unit_path(prefix, m);\n            for u in 0..m.uses.len()\n                invariant 0 <= u && u <= m.uses.len(),\n            {\n                if m.uses[u].path.len() > 0 {\n                    let full: String = path_text(m.uses[u].path.as_slice());\n                    let last: String = m.uses[u].path[m.uses[u].path.len() - 1].name.clone();\n                    if !self.imports.has(mp.as_str()) {\n                        self.imports.insert(mp.as_str(), table::new::<String>());\n                    }\n                    match self.imports.find(mp.as_str()) {\n                        None => {},\n                        Some(at) => self.imports.items[at].insert(last.as_str(), full.clone()),\n                    }\n                    self.fixed(\"E0214\", m.uses[u].span, types::cat5(\"`use \", full.as_str(), \";` is not used: write `\", full.as_str(), \"` where it is used\").as_str(), \"delete the `use`; its names are rewritten to full paths\", \"\");\n                }\n            }\n            let mut names: Vec<String> = Vec::new();\n            for t in 0..m.traits.len()\n                invariant 0 <= t && t <= m.traits.len(),\n            {\n                if types::reserved_name(m.traits[t].name.name.as_str()) {\n                    self.err(\"E0309\", m.traits[t].name.span, types::cat3(\"`\", m.traits[t].name.name.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n            }\n            for c in 0..m.consts.len()\n                invariant 0 <= c && c <= m.consts.len(),\n            {\n                if types::reserved_name(m.consts[c].name.name.as_str()) {\n                    self.err(\"E0309\", m.consts[c].name.span, types::cat3(\"`\", m.consts[c].name.name.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n            }\n            for t in 0..m.types.len()\n                invariant 0 <= t && t <= m.types.len(),\n            {\n                if types::reserved_name(m.types[t].name.name.as_str()) {\n                    self.err(\"E0309\", m.types[t].name.span, types::cat3(\"`\", m.types[t].name.name.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n                if !types::add(&mut names, m.types[t].name.name.as_str()) {\n                    self.err(\"E0302\", m.types[t].name.span, types::cat5(\"`\", m.types[t].name.name.as_str(), \"` is defined more than once in `\", mp.as_str(), \"`\").as_str());\n                }\n            }\n            for t in 0..m.traits.len()\n                invariant 0 <= t && t <= m.traits.len(),\n            {\n                if !types::add(&mut names, m.traits[t].name.name.as_str()) {\n                    self.err(\"E0302\", m.traits[t].name.span, types::cat5(\"`\", m.traits[t].name.name.as_str(), \"` is defined more than once in `\", mp.as_str(), \"`\").as_str());\n                }\n            }\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for s in 0..m.mods.len()\n                invariant 0 <= s && s <= m.mods.len(),\n            {\n                if !types::add(&mut names, m.mods[s].name.name.as_str()) {\n                    self.err(\"E0302\", m.mods[s].name.span, types::cat5(\"`\", m.mods[s].name.name.as_str(), \"` is defined more than once in `\", mp.as_str(), \"`\").as_str());\n                }\n                self.collect_mod(&m.mods[s], sub.as_str(), f - 1);\n            }\n            let none: Vec<types::TParam> = Vec::new();\n            for k in 0..m.fns.len()\n                invariant 0 <= k && k <= m.fns.len(),\n            {\n                let fname: String = m.fns[k].name.name.clone();\n                if types::builtin_name(fname.as_str()) {\n                    self.err(\"E0309\", m.fns[k].name.span, types::cat3(\"`\", fname.as_str(), \"` is a built-in name (ADR-0026)\").as_str());\n                }\n                if !types::add(&mut names, fname.as_str()) {\n                    self.err(\"E0302\", m.fns[k].name.span, types::cat5(\"`\", fname.as_str(), \"` is defined more than once in `\", mp.as_str(), \"`\").as_str());\n                } else {\n                    self.collect_fn(&m.fns[k], types::cat3(mp.as_str(), \"::\", fname.as_str()).as_str(), mp.as_str(), false, none.as_slice());\n                }\n            }\n            let mut with_impl: Vec<String> = Vec::new();\n            let mut impl_tys: Vec<String> = Vec::new();\n            let mut impl_names: Vec<Vec<String>> = Vec::new();\n            for i in 0..m.impls.len()\n                invariant 0 <= i && i <= m.impls.len() && impl_tys.len() == impl_names.len(),\n            {\n                self.collect_impl(m, i, mp.as_str(), &mut with_impl, &mut impl_tys, &mut impl_names);\n            }\n            for k in 0..m.fns.len()\n                invariant 0 <= k && k <= m.fns.len(),\n            {\n                let tps: Vec<types::TParam> = self.tparams_of(m.fns[k].generics.as_slice(), false, mp.as_str());\n                self.tparams = tps;\n                self.receiver_rule(&m.fns[k], \"\", false, mp.as_str());\n                self.tparams = Vec::new();\n            }\n            for t in 0..m.trait_impls.len()\n                invariant 0 <= t && t <= m.trait_impls.len(),\n            {\n                self.collect_trait_impl(&m.trait_impls[t], mp.as_str());\n            }\n        }\n\n        #[effects(alloc)]\n        fn collect_trait_impl(self: &mut Checker, ti: &ast::TraitImpl, mp: &str) -> () {\n            let found: Found = match self.impl_info(ti.span) {\n                None => { return; },\n                Some(x) => x,\n            };\n            let recv: String = match types::named_path(&found.info.head) {\n                None => types::text(&found.info.head),\n                Some(np) => np,\n            };\n            self.self_head = Some(SelfHead { head: found.info.head.clone(), text: types::text_in(&found.info.head, mp) });\n            let mut fnames: Vec<String> = Vec::new();\n            for k in 0..ti.fns.len()\n                invariant 0 <= k && k <= ti.fns.len(),\n            {\n                let fname: String = ti.fns[k].name.name.clone();\n                let fp: String = types::fn_path(&found.info, fname.as_str());\n                if !types::add(&mut fnames, fname.as_str()) {\n                    self.err(\"E0302\", ti.fns[k].name.span, types::cat3(\"`\", fname.as_str(), \"` is defined more than once in this `impl`\").as_str());\n                } else if found.rejected && self.fns.has(fp.as_str()) {} else {\n                    let fg: Vec<types::TParam> = self.tparams_of(ti.fns[k].generics.as_slice(), false, mp);\n                    let mut tps: Vec<types::TParam> = found.info.generics.clone();\n                    ast::append::<types::TParam>(&mut tps, fg);\n                    self.tparams = tps;\n                    self.receiver_rule(&ti.fns[k], recv.as_str(), true, mp);\n                    self.tparams = Vec::new();\n                    self.collect_fn(&ti.fns[k], fp.as_str(), mp, true, found.info.generics.as_slice());\n                }\n            }\n            if !has_span(self.overlapping_impls.as_slice(), ti.span) {\n                self.conform(&found.info, ti, mp);\n            }\n            self.self_head = None;\n        }\n\n        #[effects(alloc)]\n        fn resolve_kind(self: &mut Checker, t: &ast::TypeDef, path: &str, mp: &str) -> types::AdtKind {\n            match &t.kind {\n                ast::TypeDefKind::Struct(fields) => { if fields.len() == 0 { self.err(\"E0420\", t.name.span, \"a struct needs at least one field\"); } let mut seen: Vec<String> = Vec::new(); let mut out: Vec<types::FieldSig> = Vec::new(); for i in 0..fields.len() invariant 0 <= i && i <= fields.len(), { if !types::add(&mut seen, fields[i].name.name.as_str()) { self.err(\"E0302\", fields[i].name.span, types::cat5(\"field `\", fields[i].name.name.as_str(), \"` is defined more than once in `\", path, \"`\").as_str()); } let ty: ast::TypeKind = self.field_type(&fields[i].ty, mp); out.push(types::FieldSig { name: fields[i].name.name.clone(), ty: ty }); } types::AdtKind::Struct(out) },\n                ast::TypeDefKind::Enum(variants) => { if variants.len() == 0 { self.err(\"E0420\", t.name.span, \"an enum needs at least one variant\"); } let mut seen: Vec<String> = Vec::new(); let mut vout: Vec<types::VariantSig> = Vec::new(); for i in 0..variants.len() invariant 0 <= i && i <= variants.len(), { if !types::add(&mut seen, variants[i].name.name.as_str()) { self.err(\"E0302\", variants[i].name.span, types::cat5(\"variant `\", variants[i].name.name.as_str(), \"` is defined more than once in `\", path, \"`\").as_str()); } let mut tys: Vec<ast::TypeKind> = Vec::new(); for j in 0..variants[i].payload.len() invariant 0 <= j && j <= variants[i].payload.len() && i < variants.len(), { let ty: ast::TypeKind = self.field_type(&variants[i].payload[j], mp); tys.push(ty); } vout.push(types::VariantSig { name: variants[i].name.name.clone(), tys: tys }); } types::AdtKind::Enum(vout) },\n            }\n        }\n\n        #[effects(alloc)]\n        fn tparams_of(self: &mut Checker, gs: &[ast::TypeParam], report: bool, mp: &str) -> Vec<types::TParam> {\n            let mut out: Vec<types::TParam> = Vec::new();\n            for g in 0..gs.len()\n                invariant 0 <= g && g <= gs.len(),\n            {\n                let mut bounds: Vec<String> = Vec::new();\n                for b in 0..gs[g].bounds.len()\n                    invariant 0 <= b && b <= gs[g].bounds.len() && g < gs.len(),\n                {\n                    let name: String = path_text(gs[g].bounds[b].as_slice());\n                    if name.as_str() == \"Copy\" || name.as_str() == \"Eq\" || name.as_str() == \"Ord\" {\n                        bounds.push(name);\n                    } else {\n                        match self.trait_path(gs[g].bounds[b].as_slice(), mp) {\n                            None => { let dropped: String = name; if report && gs[g].bounds[b].len() > 0 { let last: usize = gs[g].bounds[b].len() - 1; let span: source::Span = span_to(gs[g].bounds[b][0].span, gs[g].bounds[b][last].span); let d: diag::Diag = self.unknown_trait(dropped.as_str(), span, mp, \"the built-in bounds are `Copy`, `Eq` and `Ord`; a trait of another unit is named by full path, e.g. `unit::Shape`\"); self.diags.push(d); } },\n                            Some(tr) => { let dropped: String = name; bounds.push(tr); },\n                        }\n                    }\n                }\n                if report && types::is_tparam(out.as_slice(), gs[g].name.name.as_str()) {\n                    self.help(\"E0302\", gs[g].name.span, types::cat3(\"type parameter `\", gs[g].name.name.as_str(), \"` is declared twice\").as_str(), \"give each type parameter its own name\");\n                }\n                if has_span(self.elem_params.as_slice(), gs[g].span) {\n                    bounds.push(String::from(\"elem\"));\n                }\n                out.push(types::TParam { name: gs[g].name.name.clone(), bounds: bounds });\n            }\n            out\n        }\n\n        #[effects(alloc)]\n        fn trait_sigs(self: &mut Checker, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = unit_path(prefix, m);\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for s in 0..m.mods.len()\n                invariant 0 <= s && s <= m.mods.len(),\n            {\n                self.trait_sigs(&m.mods[s], sub.as_str(), f - 1);\n            }\n            for i in 0..m.traits.len()\n                invariant 0 <= i && i <= m.traits.len(),\n            {\n                let path: String = types::cat3(mp.as_str(), \"::\", m.traits[i].name.name.as_str());\n                let mine: bool = match self.traits.find(path.as_str()) {\n                    None => false,\n                    Some(at) => span_eq(self.traits.items[at].span, m.traits[i].name.span),\n                };\n                if mine {\n                    let mut sb: Vec<String> = Vec::new();\n                    sb.push(path.clone());\n                    let selfp: types::TParam = types::TParam { name: String::from(\"Self\"), bounds: sb };\n                    let mut ig: Vec<types::TParam> = Vec::new();\n                    ig.push(selfp.clone());\n                    let mut names: Vec<String> = Vec::new();\n                    for k in 0..m.traits[i].fns.len()\n                        invariant 0 <= k && k <= m.traits[i].fns.len() && i < m.traits.len(),\n                    {\n                        let fname: String = m.traits[i].fns[k].f.name.name.clone();\n                        if types::has(names.as_slice(), fname.as_str()) {\n                            self.err(\"E0302\", m.traits[i].fns[k].f.name.span, types::cat5(\"`\", fname.as_str(), \"` is defined more than once in trait `\", m.traits[i].name.name.as_str(), \"`\").as_str());\n                        } else {\n                            names.push(fname.clone());\n                            match &m.traits[i].fns[k].f.measure {\n                                None => {},\n                                Some(d) => { self.help(\"E0207\", d.span, \"a trait method takes no `decreases`: recursion through a bound is not supported\", \"remove it; an impl's function may recurse on its own type with its own `decreases`\"); },\n                            }\n                            let own: Vec<types::TParam> = self.tparams_of(m.traits[i].fns[k].f.generics.as_slice(), false, mp.as_str());\n                            let mut tps: Vec<types::TParam> = Vec::new();\n                            tps.push(selfp.clone());\n                            ast::append::<types::TParam>(&mut tps, own);\n                            self.tparams = tps;\n                            self.receiver_rule(&m.traits[i].fns[k].f, \"Self\", true, mp.as_str());\n                            self.tparams = Vec::new();\n                            let fp: String = types::cat3(path.as_str(), \"::\", fname.as_str());\n                            self.collect_fn(&m.traits[i].fns[k].f, fp.as_str(), mp.as_str(), false, ig.as_slice());\n                            match self.fns.find(fp.as_str()) {\n                                None => {},\n                                Some(at) => { self.fns.items[at].trait_of = Some(path.clone()); self.fns.items[at].default = m.traits[i].fns[k].has_body; },\n                            }\n                        }\n                    }\n                    match self.traits.find(path.as_str()) {\n                        None => { let dropped: Vec<String> = names; },\n                        Some(at) => { self.traits.items[at].methods = names; },\n                    }\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn not_a_method(self: &mut Body, cx: &FnCtx, owner: &str, recv: &ast::Expr, name: &ast::Ident, args: &[ast::Expr], span: source::Span, no_receiver: bool, adjust: Option<ast::Adjust>) -> () {\n            let callee: String = variant_text(owner, name.name.as_str(), cx.mod_path.as_str());\n            let x: String = fmt::expr_text(recv);\n            let mut all: Vec<String> = Vec::new();\n            match adjust {\n                None => {},\n                Some(a) => { match a { ast::Adjust::Value => { all.push(x.clone()); }, ast::Adjust::Ref => { all.push(types::cat2(\"&\", x.as_str())); }, ast::Adjust::RefMut => { all.push(types::cat2(\"&mut \", x.as_str())); }, ast::Adjust::AsStr => { all.push(types::cat2(x.as_str(), \".as_str()\")); }, } },\n            }\n            for i in 0..args.len()\n                invariant 0 <= i && i <= args.len(),\n            {\n                all.push(fmt::expr_text(&args[i]));\n            }\n            let list: String = types::join(all.as_slice(), \", \");\n            if no_receiver {\n                self.c.help(\"E0314\", span, types::cat3(\"`\", callee.as_str(), \"` is not called as a method: it has no receiver\").as_str(), types::cat5(\"call it by path: `\", callee.as_str(), \"(\", list.as_str(), \")`\").as_str());\n            } else {\n                self.c.help(\"E0314\", span, types::cat3(\"`\", callee.as_str(), \"` is not called as a method: it has type parameters of its own\").as_str(), types::cat5(\"call it by path: `\", callee.as_str(), \"::<..>(\", list.as_str(), \")`\").as_str());\n            }\n        }\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ]
+   ],
+   "rust": [
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                target\n            }",
+       "new": "                self.diags\n                    .push(Diag::new(\"E0213\", span, \"write `.unwrap()`\").fix(\n                        \"a conversion has one form (its range is proved)\",\n                        Some(unwrapped),\n                    ));\n                target\n            }"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "            pat.origin = PatOrigin::Rejected;",
+       "new": "            self.diags\n                .push(Diag::new(\"E0232\", sp.to(self.prev_span()), msg).fix(fix, None));\n            pat.origin = PatOrigin::Rejected;"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "        Pat {",
+       "new": "        self.diags\n            .push(Diag::new(\"E0232\", span, msg).fix(fix, None));\n        Pat {"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        } else if all",
+       "new": "            self.diags.push(\n                Diag::new(\"E0704\", a.span, \"`#[summary(..)]` takes exactly one string\").fix(\n                    \"write the summary as one string: `#[summary(\\\"..\\\")]`\",\n                    None,\n                ),\n            );\n        } else if all"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                has_summary = true;\n            } else {",
+       "new": "                self.err(\"E0704\", a.span, \"`#[summary(..)]` takes exactly one string\");\n                has_summary = true;\n            } else {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        }\n        for sub in &m.mods {\n            self.check_mod(sub, &format!(\"{mp}::\"));",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E0704\",\n                    m.name.span,\n                    format!(\"unit `{}` has no summary\", m.name.name),\n                )\n                .fix(\"add `#[summary(\\\"one line\\\")]` above `mod`\", None),\n            );\n        }\n        for sub in &m.mods {\n            self.check_mod(sub, &format!(\"{mp}::\"));"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n        for m in &p.mods {",
+       "new": "                self.err(\n                    \"E0302\",\n                    m.name.span,\n                    format!(\"unit `{}` is defined more than once\", m.name.name),\n                );\n            }\n        }\n        for m in &p.mods {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    continue;\n                }\n                names.push(f.name.name.clone());",
+       "new": "                    self.err(\n                        \"E0302\",\n                        f.name.span,\n                        format!(\n                            \"`{}` is defined more than once in trait `{}`\",\n                            f.name.name, t.name.name\n                        ),\n                    );\n                    continue;\n                }\n                names.push(f.name.name.clone());"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        }\n                        let ty = self.field_type(&f.ty, &mp);",
+       "new": "                            self.err(\n                                \"E0302\",\n                                f.name.span,\n                                format!(\n                                    \"field `{}` is defined more than once in `{path}`\",\n                                    f.name.name\n                                ),\n                            );\n                        }\n                        let ty = self.field_type(&f.ty, &mp);"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        }\n                        let tys = v",
+       "new": "                            self.err(\n                                \"E0302\",\n                                v.name.span,\n                                format!(\n                                    \"variant `{}` is defined more than once in `{path}`\",\n                                    v.name.name\n                                ),\n                            );\n                        }\n                        let tys = v"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n            if self\n                .elem_params",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0302\",\n                        g.name.span,\n                        format!(\"type parameter `{}` is declared twice\", g.name.name),\n                    )\n                    .fix(\"give each type parameter its own name\", None),\n                );\n            }\n            if self\n                .elem_params"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n        for t in &m.traits {\n            if !names.insert(t.name.name.clone()) {",
+       "new": "                self.err(\n                    \"E0302\",\n                    t.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", t.name.name),\n                );\n            }\n        }\n        for t in &m.traits {\n            if !names.insert(t.name.name.clone()) {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n        for sub in &m.mods {",
+       "new": "                self.err(\n                    \"E0302\",\n                    t.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", t.name.name),\n                );\n            }\n        }\n        for sub in &m.mods {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n            self.collect_mod(sub, &format!(\"{mp}::\"));",
+       "new": "                self.err(\n                    \"E0302\",\n                    sub.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", sub.name.name),\n                );\n            }\n            self.collect_mod(sub, &format!(\"{mp}::\"));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                continue;\n            }\n            let path = format!(\"{mp}::{}\", f.name.name);",
+       "new": "                self.err(\n                    \"E0302\",\n                    f.name.span,\n                    format!(\"`{}` is defined more than once in `{mp}`\", f.name.name),\n                );\n                continue;\n            }\n            let path = format!(\"{mp}::{}\", f.name.name);"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    continue;\n                }\n                let fg = self.tparams_of(&f.generics, false, &mp);\n                self.tparams = ig.clone();",
+       "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0302\",\n                            f.name.span,\n                            format!(\n                                \"`{}` is defined more than once in the `impl` blocks of `{}`\",\n                                f.name.name, i.ty.name\n                            ),\n                        )\n                        .fix(\n                            \"a name is one function of the type, whichever block holds it: rename one or remove it\",\n                            None,\n                        ),\n                    );\n                    continue;\n                }\n                let fg = self.tparams_of(&f.generics, false, &mp);\n                self.tparams = ig.clone();"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    continue;\n                }\n                if rejected && self.fns.contains_key(&info.fn_path(&f.name.name)) {",
+       "new": "                    self.err(\n                        \"E0302\",\n                        f.name.span,\n                        format!(\"`{}` is defined more than once in this `impl`\", f.name.name),\n                    );\n                    continue;\n                }\n                if rejected && self.fns.contains_key(&info.fn_path(&f.name.name)) {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n        let mut generics = ig.to_vec();",
+       "new": "                self.err(\n                    \"E0302\",\n                    g.name.span,\n                    format!(\"type parameter `{}` is already the `impl`'s\", p.name),\n                );\n            }\n        }\n        let mut generics = ig.to_vec();"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/consts.rs",
+       "old": "                continue;\n            }",
+       "new": "                diags.push(Diag::new(\n                    \"E0302\",\n                    c.name.span,\n                    format!(\"`{}` is defined more than once in `{unit}`\", c.name.name),\n                ));\n                continue;\n            }"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "    }\n\n    fn f64_method(",
+       "new": "        self.diags.push(\n            Diag::new(\n                \"E0314\",\n                span,\n                format!(\"`{callee}` is not called as a method: {why}\"),\n            )\n            .fix(format!(\"call it by path: `{call}`\"), None),\n        );\n    }\n\n    fn f64_method("
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   ]
+  }
+ ]
+}

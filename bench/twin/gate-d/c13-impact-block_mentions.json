@@ -1,0 +1,111 @@
+{
+ "id": "c13-impact-block_mentions",
+ "kind": "comprehend",
+ "family": "impact",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `body::block_mentions` directly, or call one of its direct callers (its callers up to two levels)? Leave out `body::block_mentions` itself unless it is called from one of them. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `check::block_mentions` directly, or call one of its direct callers (its callers up to two levels)? Leave out `check::block_mentions` itself unless it is called from one of them. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "check::Checker::call",
+   "check::Checker::expr_inner",
+   "check::Checker::match_expr",
+   "check::block_mentions",
+   "check::mentions_strict"
+  ],
+  "bmb": [
+   "body::Body::alias_check",
+   "body::Body::match_expr",
+   "body::any_mentions",
+   "body::block_mentions",
+   "body::mentions_strict",
+   "body::opt_mentions",
+   "body::stmt_mentions"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "body::block_mentions",
+      "in",
+      "2"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "body::Body::alias_check",
+      "body::Body::match_expr",
+      "body::any_mentions",
+      "body::block_mentions",
+      "body::mentions_strict",
+      "body::opt_mentions",
+      "body::stmt_mentions"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])block_mentions\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "check::Checker::call",
+      "check::Checker::expr_inner",
+      "check::Checker::match_expr",
+      "check::block_mentions",
+      "check::mentions_strict"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "body::Body::match_expr",
+       "body::any_mentions",
+       "body::block_mentions",
+       "body::mentions_strict",
+       "body::opt_mentions",
+       "body::stmt_mentions"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "check::Checker::expr_inner",
+       "check::Checker::match_expr",
+       "check::block_mentions",
+       "check::mentions_strict"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

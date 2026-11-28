@@ -1,0 +1,128 @@
+{
+ "id": "t01-replay-e1001",
+ "family": "replay",
+ "kind": "change",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "scope": "any",
+ "source": {
+  "code": "E1001",
+  "commit": "5644c8404",
+  "subject": "2F-02, 2F-03 (ADR-0030), 2E-02..2E-04 (ADR-0029): effect sets with alloc and panic; escapes with rationales and trust levels"
+ },
+ "prompt": "`bmb check` does not report the diagnostic E1001 yet: an escape (`assume`, `#[external_body]`) without a `#[rationale(..)]` before it. It came with the commit \"2F-02, 2F-03 (ADR-0030), 2E-02..2E-04 (ADR-0029): effect sets with alloc and panic; escapes with rationales and trust levels\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    assume(small(x));\n    {\"code\": \"E1001\", \"severity\": \"error\", \"message\": \"`assume` is an escape and needs a `#[rationale(..)]` before it\", \"file\": \"err/escapes.bmb\", \"line\": 7, \"col\": 9, \"end_line\": 7, \"end_col\": 26, \"fix\": {\"message\": \"write `#[rationale(kind = K, \\\"why the fact holds\\\")]` before it, `K` one of `nonlinear`, `solver_limit`, `boundary`, `performance`\"}}\n\n    #[external_body]\n    {\"code\": \"E1001\", \"severity\": \"error\", \"message\": \"`#[external_body]` is an escape and needs a `#[rationale(..)]` before it\", \"file\": \"err/escapes.bmb\", \"line\": 47, \"col\": 5, \"end_line\": 47, \"end_col\": 21, \"fix\": {\"message\": \"write `#[rationale(kind = K, \\\"why the fact holds\\\")]` before it, `K` one of `nonlinear`, `solver_limit`, `boundary`, `performance`\"}}\n\nEverything else the program prints must stay as it is.",
+ "setup": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "        self.diags.push(\n            Diag::new(\n                \"E1001\",\n                span,\n                format!(\"{what} is an escape and needs a `#[rationale(..)]` before it\"),\n            )\n            .fix(\n                \"write `#[rationale(kind = K, \\\"why the fact holds\\\")]` before it, `K` one of \\\n                 `nonlinear`, `solver_limit`, `boundary`, `performance`\",\n                None,\n            ),\n        );",
+     "new": ""
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "decls",
+     "code": "    impl Checker {\n        #[effects(alloc)]\n        fn missing_rationale(self: &mut Checker, span: source::Span, what: &str) -> () {\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "cases": [
+  {
+   "name": "replay-escapes",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/escapes.bmb"
+   ]
+  },
+  {
+   "name": "replay-verus_external_body",
+   "args": [
+    "check"
+   ],
+   "files": [
+    "tests/check/err/verus_external_body.bmb"
+   ]
+  }
+ ],
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "    }\n\n    fn check_rationale(&mut self, a: &Attr) {",
+     "new": "        self.diags.push(\n            Diag::new(\n                \"E1001\",\n                span,\n                format!(\"{what} is an escape and needs a `#[rationale(..)]` before it\"),\n            )\n            .fix(\n                \"write `#[rationale(kind = K, \\\"why the fact holds\\\")]` before it, `K` one of \\\n                 `nonlinear`, `solver_limit`, `boundary`, `performance`\",\n                None,\n            ),\n        );\n    }\n\n    fn check_rationale(&mut self, a: &Attr) {"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "decls",
+     "code": "    impl Checker {\n        #[effects(alloc)]\n        fn missing_rationale(self: &mut Checker, span: source::Span, what: &str) -> () {\n            self.help(\"E1001\", span, types::cat2(what, \" is an escape and needs a `#[rationale(..)]` before it\").as_str(), \"write `#[rationale(kind = K, \\\"why the fact holds\\\")]` before it, `K` one of `nonlinear`, `solver_limit`, `boundary`, `performance`\");\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "corpus",
+   "bmb": [],
+   "rust": []
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "decls",
+      "code": "    impl Checker {\n        #[effects(alloc)]\n        fn missing_rationale(self: &mut Checker, span: source::Span, what: &str) -> () {\n            self.help(\"E1001\", span, types::cat2(what, \" is an escape and needs a `#[rationale(..)]` before it\").as_str(), \"write `#[rationale(kind = K, \\\"why the fact holds\\\")]` before it, `K` one of `nonlinear`, `solver_limit`, `boundary`, `performance`\");\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "    }\n\n    fn check_rationale(&mut self, a: &Attr) {",
+      "new": "        self.diags.push(\n            Diag::new(\n                \"E1001\",\n                span,\n                format!(\"{what} is an escape and needs a `#[rationale(..)]` before it\"),\n            )\n            .fix(\n                \"write `#[rationale(kind = K, \\\"why the fact holds\\\")]` before it, `K` one of \\\n                 `nonlinear`, `solver_limit`, `boundary`, `performance`\",\n                None,\n            ),\n        );\n    }\n\n    fn check_rationale(&mut self, a: &Attr) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,99 @@
+{
+ "id": "c08-callers-parse_block_rest",
+ "kind": "comprehend",
+ "family": "callers",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `parser::Parser::parse_block_rest` directly? Leave out `parser::Parser::parse_block_rest` itself unless it calls itself. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `parser::Parser::parse_block_rest` directly? Leave out `parser::Parser::parse_block_rest` itself unless it calls itself. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "parser::Parser::parse_block",
+   "parser::Parser::parse_for",
+   "parser::Parser::parse_loop",
+   "parser::Parser::parse_while_inner"
+  ],
+  "bmb": [
+   "parser::Parser::parse_block",
+   "parser::Parser::parse_for",
+   "parser::Parser::parse_loop",
+   "parser::Parser::parse_while_inner"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "parser::Parser::parse_block_rest",
+      "in",
+      "1"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Parser::parse_block",
+      "parser::Parser::parse_for",
+      "parser::Parser::parse_loop",
+      "parser::Parser::parse_while_inner"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])parse_block_rest\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Parser::parse_block",
+      "parser::Parser::parse_for",
+      "parser::Parser::parse_loop",
+      "parser::Parser::parse_while_inner"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Parser::parse_for",
+       "parser::Parser::parse_loop",
+       "parser::Parser::parse_while_inner"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Parser::parse_for",
+       "parser::Parser::parse_loop",
+       "parser::Parser::parse_while_inner"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

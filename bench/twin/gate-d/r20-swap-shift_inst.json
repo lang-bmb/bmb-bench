@@ -1,0 +1,193 @@
+{
+ "id": "r20-swap-shift_inst",
+ "kind": "change",
+ "family": "swap",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Change the signature of the function `codegen::Gen::shift_inst`: its first two parameters after `self` change places (`op` and `i`). Update every call of it. The program's behaviour must not change; change nothing else.",
+  "rust": "Change the signature of the function `codegen::Gen::shift_inst`: its first two parameters after `self` change places (`op` and `i`). Update every call of it. The program's behaviour must not change; change nothing else."
+ },
+ "scope": {
+  "rust": [
+   "codegen::Gen::bit_method",
+   "codegen::Gen::shift",
+   "codegen::Gen::shift_inst"
+  ],
+  "bmb": [
+   "codegen::Gen::bit_method",
+   "codegen::Gen::shift",
+   "codegen::Gen::shift_inst"
+  ]
+ },
+ "must_change": {
+  "rust": [
+   "codegen::Gen::bit_method",
+   "codegen::Gen::shift",
+   "codegen::Gen::shift_inst"
+  ],
+  "bmb": [
+   "codegen::Gen::bit_method",
+   "codegen::Gen::shift",
+   "codegen::Gen::shift_inst"
+  ]
+ },
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/codegen.rs",
+     "old": "        self.shift_inst(op, i, a, b)",
+     "new": "        self.shift_inst(i, op, a, b)"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/codegen.rs",
+     "old": "    fn shift_inst(&mut self, op: BinOp, i: IntTy, a: &str, b: &str) -> CVal {",
+     "new": "    fn shift_inst(&mut self, i: IntTy, op: BinOp, a: &str, b: &str) -> CVal {"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/codegen.rs",
+     "old": "            return self.shift_inst(op, i, a, &k);",
+     "new": "            return self.shift_inst(i, op, a, &k);"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "codegen",
+     "code": "    impl Gen {\n        #[effects(alloc)]\n        fn bit_method(self: &mut Gen, m: &str, i: ast::IntTy, a: &str, n: &str) -> CVal {\n            let w: u32 = body::bits(i);\n            let mut wt: String = String::new();\n            std::num::push_u64(&mut wt, w as u64);\n            if m == \"wrapping_shl\" || m == \"wrapping_shr\" {\n                let k: String = self.t();\n                let mut mask: String = String::new();\n                std::num::push_u64(&mut mask, w.wrapping_sub(1) as u64);\n                self.emit(types::cat5(k.as_str(), \" = and i64 \", n, \", \", mask.as_str()).as_str());\n                let sop: ast::BinOp = if m == \"wrapping_shl\" {\n                    ast::BinOp::Shl\n                } else {\n                    ast::BinOp::Shr\n                };\n                return self.shift_inst(i, sop, a, k.as_str());\n            }\n            if m == \"swap_bytes\" && w == 8 {\n                return CVal::Imm(String::from(a));\n            }\n            let it: String = types::cat2(\"i\", wt.as_str());\n            let x: String = self.narrowed(a, w, it.as_str());\n            let r: String = self.t();\n            let head: String = types::cat4(r.as_str(), \" = call \", it.as_str(), \" @llvm.\");\n            if m == \"rotate_left\" || m == \"rotate_right\" {\n                let k2: String = self.narrowed(n, w, it.as_str());\n                let rot: String = if m == \"rotate_left\" {\n                    String::from(\"fshl\")\n                } else {\n                    String::from(\"fshr\")\n                };\n                let mut line: String = types::cat5(head.as_str(), rot.as_str(), \".\", it.as_str(), \"(\");\n                line.push_str(types::cat7(it.as_str(), \" \", x.as_str(), \", \", it.as_str(), \" \", x.as_str()).as_str());\n                line.push_str(types::cat5(\", \", it.as_str(), \" \", k2.as_str(), \")\").as_str());\n                self.emit(line.as_str());\n            } else if m == \"count_ones\" || m == \"count_zeros\" {\n                self.emit(types::cat7(head.as_str(), \"ctpop.\", it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \")\").as_str()).as_str());\n            } else if m == \"leading_zeros\" || m == \"trailing_zeros\" {\n                let zf: String = if m == \"leading_zeros\" {\n                    String::from(\"ctlz.\")\n                } else {\n                    String::from(\"cttz.\")\n                };\n                self.emit(types::cat7(head.as_str(), zf.as_str(), it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \", i1 false)\").as_str()).as_str());\n            } else if m == \"leading_ones\" || m == \"trailing_ones\" {\n                let of: String = if m == \"leading_ones\" {\n                    String::from(\"ctlz.\")\n                } else {\n                    String::from(\"cttz.\")\n                };\n                let inv: String = self.t();\n                self.emit(types::cat7(inv.as_str(), \" = xor \", it.as_str(), \" \", x.as_str(), \", -1\", \"\").as_str());\n                self.emit(types::cat7(head.as_str(), of.as_str(), it.as_str(), \"(\", it.as_str(), \" \", types::cat2(inv.as_str(), \", i1 false)\").as_str()).as_str());\n            } else if m == \"reverse_bits\" {\n                self.emit(types::cat7(head.as_str(), \"bitreverse.\", it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \")\").as_str()).as_str());\n            } else if m == \"swap_bytes\" {\n                self.emit(types::cat7(head.as_str(), \"bswap.\", it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \")\").as_str()).as_str());\n            } else {\n                self.todo.push(types::cat4(\"the bit method `\", m, \"` in \", self.path.as_str()));\n                return CVal::Never;\n            }\n            let res: String = if m == \"count_zeros\" {\n                let z: String = self.t();\n                self.emit(types::cat7(z.as_str(), \" = sub \", it.as_str(), \" \", wt.as_str(), \", \", r.as_str()).as_str());\n                z\n            } else {\n                r\n            };\n            if w == 64 {\n                return CVal::Imm(res);\n            }\n            let ext: String = if body::bit_count(m) || !body::signed(i) {\n                String::from(\"zext\")\n            } else {\n                String::from(\"sext\")\n            };\n            let back: String = self.t();\n            self.emit(types::cat7(back.as_str(), \" = \", ext.as_str(), \" \", it.as_str(), \" \", types::cat2(res.as_str(), \" to i64\").as_str()).as_str());\n            CVal::Imm(back)\n        }\n\n        #[effects(alloc)]\n        fn shift(self: &mut Gen, e: &ast::Expr, op: ast::BinOp, i: ast::IntTy, a: &str, r: &ast::Expr, b: &str) -> CVal {\n            let w: u32 = body::bits(i);\n            let mut wt: String = String::new();\n            std::num::push_u64(&mut wt, w as u64);\n            let literal: bool = match int_lit(r) {\n                None => false,\n                Some(k) => k.hi == 0 && k.lo < w as u64,\n            };\n            if !literal && self.proved(\"E0803\", e) {\n                self.emit(\"; proved E0803\");\n            } else if !literal {\n                let c: String = self.t();\n                self.emit(types::cat5(c.as_str(), \" = icmp ult i64 \", b, \", \", wt.as_str()).as_str());\n                self.check(c.as_str(), types::cat2(\"shift amount out of 0..\", wt.as_str()).as_str());\n            }\n            self.shift_inst(i, op, a, b)\n        }\n\n        #[effects(alloc)]\n        fn shift_inst(self: &mut Gen, i: ast::IntTy, op: ast::BinOp, a: &str, b: &str) -> CVal {\n            let w: u32 = body::bits(i);\n            let mut wt: String = String::new();\n            std::num::push_u64(&mut wt, w as u64);\n            let res: String = self.t();\n            if is_shr(op) {\n                let inst: String = if body::signed(i) {\n                    String::from(\"ashr\")\n                } else {\n                    String::from(\"lshr\")\n                };\n                self.emit(types::cat7(res.as_str(), \" = \", inst.as_str(), \" i64 \", a, \", \", b).as_str());\n            } else if w == 64 {\n                self.emit(types::cat5(res.as_str(), \" = shl i64 \", a, \", \", b).as_str());\n            } else {\n                let wide: String = self.t();\n                let narrow: String = self.t();\n                self.emit(types::cat5(wide.as_str(), \" = shl i64 \", a, \", \", b).as_str());\n                self.emit(types::cat5(narrow.as_str(), \" = trunc i64 \", wide.as_str(), \" to i\", wt.as_str()).as_str());\n                let ext: String = if body::signed(i) {\n                    String::from(\"sext\")\n                } else {\n                    String::from(\"zext\")\n                };\n                let mut line: String = types::cat5(res.as_str(), \" = \", ext.as_str(), \" i\", wt.as_str());\n                line.push_str(\" \");\n                line.push_str(narrow.as_str());\n                line.push_str(\" to i64\");\n                self.emit(line.as_str());\n            }\n            CVal::Imm(res)\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "scope",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "codegen",
+      "code": "    impl Gen {\n        #[effects(alloc)]\n        fn bit_method(self: &mut Gen, m: &str, i: ast::IntTy, a: &str, n: &str) -> CVal {\n            let w: u32 = body::bits(i);\n            let mut wt: String = String::new();\n            std::num::push_u64(&mut wt, w as u64);\n            if m == \"wrapping_shl\" || m == \"wrapping_shr\" {\n                let k: String = self.t();\n                let mut mask: String = String::new();\n                std::num::push_u64(&mut mask, w.wrapping_sub(1) as u64);\n                self.emit(types::cat5(k.as_str(), \" = and i64 \", n, \", \", mask.as_str()).as_str());\n                let sop: ast::BinOp = if m == \"wrapping_shl\" {\n                    ast::BinOp::Shl\n                } else {\n                    ast::BinOp::Shr\n                };\n                return self.shift_inst(i, sop, a, k.as_str());\n            }\n            if m == \"swap_bytes\" && w == 8 {\n                return CVal::Imm(String::from(a));\n            }\n            let it: String = types::cat2(\"i\", wt.as_str());\n            let x: String = self.narrowed(a, w, it.as_str());\n            let r: String = self.t();\n            let head: String = types::cat4(r.as_str(), \" = call \", it.as_str(), \" @llvm.\");\n            if m == \"rotate_left\" || m == \"rotate_right\" {\n                let k2: String = self.narrowed(n, w, it.as_str());\n                let rot: String = if m == \"rotate_left\" {\n                    String::from(\"fshl\")\n                } else {\n                    String::from(\"fshr\")\n                };\n                let mut line: String = types::cat5(head.as_str(), rot.as_str(), \".\", it.as_str(), \"(\");\n                line.push_str(types::cat7(it.as_str(), \" \", x.as_str(), \", \", it.as_str(), \" \", x.as_str()).as_str());\n                line.push_str(types::cat5(\", \", it.as_str(), \" \", k2.as_str(), \")\").as_str());\n                self.emit(line.as_str());\n            } else if m == \"count_ones\" || m == \"count_zeros\" {\n                self.emit(types::cat7(head.as_str(), \"ctpop.\", it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \")\").as_str()).as_str());\n            } else if m == \"leading_zeros\" || m == \"trailing_zeros\" {\n                let zf: String = if m == \"leading_zeros\" {\n                    String::from(\"ctlz.\")\n                } else {\n                    String::from(\"cttz.\")\n                };\n                self.emit(types::cat7(head.as_str(), zf.as_str(), it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \", i1 false)\").as_str()).as_str());\n            } else if m == \"leading_ones\" || m == \"trailing_ones\" {\n                let of: String = if m == \"leading_ones\" {\n                    String::from(\"ctlz.\")\n                } else {\n                    String::from(\"cttz.\")\n                };\n                let inv: String = self.t();\n                self.emit(types::cat7(inv.as_str(), \" = xor \", it.as_str(), \" \", x.as_str(), \", -1\", \"\").as_str());\n                self.emit(types::cat7(head.as_str(), of.as_str(), it.as_str(), \"(\", it.as_str(), \" \", types::cat2(inv.as_str(), \", i1 false)\").as_str()).as_str());\n            } else if m == \"reverse_bits\" {\n                self.emit(types::cat7(head.as_str(), \"bitreverse.\", it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \")\").as_str()).as_str());\n            } else if m == \"swap_bytes\" {\n                self.emit(types::cat7(head.as_str(), \"bswap.\", it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \")\").as_str()).as_str());\n            } else {\n                self.todo.push(types::cat4(\"the bit method `\", m, \"` in \", self.path.as_str()));\n                return CVal::Never;\n            }\n            let res: String = if m == \"count_zeros\" {\n                let z: String = self.t();\n                self.emit(types::cat7(z.as_str(), \" = sub \", it.as_str(), \" \", wt.as_str(), \", \", r.as_str()).as_str());\n                z\n            } else {\n                r\n            };\n            if w == 64 {\n                return CVal::Imm(res);\n            }\n            let ext: String = if body::bit_count(m) || !body::signed(i) {\n                String::from(\"zext\")\n            } else {\n                String::from(\"sext\")\n            };\n            let back: String = self.t();\n            self.emit(types::cat7(back.as_str(), \" = \", ext.as_str(), \" \", it.as_str(), \" \", types::cat2(res.as_str(), \" to i64\").as_str()).as_str());\n            CVal::Imm(back)\n        }\n\n        #[effects(alloc)]\n        fn shift(self: &mut Gen, e: &ast::Expr, op: ast::BinOp, i: ast::IntTy, a: &str, r: &ast::Expr, b: &str) -> CVal {\n            let w: u32 = body::bits(i);\n            let mut wt: String = String::new();\n            std::num::push_u64(&mut wt, w as u64);\n            let literal: bool = match int_lit(r) {\n                None => false,\n                Some(k) => k.hi == 0 && k.lo < w as u64,\n            };\n            if !literal && self.proved(\"E0803\", e) {\n                self.emit(\"; proved E0803\");\n            } else if !literal {\n                let c: String = self.t();\n                self.emit(types::cat5(c.as_str(), \" = icmp ult i64 \", b, \", \", wt.as_str()).as_str());\n                self.check(c.as_str(), types::cat2(\"shift amount out of 0..\", wt.as_str()).as_str());\n            }\n            self.shift_inst(i, op, a, b)\n        }\n\n        #[effects(alloc)]\n        fn shift_inst(self: &mut Gen, i: ast::IntTy, op: ast::BinOp, a: &str, b: &str) -> CVal {\n            let w: u32 = body::bits(i);\n            let mut wt: String = String::new();\n            std::num::push_u64(&mut wt, w as u64);\n            let res: String = self.t();\n            if is_shr(op) {\n                let inst: String = if body::signed(i) {\n                    String::from(\"ashr\")\n                } else {\n                    String::from(\"lshr\")\n                };\n                self.emit(types::cat7(res.as_str(), \" = \", inst.as_str(), \" i64 \", a, \", \", b).as_str());\n            } else if w == 64 {\n                self.emit(types::cat5(res.as_str(), \" = shl i64 \", a, \", \", b).as_str());\n            } else {\n                let wide: String = self.t();\n                let narrow: String = self.t();\n                self.emit(types::cat5(wide.as_str(), \" = shl i64 \", a, \", \", b).as_str());\n                self.emit(types::cat5(narrow.as_str(), \" = trunc i64 \", wide.as_str(), \" to i\", wt.as_str()).as_str());\n                let ext: String = if body::signed(i) {\n                    String::from(\"sext\")\n                } else {\n                    String::from(\"zext\")\n                };\n                let mut line: String = types::cat5(res.as_str(), \" = \", ext.as_str(), \" i\", wt.as_str());\n                line.push_str(\" \");\n                line.push_str(narrow.as_str());\n                line.push_str(\" to i64\");\n                self.emit(line.as_str());\n            }\n            CVal::Imm(res)\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/codegen.rs",
+      "old": "        self.shift_inst(op, i, a, b)",
+      "new": "        self.shift_inst(i, op, a, b)"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/codegen.rs",
+      "old": "    fn shift_inst(&mut self, op: BinOp, i: IntTy, a: &str, b: &str) -> CVal {",
+      "new": "    fn shift_inst(&mut self, i: IntTy, op: BinOp, a: &str, b: &str) -> CVal {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/codegen.rs",
+      "old": "            return self.shift_inst(op, i, a, &k);",
+      "new": "            return self.shift_inst(i, op, a, &k);"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/sha256.rs",
+      "old": "    let mut s = String::from(\"sha256:\");",
+      "new": "    let mut s = \"sha256:\".to_string();"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "codegen",
+      "code": "    impl Gen {\n        #[effects(alloc)]\n        fn bit_method(self: &mut Gen, m: &str, i: ast::IntTy, a: &str, n: &str) -> CVal {\n            let w: u32 = body::bits(i);\n            let mut wt: String = String::new();\n            std::num::push_u64(&mut wt, w as u64);\n            if m == \"wrapping_shl\" || m == \"wrapping_shr\" {\n                let k: String = self.t();\n                let mut mask: String = String::new();\n                std::num::push_u64(&mut mask, w.wrapping_sub(1) as u64);\n                self.emit(types::cat5(k.as_str(), \" = and i64 \", n, \", \", mask.as_str()).as_str());\n                let sop: ast::BinOp = if m == \"wrapping_shl\" {\n                    ast::BinOp::Shl\n                } else {\n                    ast::BinOp::Shr\n                };\n                return self.shift_inst(i, sop, a, k.as_str());\n            }\n            if m == \"swap_bytes\" && w == 8 {\n                return CVal::Imm(String::from(a));\n            }\n            let it: String = types::cat2(\"i\", wt.as_str());\n            let x: String = self.narrowed(a, w, it.as_str());\n            let r: String = self.t();\n            let head: String = types::cat4(r.as_str(), \" = call \", it.as_str(), \" @llvm.\");\n            if m == \"rotate_left\" || m == \"rotate_right\" {\n                let k2: String = self.narrowed(n, w, it.as_str());\n                let rot: String = if m == \"rotate_left\" {\n                    String::from(\"fshl\")\n                } else {\n                    String::from(\"fshr\")\n                };\n                let mut line: String = types::cat5(head.as_str(), rot.as_str(), \".\", it.as_str(), \"(\");\n                line.push_str(types::cat7(it.as_str(), \" \", x.as_str(), \", \", it.as_str(), \" \", x.as_str()).as_str());\n                line.push_str(types::cat5(\", \", it.as_str(), \" \", k2.as_str(), \")\").as_str());\n                self.emit(line.as_str());\n            } else if m == \"count_ones\" || m == \"count_zeros\" {\n                self.emit(types::cat7(head.as_str(), \"ctpop.\", it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \")\").as_str()).as_str());\n            } else if m == \"leading_zeros\" || m == \"trailing_zeros\" {\n                let zf: String = if m == \"leading_zeros\" {\n                    String::from(\"ctlz.\")\n                } else {\n                    String::from(\"cttz.\")\n                };\n                self.emit(types::cat7(head.as_str(), zf.as_str(), it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \", i1 false)\").as_str()).as_str());\n            } else if m == \"leading_ones\" || m == \"trailing_ones\" {\n                let of: String = if m == \"leading_ones\" {\n                    String::from(\"ctlz.\")\n                } else {\n                    String::from(\"cttz.\")\n                };\n                let inv: String = self.t();\n                self.emit(types::cat7(inv.as_str(), \" = xor \", it.as_str(), \" \", x.as_str(), \", -1\", \"\").as_str());\n                self.emit(types::cat7(head.as_str(), of.as_str(), it.as_str(), \"(\", it.as_str(), \" \", types::cat2(inv.as_str(), \", i1 false)\").as_str()).as_str());\n            } else if m == \"reverse_bits\" {\n                self.emit(types::cat7(head.as_str(), \"bitreverse.\", it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \")\").as_str()).as_str());\n            } else if m == \"swap_bytes\" {\n                self.emit(types::cat7(head.as_str(), \"bswap.\", it.as_str(), \"(\", it.as_str(), \" \", types::cat2(x.as_str(), \")\").as_str()).as_str());\n            } else {\n                self.todo.push(types::cat4(\"the bit method `\", m, \"` in \", self.path.as_str()));\n                return CVal::Never;\n            }\n            let res: String = if m == \"count_zeros\" {\n                let z: String = self.t();\n                self.emit(types::cat7(z.as_str(), \" = sub \", it.as_str(), \" \", wt.as_str(), \", \", r.as_str()).as_str());\n                z\n            } else {\n                r\n            };\n            if w == 64 {\n                return CVal::Imm(res);\n            }\n            let ext: String = if body::bit_count(m) || !body::signed(i) {\n                String::from(\"zext\")\n            } else {\n                String::from(\"sext\")\n            };\n            let back: String = self.t();\n            self.emit(types::cat7(back.as_str(), \" = \", ext.as_str(), \" \", it.as_str(), \" \", types::cat2(res.as_str(), \" to i64\").as_str()).as_str());\n            CVal::Imm(back)\n        }\n\n        #[effects(alloc)]\n        fn shift(self: &mut Gen, e: &ast::Expr, op: ast::BinOp, i: ast::IntTy, a: &str, r: &ast::Expr, b: &str) -> CVal {\n            let w: u32 = body::bits(i);\n            let mut wt: String = String::new();\n            std::num::push_u64(&mut wt, w as u64);\n            let literal: bool = match int_lit(r) {\n                None => false,\n                Some(k) => k.hi == 0 && k.lo < w as u64,\n            };\n            if !literal && self.proved(\"E0803\", e) {\n                self.emit(\"; proved E0803\");\n            } else if !literal {\n                let c: String = self.t();\n                self.emit(types::cat5(c.as_str(), \" = icmp ult i64 \", b, \", \", wt.as_str()).as_str());\n                self.check(c.as_str(), types::cat2(\"shift amount out of 0..\", wt.as_str()).as_str());\n            }\n            self.shift_inst(i, op, a, b)\n        }\n\n        #[effects(alloc)]\n        fn shift_inst(self: &mut Gen, i: ast::IntTy, op: ast::BinOp, a: &str, b: &str) -> CVal {\n            let w: u32 = body::bits(i);\n            let mut wt: String = String::new();\n            std::num::push_u64(&mut wt, w as u64);\n            let res: String = self.t();\n            if is_shr(op) {\n                let inst: String = if body::signed(i) {\n                    String::from(\"ashr\")\n                } else {\n                    String::from(\"lshr\")\n                };\n                self.emit(types::cat7(res.as_str(), \" = \", inst.as_str(), \" i64 \", a, \", \", b).as_str());\n            } else if w == 64 {\n                self.emit(types::cat5(res.as_str(), \" = shl i64 \", a, \", \", b).as_str());\n            } else {\n                let wide: String = self.t();\n                let narrow: String = self.t();\n                self.emit(types::cat5(wide.as_str(), \" = shl i64 \", a, \", \", b).as_str());\n                self.emit(types::cat5(narrow.as_str(), \" = trunc i64 \", wide.as_str(), \" to i\", wt.as_str()).as_str());\n                let ext: String = if body::signed(i) {\n                    String::from(\"sext\")\n                } else {\n                    String::from(\"zext\")\n                };\n                let mut line: String = types::cat5(res.as_str(), \" = \", ext.as_str(), \" i\", wt.as_str());\n                line.push_str(\" \");\n                line.push_str(narrow.as_str());\n                line.push_str(\" to i64\");\n                self.emit(line.as_str());\n            }\n            CVal::Imm(res)\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/codegen.rs",
+      "old": "        self.shift_inst(op, i, a, b)",
+      "new": "        self.shift_inst(i, op, a, b)"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/codegen.rs",
+      "old": "    fn shift_inst(&mut self, op: BinOp, i: IntTy, a: &str, b: &str) -> CVal {",
+      "new": "    fn shift_inst(&mut self, i: IntTy, op: BinOp, a: &str, b: &str) -> CVal {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/codegen.rs",
+      "old": "            return self.shift_inst(op, i, a, &k);",
+      "new": "            return self.shift_inst(i, op, a, &k);"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "done",
+   "bmb": [],
+   "rust": []
+  }
+ ]
+}

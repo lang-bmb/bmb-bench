@@ -1,0 +1,111 @@
+{
+ "id": "c11-impact-status_lines",
+ "kind": "comprehend",
+ "family": "impact",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `prove::status_lines` directly, or call one of its direct callers (its callers up to two levels)? Leave out `prove::status_lines` itself unless it is called from one of them. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `lib::status_lines` directly, or call one of its direct callers (its callers up to two levels)? Leave out `lib::status_lines` itself unless it is called from one of them. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "lib::FrontCache::emit_llvm",
+   "lib::emit_llvm",
+   "lib::emit_llvm_frontend",
+   "lib::verify_frontend",
+   "lib::verify_frontend_defs",
+   "lib::verify_sources_only"
+  ],
+  "bmb": [
+   "lib::emit_checked",
+   "lib::emit_llvm",
+   "lib::verify",
+   "lib::verify_checked",
+   "mcp::tool_build",
+   "mcp::verify"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "prove::status_lines",
+      "in",
+      "2"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "lib::emit_checked",
+      "lib::emit_llvm",
+      "lib::verify",
+      "lib::verify_checked",
+      "mcp::tool_build",
+      "mcp::verify"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])status_lines\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "lib::FrontCache::emit_llvm",
+      "lib::emit_llvm",
+      "lib::emit_llvm_frontend",
+      "lib::verify_frontend",
+      "lib::verify_frontend_defs",
+      "lib::verify_sources_only"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "lib::emit_llvm",
+       "lib::verify",
+       "lib::verify_checked",
+       "mcp::tool_build",
+       "mcp::verify"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "lib::emit_llvm",
+       "lib::emit_llvm_frontend",
+       "lib::verify_frontend",
+       "lib::verify_frontend_defs",
+       "lib::verify_sources_only"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

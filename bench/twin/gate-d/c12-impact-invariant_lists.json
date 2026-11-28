@@ -1,0 +1,114 @@
+{
+ "id": "c12-impact-invariant_lists",
+ "kind": "comprehend",
+ "family": "impact",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `parser::Parser::invariant_lists` directly, or call one of its direct callers (its callers up to two levels)? Leave out `parser::Parser::invariant_lists` itself unless it is called from one of them. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `parser::Parser::invariant_lists` directly, or call one of its direct callers (its callers up to two levels)? Leave out `parser::Parser::invariant_lists` itself unless it is called from one of them. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "parser::Parser::body_clauses",
+   "parser::Parser::parse_for",
+   "parser::Parser::parse_loop",
+   "parser::Parser::parse_primary",
+   "parser::Parser::parse_stmt",
+   "parser::Parser::parse_while",
+   "parser::Parser::parse_while_inner"
+  ],
+  "bmb": [
+   "parser::Parser::body_clauses",
+   "parser::Parser::parse_for",
+   "parser::Parser::parse_loop",
+   "parser::Parser::parse_primary",
+   "parser::Parser::parse_stmt",
+   "parser::Parser::parse_while_inner"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "parser::Parser::invariant_lists",
+      "in",
+      "2"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Parser::body_clauses",
+      "parser::Parser::parse_for",
+      "parser::Parser::parse_loop",
+      "parser::Parser::parse_primary",
+      "parser::Parser::parse_stmt",
+      "parser::Parser::parse_while_inner"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])invariant_lists\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Parser::body_clauses",
+      "parser::Parser::parse_for",
+      "parser::Parser::parse_loop",
+      "parser::Parser::parse_primary",
+      "parser::Parser::parse_stmt",
+      "parser::Parser::parse_while",
+      "parser::Parser::parse_while_inner"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Parser::parse_for",
+       "parser::Parser::parse_loop",
+       "parser::Parser::parse_primary",
+       "parser::Parser::parse_stmt",
+       "parser::Parser::parse_while_inner"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Parser::parse_for",
+       "parser::Parser::parse_loop",
+       "parser::Parser::parse_primary",
+       "parser::Parser::parse_stmt",
+       "parser::Parser::parse_while",
+       "parser::Parser::parse_while_inner"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,82 @@
+{
+ "id": "c33-state-pos",
+ "kind": "comprehend",
+ "family": "state",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions change the field `pos` of `parser::Toks`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions change the field `pos` of `parser::Parser`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "parser::Parser::bump",
+   "parser::Parser::compound_ahead",
+   "parser::Parser::compound_assign",
+   "parser::Parser::parse_stmt"
+  ],
+  "bmb": [
+   "parser::Toks::back",
+   "parser::Toks::bump"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Toks::back",
+      "parser::Toks::bump"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\\.pos\\b"
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "parser::Parser::bump",
+      "parser::Parser::compound_ahead",
+      "parser::Parser::compound_assign",
+      "parser::Parser::parse_stmt"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Toks::bump"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "parser::Parser::compound_ahead",
+       "parser::Parser::compound_assign",
+       "parser::Parser::parse_stmt"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

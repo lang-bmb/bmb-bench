@@ -1,0 +1,126 @@
+{
+ "id": "c15-impact-assertions",
+ "kind": "comprehend",
+ "family": "impact",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `encode_spec::assertions` directly, or call one of its direct callers (its callers up to two levels)? Leave out `encode_spec::assertions` itself unless it is called from one of them. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `verify::assertions` directly, or call one of its direct callers (its callers up to two levels)? Leave out `verify::assertions` itself unless it is called from one of them. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "lib::dump_stage",
+   "verify::Prog::struct_facts",
+   "verify::dump_smt",
+   "verify::sat_of",
+   "verify::verify_pass"
+  ],
+  "bmb": [
+   "encode_exec::dump_body",
+   "encode_query::plan",
+   "encode_query::reach_points",
+   "encode_query::retry_script",
+   "encode_spec::dump_def",
+   "encode_spec::push_obls",
+   "encode_spec::struct_facts",
+   "prove::domain",
+   "sat::reach_points",
+   "sat::reach_with",
+   "sat::sat_of",
+   "sat::sat_with"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "encode_spec::assertions",
+      "in",
+      "2"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "encode_exec::dump_body",
+      "encode_query::plan",
+      "encode_query::reach_points",
+      "encode_query::retry_script",
+      "encode_spec::dump_def",
+      "encode_spec::push_obls",
+      "encode_spec::struct_facts",
+      "prove::domain",
+      "sat::reach_points",
+      "sat::reach_with",
+      "sat::sat_of",
+      "sat::sat_with"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])assertions\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "lib::dump_stage",
+      "verify::Prog::struct_facts",
+      "verify::dump_smt",
+      "verify::sat_of",
+      "verify::verify_pass"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "encode_query::plan",
+       "encode_query::reach_points",
+       "encode_query::retry_script",
+       "encode_spec::dump_def",
+       "encode_spec::push_obls",
+       "encode_spec::struct_facts",
+       "prove::domain",
+       "sat::reach_points",
+       "sat::reach_with",
+       "sat::sat_of",
+       "sat::sat_with"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "verify::Prog::struct_facts",
+       "verify::dump_smt",
+       "verify::sat_of",
+       "verify::verify_pass"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,105 @@
+{
+ "id": "c10-callers-is_scalar",
+ "kind": "comprehend",
+ "family": "callers",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `types::is_scalar` directly? Leave out `types::is_scalar` itself unless it calls itself. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `check::is_scalar` directly? Leave out `check::is_scalar` itself unless it calls itself. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "check::Checker::binary",
+   "check::Checker::bit_vector_terms",
+   "check::Checker::check_param_type",
+   "check::Checker::vec_elem_ok",
+   "check::array_elem_ok",
+   "verify::Enc::abstract_reads"
+  ],
+  "bmb": [
+   "body::Body::binary_same",
+   "body::Body::bit_vector_terms",
+   "body::Body::check_ref_param",
+   "encode_exec::Exec::abstract_reads"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "types::is_scalar",
+      "in",
+      "1"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "body::Body::binary_same",
+      "body::Body::bit_vector_terms",
+      "body::Body::check_ref_param",
+      "encode_exec::Exec::abstract_reads"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])is_scalar\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "check::Checker::binary",
+      "check::Checker::bit_vector_terms",
+      "check::Checker::check_param_type",
+      "check::Checker::vec_elem_ok",
+      "check::array_elem_ok",
+      "verify::Enc::abstract_reads"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "body::Body::bit_vector_terms",
+       "body::Body::check_ref_param",
+       "encode_exec::Exec::abstract_reads"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "check::Checker::bit_vector_terms",
+       "check::Checker::check_param_type",
+       "check::Checker::vec_elem_ok",
+       "check::array_elem_ok",
+       "verify::Enc::abstract_reads"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

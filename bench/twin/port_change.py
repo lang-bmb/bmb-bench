@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Refactoring tasks on the port twin (ADR-0104: H-REFACTOR).
 
-    port_change.py make COMMIT     write bench/twin/port/r*.json for that commit
-    port_change.py check           the committed tasks are what `make` writes for
-                                   their commit
+    port_change.py [--set NAME] make COMMIT    write the set's r*.json for that commit
+    port_change.py [--set NAME] check          the committed tasks are what `make`
+                                               writes for their commit
+    port_change.py [--set NAME] supply COMMIT  the candidates per family
 
 A task asks for a change that keeps the program's behaviour. It succeeds
 when three things hold (`pair.py`): the arm's program builds (BMB: every
@@ -23,9 +24,18 @@ not written by hand; the families of `port_hand.py` are, as replacements of
 text that must fit the commit) and two weak solutions that must fail: one also edits
 a function outside the scope, one also changes the program's output.
 
+A set with `conditions` (`port_sets.py`) is measured under more than one
+tool condition of `parity.json`. Where a condition has a tool that changes
+the reference solution, the task carries that solution too, under
+`ARM:CONDITION` beside `ARM` in `oracle` and in each weak solution
+(`pair.py` takes it when it runs under that condition): under
+`port-rename` the BMB solution of a `rename` task is one `write` with
+`rename`.
+
 The choice of targets is mechanical, as in `port_tasks.py`: the candidates
 that meet the family's rule in sorted order, a seeded shuffle, at most
-`PER_FILE` per Rust file.
+`PER_FILE` per Rust file. The seed and the counts are the set's; a set that
+avoids another takes no function the other has a task about.
 """
 import argparse
 import json
@@ -44,11 +54,10 @@ sys.path.insert(0, HERE)
 import index  # noqa: E402
 import pair  # noqa: E402
 import port_hand  # noqa: E402
+import port_sets  # noqa: E402
 import port_tasks  # noqa: E402
 
-OUT = port_tasks.OUT
-SEED = 20261117
-COUNT = {"rename": 10, "swap": 6}
+FAMILIES = ("rename", "swap")
 PER_FILE = {"rename": 3, "swap": 2}
 # A reference solution touches this many functions at most (a session has
 # sixty tool calls) and at least two (the function and one use).
@@ -226,9 +235,21 @@ def bmb_code(paths, texts, heads):
 class Twin:
     """The two sides at one commit, as a session finds them."""
 
-    def __init__(self, commit):
+    def __init__(self, commit, files=index.RUST_FILES, beside=()):
+        """`files`: the Rust files the targets are taken from (a session
+        gets the whole crate either way). `beside`: what the fixture puts
+        beside the crate; the words of its Rust files are `outside` (the
+        sources of the crate's examples call the crate's functions, and a
+        session cannot write them)."""
         self.tree = port_tasks.tree_of(commit)
-        self.r = index.rust_index(self.tree)
+        self.outside = set()
+        for rel in beside:
+            if rel.endswith(".rs"):
+                text = subprocess.run(["git", "show", f"{commit}:{rel}"], cwd=lang_bmb.root(), capture_output=True,
+                                      text=True, check=True).stdout
+                self.outside |= set(re.findall(r"\w+", text))
+        self.targets = list(files)
+        self.r = index.rust_index(self.tree, self.targets)
         self.heads = {}
         self.b = index.bmb_index(self.tree, rest=True, heads=self.heads)
         self.bf = {p: t for p, t in self.b.items() if not p.endswith("::<rest>")}
@@ -317,7 +338,10 @@ def rename(twin, name, rk, bk):
     b_calls.append(["write", {"unit": home, "remove": [bk]}])
     return {"names": {"rust": {"target": rk, "new": new}, "bmb": {"target": bk, "new": new}},
             "scope": {"rust": sorted(r_scope + [r_new]), "bmb": sorted(b_scope + [b_new])},
-            "oracle": {"rust": r_calls, "bmb": b_calls}}
+            "oracle": {"rust": r_calls, "bmb": b_calls},
+            # With `--rename-ops` (the condition `port-rename`): the
+            # declaration and every reference in one call.
+            "by_condition": {"port-rename": [["write", {"rename": [{"def": bk, "to": new}]}]]}}
 
 
 def swap(twin, name, rk, bk):
@@ -399,10 +423,12 @@ def swapped_calls(text, name, files, rk):
     return both[0].split("\n\x00\n", 1)[1], both[1]
 
 
-def candidates(twin):
-    out = {k: [] for k in COUNT}
+def candidates(twin, avoid=()):
+    out = {k: [] for k in FAMILIES}
     names = sorted({index.simple(p) for p in twin.r} & {index.simple(p) for p in twin.bf})
     for n in names:
+        if n.lower() in avoid:
+            continue
         if not (index.unique(twin.r, n) and index.unique(twin.bf, n) and twin.clean(n)):
             continue
         rk = next(p for p in twin.r if index.simple(p) == n)
@@ -416,47 +442,68 @@ def candidates(twin):
     return out
 
 
-def make(commit):
+def left_out(twin, name):
+    """Whether the target `name` is left out after the shuffle (the others
+    keep their places): it is in `EXCLUDE`, or a file beside the crate
+    uses the name (found by `pair.py check`: the Rust reference solution of
+    `ite_val` renamed every use in the crate and `cargo test` did not
+    build, because an example outside the crate calls the function; the
+    Rust arm's tools write only `src/` and `tests/`)."""
+    return name in EXCLUDE or name in twin.outside
+
+
+def picked_of(pool, s, family, twin):
+    """The first of the seeded shuffle, as many as the set asks for, at
+    most `PER_FILE` per Rust file, without the targets left out
+    (`left_out`). A family with fewer gives what it has (`supply` prints
+    the numbers)."""
+    pool = list(pool)
+    random.Random(f"{s['seed']}:{family}").shuffle(pool)
+    seen, picked = defaultdict(int), []
+    for mod, t in pool:
+        if len(picked) == s["change"][family]:
+            break
+        if left_out(twin, index.simple(t["names"]["rust"]["target"])):
+            continue
+        if seen[mod] >= PER_FILE[family]:
+            continue
+        seen[mod] += 1
+        picked.append(t)
+    return picked
+
+
+def make(commit, s):
     commit = subprocess.run(["git", "rev-parse", commit], cwd=lang_bmb.root(), capture_output=True, text=True,
                             check=True).stdout.strip()
-    twin = Twin(commit)
-    cands = candidates(twin)
+    twin = Twin(commit, port_sets.rust_files(s), port_sets.beside(s))
+    cands = candidates(twin, port_sets.avoided(s))
     out = {}
-    for family in COUNT:
-        pool = list(cands[family])
-        random.Random(f"{SEED}:{family}").shuffle(pool)
-        seen, picked = defaultdict(int), []
-        for mod, t in pool:
-            if len(picked) == COUNT[family]:
-                break
-            if index.simple(t["names"]["rust"]["target"]) in EXCLUDE:
-                continue
-            if seen[mod] >= PER_FILE[family]:
-                continue
-            seen[mod] += 1
-            picked.append(t)
-        if len(picked) < COUNT[family]:
-            sys.exit(f"{family}: only {len(picked)} candidates of {COUNT[family]}")
-        for t in picked:
+    for family in FAMILIES:
+        for t in picked_of(cands[family], s, family, twin):
             tid = f"r{len(out) + 1:02d}-{family}-{index.simple(t['names']['rust']['target']).lower()}"
+            # The solutions of the BMB arm under the set's other tool
+            # conditions, where the condition's tool changes them.
+            also = {f"bmb:{c}": calls for c, calls in t.get("by_condition", {}).items() if c in s["conditions"]}
+            oracle = {**t["oracle"], **also}
             task = {
                 "id": tid,
                 "kind": "change",
                 "family": family,
-                "fixture": "port",
+                "fixture": s["fixture"],
                 "commit": commit,
                 "prompt": {arm: PROMPT[family].format(**t["names"][arm]) for arm in ("bmb", "rust")},
                 "scope": t["scope"],
                 "must_change": t["scope"],
-                "oracle": t["oracle"],
-                "weak": [{"fails": k, **{arm: t["oracle"][arm] + weak(arm, twin, k) for arm in ("bmb", "rust")}}
+                "oracle": oracle,
+                "weak": [{"fails": k, **{arm: oracle[arm] + weak(arm.split(":")[0], twin, k)
+                                         for arm in ("bmb", "rust", *also)}}
                          for k in ("scope", "corpus")] + [NOTHING],
             }
             out[tid + ".json"] = json.dumps(task, indent=1, ensure_ascii=False) + "\n"
     me = sys.modules[__name__]
-    for t in port_hand.tasks(twin, me):
+    for t in port_hand.tasks(twin, me) if s["hand"] else []:
         tid = f"r{len(out) + 1:02d}-{t['family']}-{t['name']}"
-        task = {"id": tid, "kind": "change", "family": t["family"], "fixture": "port", "commit": commit,
+        task = {"id": tid, "kind": "change", "family": t["family"], "fixture": s["fixture"], "commit": commit,
                 "prompt": t["prompt"], "scope": t["scope"], "must_change": t["scope"], "oracle": t["oracle"],
                 "weak": [{"fails": k, **{arm: t["oracle"][arm] + weak(arm, twin, k) for arm in ("bmb", "rust")}}
                          for k in ("scope", "corpus")] + [NOTHING]}
@@ -464,8 +511,30 @@ def make(commit):
     return out
 
 
+def cmd_supply(a):
+    """Per family: the candidates that meet the rule (after the avoided
+    targets went), and how many the cap per file and `EXCLUDE` leave."""
+    s = port_sets.get(a.set)
+    commit = subprocess.run(["git", "rev-parse", a.commit], cwd=lang_bmb.root(), capture_output=True, text=True,
+                            check=True).stdout.strip()
+    twin = Twin(commit, port_sets.rust_files(s), port_sets.beside(s))
+    cands = candidates(twin, port_sets.avoided(s))
+    for family in FAMILIES:
+        seen, out = defaultdict(int), 0
+        for mod, t in cands[family]:
+            gone = left_out(twin, index.simple(t["names"]["rust"]["target"]))
+            out += gone
+            seen[mod] += not gone
+        capped = sum(min(n, PER_FILE[family]) for n in seen.values())
+        print(f"{family}: {len(cands[family])} candidates in {len(seen)} files, {out} of them left out, {capped} under "
+              f"the cap of {PER_FILE[family]} per file, {s['change'][family]} asked")
+
+
 def cmd_make(a):
-    files = make(a.commit)
+    s = port_sets.get(a.set)
+    OUT = port_sets.out_dir(s)
+    files = make(a.commit, s)
+    os.makedirs(OUT, exist_ok=True)
     for f in os.listdir(OUT):
         if re.fullmatch(r"r\d\d-.*\.json", f):
             os.remove(os.path.join(OUT, f))
@@ -476,6 +545,8 @@ def cmd_make(a):
 
 
 def cmd_check(a):
+    s = port_sets.get(a.set)
+    OUT = port_sets.out_dir(s)
     have = {f: open(os.path.join(OUT, f), encoding="utf-8").read() for f in sorted(os.listdir(OUT))
             if re.fullmatch(r"r\d\d-.*\.json", f)}
     if not have:
@@ -483,7 +554,7 @@ def cmd_check(a):
     commits = {json.loads(t)["commit"] for t in have.values()}
     if len(commits) != 1:
         sys.exit(f"tasks of several commits: {sorted(commits)}")
-    want = make(commits.pop())
+    want = make(commits.pop(), s)
     problems = [f"{f}: differs from what `make` writes" for f in sorted(set(have) | set(want))
                 if have.get(f) != want.get(f)]
     for p in problems:
@@ -495,12 +566,13 @@ def cmd_check(a):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    port_sets.add_argument(ap)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    mk = sub.add_parser("make")
-    mk.add_argument("commit")
+    for name in ("make", "supply"):
+        sub.add_parser(name).add_argument("commit")
     sub.add_parser("check")
     a = ap.parse_args()
-    {"make": cmd_make, "check": cmd_check}[a.cmd](a)
+    {"make": cmd_make, "check": cmd_check, "supply": cmd_supply}[a.cmd](a)
 
 
 if __name__ == "__main__":

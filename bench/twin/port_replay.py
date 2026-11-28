@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Commit replay tasks on the port twin (ADR-0104: H-TASK).
 
-    port_replay.py make COMMIT     write bench/twin/port/t*.json for that commit
-    port_replay.py check           the committed tasks are what `make` writes for
-                                   their commit
-    port_replay.py sources COMMIT  print the table `SOURCES` for that commit
+    port_replay.py [--set NAME] make COMMIT    write the set's t*.json and h*.json
+                                               for that commit
+    port_replay.py [--set NAME] check          the committed tasks are what `make`
+                                               writes for their commit
+    port_replay.py [--set NAME] supply COMMIT  the candidates
+    port_replay.py sources COMMIT              print the table `SOURCES` for that
+                                               commit
 
 A task takes one thing a commit of stage0's history added, undoes it on
 both sides of the twin, and asks for it with what a developer had then:
@@ -15,7 +18,9 @@ What is replayed here is a diagnostic: the commit that first reported a
 code. Undoing it is mechanical where each side reports the code in one
 statement (`self.diags.push(Diag::new("E0250", ..))`, `self.c.help("E0250",
 ..)`): the statement goes, the code around it stays, so both sides still
-build and the program accepts what the rule rejects. A task then has
+build and the program accepts what the rule rejects. A set whose `sites` is `every` (`port_sets.py`) also takes
+the codes reported in several places, where every place is such a statement
+on both sides: all of them go. A task then has
 
     setup    the tool calls that remove the statement (`pair.py` applies
              them before the session)
@@ -27,7 +32,11 @@ build and the program accepts what the rule rejects. A task then has
              a change of what every diagnostic prints
 
 The targets are chosen as in `port_tasks.py`: the codes that meet the rule
-in sorted order, a seeded shuffle, at most `PER_FILE` per Rust file.
+in sorted order, a seeded shuffle, at most `PER_FILE` per Rust file. The
+seed and the counts are the set's (`port_sets.py`); a set that avoids
+another takes no code the other has a task or a step about. Where the
+candidates do not reach both counts, the set says which is filled first
+(`first`): the single replays, or the histories.
 `EXCLUDE` names the codes whose undone state does not build or prove, or
 whose corpus does not tell the two states apart, with the reason.
 """
@@ -47,13 +56,8 @@ import lang_bmb  # noqa: E402
 sys.path.insert(0, HERE)
 import index  # noqa: E402
 import port_change as ch  # noqa: E402
-import port_tasks  # noqa: E402
+import port_sets  # noqa: E402
 
-OUT = port_tasks.OUT
-SEED = 20261117
-COUNT = 22
-HISTORIES = 4
-STEPS = 5
 PER_FILE = 12
 CORPUS = os.path.join("tests", "check", "err")
 EXAMPLES = 2
@@ -199,6 +203,7 @@ SOURCES = {
     'E0514': ('0ac7a430a', '2G-02: the Vec surface in the checker and move checking (ADR-0031 §1, §2, §7)'),
     'E0515': ('6f82b9242', '2N-03: by (bit_vector) sub-proofs and bit methods (ADR-0048 §2, §4)'),
     'E0516': ('6f82b9242', '2N-03: by (bit_vector) sub-proofs and bit methods (ADR-0048 §2, §4)'),
+    'E0517': ('50a08ccd3', 'Reject a trigger that is a bound variable alone'),
     'E0601': ('d3949466e', 'compiler: M1 front end (parse, check, JSONL diagnostics)'),
     'E0602': ('d3949466e', 'compiler: M1 front end (parse, check, JSONL diagnostics)'),
     'E0603': ('d3949466e', 'compiler: M1 front end (parse, check, JSONL diagnostics)'),
@@ -242,10 +247,13 @@ SOURCES = {
 EXCLUDE = {}
 
 
-def statement(text, at):
+def statement(text, at, chain=False):
     """(start, end) of the statement around `text[at]`: from after the
     `;` or `{` before it to its own `;`. None when what is there is not
-    a statement of its own (an arm's value, a `let`, a `return`)."""
+    a statement of its own (an arm's value, a `let`, a `return`). With
+    `chain`, a call whose receiver and method are on two lines
+    (`self.diags` and `.push(..)` below it, as rustfmt breaks a long one)
+    is a statement too."""
     depth, inside, i = 0, 0, at
     while i > 0:
         c = text[i - 1]
@@ -269,7 +277,7 @@ def statement(text, at):
         c = text[j]
         if c == '"':
             j += 1
-            while text[j] != '"':
+            while j < len(text) and text[j] != '"':
                 j += 2 if text[j] == "\\" else 1
         elif c in "([{":
             depth += 1
@@ -285,18 +293,35 @@ def statement(text, at):
     else:
         return None
     body = text[start:j + 1].strip()
-    if not re.match(r"[A-Za-z_][\w.:]*\(", body) or re.search(r"\b(return|let|break|continue)\b|=>|\?", body.split('"')[0]):
+    head = r"[A-Za-z_][\w.:]*(?:\s*\.\w+)*\(" if chain else r"[A-Za-z_][\w.:]*\("
+    if not re.match(head, body) or re.search(r"\b(return|let|break|continue)\b|=>|\?", body.split('"')[0]):
         return None
     return start, j + 1
 
 
-def without(text, code):
+def without(text, code, every=False):
     """`text` without the one statement that reports `code`; None when
-    the code is not in exactly one statement of its own."""
+    the code is not in exactly one statement of its own. With `every`:
+    without every statement that has the code, None when one of its
+    places is not a statement of its own (`statement` with `chain`) or
+    there is none."""
     hits = [m.start() for m in re.finditer(re.escape(f'"{code}"'), text)]
+    if every:
+        if not hits:
+            return None
+        while hits:
+            text = without_at(text, statement(text, hits[-1], chain=True))
+            if text is None:
+                return None
+            hits = [m.start() for m in re.finditer(re.escape(f'"{code}"'), text)]
+        return text
     if len(hits) != 1:
         return None
-    got = statement(text, hits[0])
+    return without_at(text, statement(text, hits[0]))
+
+
+def without_at(text, got):
+    """`text` without the statement at `got` (`statement`'s answer)."""
     if got is None:
         return None
     start, end = got
@@ -361,16 +386,28 @@ def examples_of(files):
     return "\n\n".join(out)
 
 
-def candidates(twin, commit):
+def candidates(twin, commit, avoid=(), every=False):
     """[(Rust file, code, BMB definition)] of the codes each side reports
-    in one statement of its own, with a documentation row and a corpus."""
+    in one statement of its own, with a documentation row and a corpus.
+    With `every` (a set whose `sites` is `every`): the codes every place
+    of which, on both sides, is a statement of its own, however many
+    places there are; the two other fields are then the first Rust file
+    and the lists of the files and the definitions."""
     docs, corpus = doc_rows(commit), corpus_of(commit)
     # Without the table of codes each side has (`diag.rs`, `diag::codes`).
-    r_sites = code_sites({f: t for f, t in twin.files.items() if f in index.RUST_FILES and f != "diag.rs"})
+    r_sites = code_sites({f: t for f, t in twin.files.items() if f in twin.targets and f != "diag.rs"})
     b_sites = code_sites({p: t for p, t in twin.bf.items() if p != "diag::codes"})
     out = []
     for code in sorted(set(r_sites) & set(b_sites)):
         if code in EXCLUDE or code not in SOURCES or code not in docs or code not in corpus:
+            continue
+        if code.lower() in avoid:
+            continue
+        if every:
+            fs, ps = sorted(r_sites[code]), sorted(b_sites[code])
+            if all(without(twin.files[f], code, True) is not None for f in fs) and \
+                    all(without(twin.b[p], code, True) is not None for p in ps):
+                out.append((fs[0], code, (fs, ps)))
             continue
         if len(r_sites[code]) != 1 or len(b_sites[code]) != 1:
             continue
@@ -384,19 +421,19 @@ def candidates(twin, commit):
 class State:
     """The two sides with the statements of some codes removed."""
 
-    def __init__(self, twin, sites):
-        self.twin, self.sites = twin, sites  # sites: {code: (Rust file, BMB definition)}
+    def __init__(self, twin, sites, every=False):
+        self.twin, self.sites, self.every = twin, sites, every  # sites: {code: ([Rust file], [BMB definition])}
 
     def rust(self, f, gone):
         text = self.twin.files[f]
-        for code in sorted(c for c in gone if self.sites[c][0] == f):
-            text = without(text, code)
+        for code in sorted(c for c in gone if f in self.sites[c][0]):
+            text = without(text, code, self.every)
         return text
 
     def bmb(self, p, gone):
         text = self.twin.b[p]
-        for code in sorted(c for c in gone if self.sites[c][1] == p):
-            text = without(text, code)
+        for code in sorted(c for c in gone if p in self.sites[c][1]):
+            text = without(text, code, self.every)
         return text
 
     def calls(self, before, after):
@@ -404,11 +441,11 @@ class State:
         codes `before` to the state without the codes `after`."""
         moved = set(before) ^ set(after)
         rust = []
-        for f in sorted({self.sites[c][0] for c in moved}):
+        for f in sorted({f for c in moved for f in self.sites[c][0]}):
             rust += [["edit_file", {"path": "src/" + f, "old": o, "new": n}]
                      for o, n in ch.edits_between(self.rust(f, before), self.rust(f, after))]
         units = defaultdict(dict)
-        for p in sorted({self.sites[c][1] for c in moved}):
+        for p in sorted({p for c in moved for p in self.sites[c][1]}):
             units[ch.unit_of(p)][p] = self.bmb(p, after)
         bmb = [["write", {"unit": u, "code": ch.bmb_code(sorted(texts), texts, self.twin.heads)}]
                for u, texts in sorted(units.items())]
@@ -427,23 +464,66 @@ def source_of(code):
     return {"code": code, "commit": SOURCES[code][0], "subject": SOURCES[code][1]}
 
 
-def make(commit):
-    commit = subprocess.run(["git", "rev-parse", commit], cwd=lang_bmb.root(), capture_output=True, text=True,
-                            check=True).stdout.strip()
-    twin = ch.Twin(commit)
-    pool, docs, corpus = candidates(twin, commit)
-    random.Random(f"{SEED}:replay").shuffle(pool)
-    state = State(twin, {code: (f, p) for f, code, p in pool})
+def histories_of(rest, corpus, count, steps):
+    """([codes of a history], the codes left): up to `count` histories
+    of `steps` codes each, taken from `rest` in order. A history is the
+    next codes in order that leave each other a file of its own."""
+    files_of = {code: [src for src, _ in corpus[code]] for code in rest}
+
+    def owned(codes):
+        return {c: [s for s in files_of[c] if not any(s in files_of[d] for d in codes if d != c)] for c in codes}
+
+    out = []
+    while len(out) < count:
+        codes = []
+        for c in rest:
+            if len(codes) < steps and all(owned(codes + [c]).values()):
+                codes.append(c)
+        if len(codes) < steps:
+            break
+        rest = [c for c in rest if c not in codes]
+        out.append(codes)
+    return out, rest, files_of, owned
+
+
+def singles_of(pool, count):
+    """(the codes of the single replays, the codes left): the first
+    `count` of `pool`, at most `PER_FILE` per Rust file."""
     seen, picked, rest = defaultdict(int), [], []
-    for f, code, _ in pool:
-        if len(picked) < COUNT and seen[f] < PER_FILE:
+    for f, code in pool:
+        if len(picked) < count and seen[f] < PER_FILE:
             seen[f] += 1
             picked.append(code)
         else:
             rest.append(code)
-    if len(picked) < COUNT:
-        sys.exit(f"replay: only {len(picked)} candidates of {COUNT}")
-    head = {"kind": "change", "fixture": "port", "commit": commit, "scope": "any"}
+    return picked, rest
+
+
+def plan(pool, corpus, s):
+    """(single codes, histories, files_of, owned) of the shuffled `pool`.
+    The set's `first` is filled from the whole pool, the other from what
+    it leaves."""
+    pairs = [(f, code) for f, code, _ in pool]
+    if s["first"] == "replays":
+        picked, rest = singles_of(pairs, s["replays"])
+        groups, _, files_of, owned = histories_of(rest, corpus, s["histories"], s["steps"])
+    else:
+        groups, rest, files_of, owned = histories_of([c for _, c in pairs], corpus, s["histories"], s["steps"])
+        picked, _ = singles_of([(f, c) for f, c in pairs if c in rest], s["replays"])
+    return picked, groups, files_of, owned
+
+
+def make(commit, s):
+    commit = subprocess.run(["git", "rev-parse", commit], cwd=lang_bmb.root(), capture_output=True, text=True,
+                            check=True).stdout.strip()
+    twin = ch.Twin(commit, port_sets.rust_files(s))
+    every = s["sites"] == "every"
+    pool, docs, corpus = candidates(twin, commit, port_sets.avoided(s), every)
+    random.Random(f"{s['seed']}:replay").shuffle(pool)
+    state = State(twin, {code: (p if every else ([f], [p])) for f, code, p in pool}, every)
+    picked, groups, files_of, owned = plan(pool, corpus, s)
+    STEPS = s["steps"]
+    head = {"kind": "change", "fixture": s["fixture"], "commit": commit, "scope": "any"}
     spoil = lambda arm: ch.weak(arm, twin, "corpus")  # noqa: E731
     out = {}
     for code in picked:
@@ -459,20 +539,8 @@ def make(commit):
     # together and asked for one after the other in one copy of the code.
     # A step's cases are the files that show its code and no other code of
     # the history; the last step also has the files left out so.
-    files_of = {code: [src for src, _ in corpus[code]] for code in rest}
-    def owned(codes):
-        return {c: [s for s in files_of[c] if not any(s in files_of[d] for d in codes if d != c)] for c in codes}
-
     n = 0
-    while n < HISTORIES:
-        # The next codes in order that leave each other a file of its own.
-        codes = []
-        for c in rest:
-            if len(codes) < STEPS and all(owned(codes + [c]).values()):
-                codes.append(c)
-        if len(codes) < STEPS:
-            sys.exit(f"replay: only {n} histories of {HISTORIES}")
-        rest = [c for c in rest if c not in codes]
+    for codes in groups:
         own = owned(codes)
         n += 1
         steps, used = [], set()
@@ -494,8 +562,29 @@ def make(commit):
     return out
 
 
+def cmd_supply(a):
+    """The codes that meet the rule (after the avoided ones went) per
+    Rust file, and what the set's counts take of them."""
+    s = port_sets.get(a.set)
+    commit = subprocess.run(["git", "rev-parse", a.commit], cwd=lang_bmb.root(), capture_output=True, text=True,
+                            check=True).stdout.strip()
+    twin = ch.Twin(commit, port_sets.rust_files(s))
+    pool, _, corpus = candidates(twin, commit, port_sets.avoided(s), s["sites"] == "every")
+    per = defaultdict(int)
+    for f, _, _ in pool:
+        per[f] += 1
+    random.Random(f"{s['seed']}:replay").shuffle(pool)
+    picked, groups, _, _ = plan(pool, corpus, s)
+    print(f"replay: {len(pool)} codes ({', '.join(f'{f} {n}' for f, n in sorted(per.items()))}); "
+          f"{len(groups)} histories of {s['steps']} ({s['histories']} asked), {len(picked)} single replays "
+          f"({s['replays']} asked), {len(pool) - len(picked) - s['steps'] * len(groups)} codes left")
+
+
 def cmd_make(a):
-    files = make(a.commit)
+    s = port_sets.get(a.set)
+    OUT = port_sets.out_dir(s)
+    files = make(a.commit, s)
+    os.makedirs(OUT, exist_ok=True)
     for f in os.listdir(OUT):
         if re.fullmatch(r"[th]\d\d-.*\.json", f):
             os.remove(os.path.join(OUT, f))
@@ -506,6 +595,8 @@ def cmd_make(a):
 
 
 def cmd_check(a):
+    s = port_sets.get(a.set)
+    OUT = port_sets.out_dir(s)
     have = {f: open(os.path.join(OUT, f), encoding="utf-8").read() for f in sorted(os.listdir(OUT))
             if re.fullmatch(r"[th]\d\d-.*\.json", f)}
     if not have:
@@ -513,7 +604,7 @@ def cmd_check(a):
     commits = {json.loads(t)["commit"] for t in have.values()}
     if len(commits) != 1:
         sys.exit(f"tasks of several commits: {sorted(commits)}")
-    want = make(commits.pop())
+    want = make(commits.pop(), s)
     problems = [f"{f}: differs from what `make` writes" for f in sorted(set(have) | set(want))
                 if have.get(f) != want.get(f)]
     for p in problems:
@@ -527,11 +618,11 @@ def cmd_sources(a):
     """The first commit before `a.commit` whose `compiler/src` has each
     code (needs the repository's whole history)."""
     twin = ch.Twin(subprocess.run(["git", "rev-parse", a.commit], cwd=lang_bmb.root(), capture_output=True, text=True,
-                                  check=True).stdout.strip())
+                                  check=True).stdout.strip(), port_sets.rust_files(port_sets.get(a.set)))
     codes = sorted(set(code_sites(twin.files)) & set(code_sites(twin.bf)))
     print("SOURCES = {")
     for code in codes:
-        r = subprocess.run(["git", "log", "--reverse", "--format=%h\t%s", f"-S\"{code}\"", a.commit, "--",
+        r = subprocess.run(["git", "log", "--reverse", "--format=%H\t%s", f"-S\"{code}\"", a.commit, "--",
                             "compiler/src"], cwd=lang_bmb.root(), capture_output=True, text=True, check=True).stdout
         if r.strip():
             sha, subject = r.splitlines()[0].split("\t", 1)
@@ -541,12 +632,13 @@ def cmd_sources(a):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    port_sets.add_argument(ap)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("make", "sources"):
+    for name in ("make", "sources", "supply"):
         sub.add_parser(name).add_argument("commit")
     sub.add_parser("check")
     a = ap.parse_args()
-    {"make": cmd_make, "check": cmd_check, "sources": cmd_sources}[a.cmd](a)
+    {"make": cmd_make, "check": cmd_check, "sources": cmd_sources, "supply": cmd_supply}[a.cmd](a)
 
 
 if __name__ == "__main__":

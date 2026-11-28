@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Definitions of the port twin, one per function or method.
 
-The twin is stage0's components C0~C4 (`compiler/src`, Rust) and their port
-(`selfhost/`, BMB). A comprehension question's answer is a set of definitions,
+The twin is stage0 (`compiler/src`, Rust: the files a fixture lists, by
+default those of components C0~C4) and its port (`selfhost/`, BMB). A comprehension question's answer is a set of definitions,
 so both sides need the same grain: a free function, or a method of an `impl`
 block. `pair.py`'s splitter takes a whole `impl` block as one item, which is
 too coarse for stage0 (most of the checker is `impl Checker`).
@@ -62,7 +62,9 @@ def _items(lines, starts, rest=None):
             ln = lines[j]
             one_line = j == i and ln.rstrip().endswith("}") and ln.count("{") == ln.count("}") and "{" in ln
             no_body = ln.rstrip().endswith(";") and "{" not in "".join(lines[i:j + 1])
-            if ln == ind + "}" or one_line or no_body:
+            # A body without a statement is `{}` on a line of its own after
+            # the contract lines (a `proof fn`).
+            if ln == ind + "}" or one_line or no_body or (j > i and ln == ind + "{}"):
                 break
             j += 1
         out[path] = "\n".join(attrs + lines[i:j + 1])
@@ -168,13 +170,31 @@ def simple(path):
     return path.rsplit("::", 1)[-1]
 
 
-def mentions(index, pattern, own=None):
+_WORDS = {}
+
+
+def with_word(index, word):
+    """The part of `index` whose texts have `word` as a whole word (the
+    words of an index are read once: all of stage0 is 1,700 functions and
+    the port 3,500, and a question is asked of every name)."""
+    key = id(index)
+    if key not in _WORDS or _WORDS[key][0] is not index:
+        by = {}
+        for path, text in index.items():
+            for w in set(re.findall(r"\w+", text)):
+                by.setdefault(w, []).append(path)
+        _WORDS[key] = (index, by)
+    return {p: index[p] for p in _WORDS[key][1].get(word, [])}
+
+
+def mentions(index, pattern, own=None, word=None):
     """The definitions whose text matches `pattern`. `own` (a path) only
     counts when the match is after its first line (a function does not call
-    itself by being declared)."""
+    itself by being declared). `word`: a whole word every match has (only
+    the texts with it are searched)."""
     pat = re.compile(pattern)
     out = set()
-    for path, text in index.items():
+    for path, text in (index if word is None else with_word(index, word)).items():
         body = text.split("\n", 1)[1] if path == own and "\n" in text else ("" if path == own else text)
         if pat.search(body):
             out.add(path)
@@ -190,8 +210,17 @@ def callers(index, path):
     """The definitions that call `path`, by its name in their text. Exact
     only when the name is one definition's (`unique`) and no field or local
     has it; `port_tasks.py check` compares the BMB side with the map."""
-    return mentions(index, call_pattern(simple(path)), own=path)
+    return mentions(index, call_pattern(simple(path)), own=path, word=simple(path))
+
+
+_NAMES = {}
 
 
 def unique(index, name):
-    return sum(1 for p in index if simple(p) == name) == 1
+    key = id(index)
+    if key not in _NAMES or _NAMES[key][0] is not index:
+        count = {}
+        for p in index:
+            count[simple(p)] = count.get(simple(p), 0) + 1
+        _NAMES[key] = (index, count)
+    return _NAMES[key][1].get(name, 0) == 1

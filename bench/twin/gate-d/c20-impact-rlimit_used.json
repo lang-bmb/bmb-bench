@@ -1,0 +1,108 @@
+{
+ "id": "c20-impact-rlimit_used",
+ "kind": "comprehend",
+ "family": "impact",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `solver::rlimit_used` directly, or call one of its direct callers (its callers up to two levels)? Leave out `solver::rlimit_used` itself unless it is called from one of them. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `smt::Solver::rlimit_used` directly, or call one of its direct callers (its callers up to two levels)? Leave out `smt::Solver::rlimit_used` itself unless it is called from one of them. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "verify::check_sat_counted",
+   "verify::dump_queries",
+   "verify::sat_of",
+   "verify::verify_impl",
+   "verify::verify_pass",
+   "verify::verify_trusting"
+  ],
+  "bmb": [
+   "prove::decide",
+   "prove::decide_sub",
+   "prove::spent",
+   "sat::reach_with",
+   "sat::sat_with"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "solver::rlimit_used",
+      "in",
+      "2"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "prove::decide",
+      "prove::decide_sub",
+      "prove::spent",
+      "sat::reach_with",
+      "sat::sat_with"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])rlimit_used\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "verify::check_sat_counted",
+      "verify::dump_queries",
+      "verify::sat_of",
+      "verify::verify_impl",
+      "verify::verify_pass",
+      "verify::verify_trusting"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "prove::decide_sub",
+       "prove::spent",
+       "sat::reach_with",
+       "sat::sat_with"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "verify::dump_queries",
+       "verify::sat_of",
+       "verify::verify_impl",
+       "verify::verify_pass",
+       "verify::verify_trusting"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

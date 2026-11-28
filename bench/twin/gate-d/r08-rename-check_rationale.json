@@ -1,0 +1,298 @@
+{
+ "id": "r08-rename-check_rationale",
+ "kind": "change",
+ "family": "rename",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Rename the function `decls::Checker::check_rationale` to `check_rationale_renamed` and update every use of it. The program's behaviour must not change; change nothing else.",
+  "rust": "Rename the function `check::Checker::check_rationale` to `check_rationale_renamed` and update every use of it. The program's behaviour must not change; change nothing else."
+ },
+ "scope": {
+  "rust": [
+   "check::Checker::assume_stmt",
+   "check::Checker::check_rationale",
+   "check::Checker::check_rationale_renamed",
+   "check::Checker::fn_effect"
+  ],
+  "bmb": [
+   "body::Body::assume_stmt",
+   "decls::Checker::check_rationale",
+   "decls::Checker::check_rationale_renamed",
+   "decls::Checker::fn_effect"
+  ]
+ },
+ "must_change": {
+  "rust": [
+   "check::Checker::assume_stmt",
+   "check::Checker::check_rationale",
+   "check::Checker::check_rationale_renamed",
+   "check::Checker::fn_effect"
+  ],
+  "bmb": [
+   "body::Body::assume_stmt",
+   "decls::Checker::check_rationale",
+   "decls::Checker::check_rationale_renamed",
+   "decls::Checker::fn_effect"
+  ]
+ },
+ "oracle": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                \"rationale\" => self.check_rationale(a),",
+     "new": "                \"rationale\" => self.check_rationale_renamed(a),"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "            Some(a) => self.check_rationale(a),",
+     "new": "            Some(a) => self.check_rationale_renamed(a),"
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "    fn check_rationale(&mut self, a: &Attr) {",
+     "new": "    fn check_rationale_renamed(&mut self, a: &Attr) {"
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "decls",
+     "code": "    impl Checker {\n        #[effects(alloc)]\n        fn check_rationale_renamed(self: &mut Checker, a: &ast::Attr) -> () {\n            let mut kind: bool = false;\n            let mut kind_written: bool = false;\n            let mut text: bool = false;\n            let mut bad: Vec<String> = Vec::new();\n            for i in 0..a.args.len()\n                invariant 0 <= i && i <= a.args.len(),\n            {\n                match &a.args[i] {\n                    ast::AttrArg::Ident(id) => bad.push(types::cat3(\"`\", id.name.as_str(), \"` needs a key (`kind = ..`)\")),\n                    ast::AttrArg::Str(s, sp) => { if blank(s.as_str()) { bad.push(String::from(\"the explanation is empty\")); } if text { bad.push(String::from(\"one explanation, as one string\")); } text = true; },\n                    ast::AttrArg::Pair(k, v) => { if k.name.as_str() == \"kind\" { kind_written = true; if rationale_kind(&**v) { if kind { bad.push(String::from(\"`kind` is given twice\")); } kind = true; } else { bad.push(String::from(\"`kind` is one of `nonlinear`, `solver_limit`, `boundary`, `performance`\")); } } else if k.name.as_str() == \"hash\" { if !is_str_arg(&**v) { bad.push(String::from(\"`hash` is a string (the tools write it)\")); } } else { bad.push(types::cat3(\"unknown key `\", k.name.as_str(), \"`\")); } },\n                }\n            }\n            if !kind_written {\n                bad.push(String::from(\"`kind = ..` is missing\"));\n            }\n            if !text {\n                bad.push(String::from(\"the explanation (a string) is missing\"));\n            }\n            if bad.len() > 0 {\n                self.help(\"E1002\", a.span, types::cat2(\"malformed rationale: \", types::join(bad.as_slice(), \"; \").as_str()).as_str(), \"write `#[rationale(kind = K, \\\"why the fact holds\\\")]`, `K` one of `nonlinear`, `solver_limit`, `boundary`, `performance`\");\n            }\n        }\n\n        #[effects(alloc)]\n        fn fn_effect(self: &mut Checker, f: &ast::FnDef) -> types::Effects {\n            let mut effect: types::Effects = types::pure();\n            let mut have: bool = false;\n            for i in 0..f.attrs.len()\n                invariant 0 <= i && i <= f.attrs.len(),\n            {\n                let an: String = f.attrs[i].name.name.clone();\n                let span: source::Span = f.attrs[i].span;\n                if an.as_str() == \"effects\" {\n                    if is_proof(&f.kind) {\n                        self.fixed(\"E0256\", span, \"a `proof fn` has no effect: it is ghost code, erased before it runs\", \"remove the attribute\", \"\");\n                    } else if is_spec(&f.kind) {\n                        self.fixed(\"E0604\", span, \"spec functions are pure by definition\", \"remove the attribute\", \"\");\n                    } else if have {\n                        self.fixed(\"E0605\", span, \"duplicate `#[effects(..)]` attribute\", \"remove the attribute\", \"\");\n                    } else {\n                        effect = self.effects_attr(&f.attrs[i]);\n                        have = true;\n                    }\n                } else if an.as_str() == \"uses\" {} else if an.as_str() == \"external_body\" {\n                    if !is_exec(&f.kind) || f.name.name.as_str() == \"main\" {\n                        self.fixed(\"E1004\", span, \"`#[external_body]` is for an executable function other than `main`\", \"remove the attribute\", \"\");\n                    } else if !has_attr(f.attrs.as_slice(), \"rationale\") {\n                        self.missing_rationale(span, \"`#[external_body]`\");\n                    }\n                } else if an.as_str() == \"rationale\" {\n                    if !has_attr(f.attrs.as_slice(), \"external_body\") {\n                        self.fixed(\"E1002\", span, \"a rationale on a function that is not `#[external_body]`\", \"remove it: a rationale stands before `#[external_body]` or an `assume`\", \"\");\n                    } else {\n                        self.check_rationale_renamed(&f.attrs[i]);\n                    }\n                } else if an.as_str() == \"summary\" {\n                    self.check_summary(&f.attrs[i], f.attrs.as_slice());\n                } else {\n                    self.fixed(\"E0605\", span, types::cat3(\"unknown attribute `\", an.as_str(), \"` on a function\").as_str(), \"remove it: functions take `#[summary(\\\"..\\\")]`, `#[effects(..)]`, `#[uses(..)]`, `#[external_body]` and `#[rationale(..)]`\", \"\");\n                }\n            }\n            if is_exec(&f.kind) && !have {\n                let hi: u32 = if f.span.lo < 4294967293 {\n                    f.span.lo + 2\n                } else {\n                    f.span.lo\n                };\n                self.fixed(\"E0601\", source::Span { file: f.span.file, lo: f.span.lo, hi: hi }, types::cat3(\"`\", f.name.name.as_str(), \"` has no `#[effects(..)]` attribute\").as_str(), \"add `#[effects(pure)]` above the function\", \"#[effects(pure)]\\nfn\");\n            }\n            effect\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "body",
+     "code": "    impl Body {\n        #[effects(alloc)]\n        fn assume_stmt(self: &mut Body, cx: &mut FnCtx, a: &ast::Assume, mode: Mode, f: usize) -> ()\n            decreases f * 3,\n        {\n            if f == 0 {\n                return;\n            }\n            if !exec_mode(mode) {\n                self.c.help(\"E1003\", a.span, \"`assume` is not allowed in a specification or ghost code\", \"an escape is a statement of executable code; a ghost fact is proved (`assert`, a `proof fn`)\");\n            }\n            let want: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &a.cond, &want, Mode::Spec(false), f - 1);\n            let named: Option<usize> = match call_of(&a.cond) {\n                None => None,\n                Some(call) => { match self.resolve(call.path.as_slice(), cx.mod_path.as_str()) { None => None, Some(p) => self.c.fns.find(p.as_str()), } },\n            };\n            let pred: bool = match named {\n                None => false,\n                Some(i) => is_spec(self.c.fns.items[i].kind) && types::same(&self.c.fns.items[i].ret, &ast::TypeKind::Bool),\n            };\n            if !pred && !types::is_error(&t) {\n                self.c.help(\"E1003\", a.cond.span, \"`assume` takes one named predicate call\", \"move the condition into `spec fn name(..) -> bool { .. }` and assume `name(..)`\");\n            }\n            match &a.rationale {\n                None => self.c.missing_rationale(a.span, \"`assume`\"),\n                Some(r) => self.c.check_rationale_renamed(r),\n            }\n            if exec_mode(mode) {\n                need_own(cx, panic_effect(), \"`assume`\");\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "decls",
+     "remove": [
+      "decls::Checker::check_rationale"
+     ]
+    }
+   ]
+  ],
+  "bmb:port-rename": [
+   [
+    "write",
+    {
+     "rename": [
+      {
+       "def": "decls::Checker::check_rationale",
+       "to": "check_rationale_renamed"
+      }
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "scope",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "decls",
+      "code": "    impl Checker {\n        #[effects(alloc)]\n        fn check_rationale_renamed(self: &mut Checker, a: &ast::Attr) -> () {\n            let mut kind: bool = false;\n            let mut kind_written: bool = false;\n            let mut text: bool = false;\n            let mut bad: Vec<String> = Vec::new();\n            for i in 0..a.args.len()\n                invariant 0 <= i && i <= a.args.len(),\n            {\n                match &a.args[i] {\n                    ast::AttrArg::Ident(id) => bad.push(types::cat3(\"`\", id.name.as_str(), \"` needs a key (`kind = ..`)\")),\n                    ast::AttrArg::Str(s, sp) => { if blank(s.as_str()) { bad.push(String::from(\"the explanation is empty\")); } if text { bad.push(String::from(\"one explanation, as one string\")); } text = true; },\n                    ast::AttrArg::Pair(k, v) => { if k.name.as_str() == \"kind\" { kind_written = true; if rationale_kind(&**v) { if kind { bad.push(String::from(\"`kind` is given twice\")); } kind = true; } else { bad.push(String::from(\"`kind` is one of `nonlinear`, `solver_limit`, `boundary`, `performance`\")); } } else if k.name.as_str() == \"hash\" { if !is_str_arg(&**v) { bad.push(String::from(\"`hash` is a string (the tools write it)\")); } } else { bad.push(types::cat3(\"unknown key `\", k.name.as_str(), \"`\")); } },\n                }\n            }\n            if !kind_written {\n                bad.push(String::from(\"`kind = ..` is missing\"));\n            }\n            if !text {\n                bad.push(String::from(\"the explanation (a string) is missing\"));\n            }\n            if bad.len() > 0 {\n                self.help(\"E1002\", a.span, types::cat2(\"malformed rationale: \", types::join(bad.as_slice(), \"; \").as_str()).as_str(), \"write `#[rationale(kind = K, \\\"why the fact holds\\\")]`, `K` one of `nonlinear`, `solver_limit`, `boundary`, `performance`\");\n            }\n        }\n\n        #[effects(alloc)]\n        fn fn_effect(self: &mut Checker, f: &ast::FnDef) -> types::Effects {\n            let mut effect: types::Effects = types::pure();\n            let mut have: bool = false;\n            for i in 0..f.attrs.len()\n                invariant 0 <= i && i <= f.attrs.len(),\n            {\n                let an: String = f.attrs[i].name.name.clone();\n                let span: source::Span = f.attrs[i].span;\n                if an.as_str() == \"effects\" {\n                    if is_proof(&f.kind) {\n                        self.fixed(\"E0256\", span, \"a `proof fn` has no effect: it is ghost code, erased before it runs\", \"remove the attribute\", \"\");\n                    } else if is_spec(&f.kind) {\n                        self.fixed(\"E0604\", span, \"spec functions are pure by definition\", \"remove the attribute\", \"\");\n                    } else if have {\n                        self.fixed(\"E0605\", span, \"duplicate `#[effects(..)]` attribute\", \"remove the attribute\", \"\");\n                    } else {\n                        effect = self.effects_attr(&f.attrs[i]);\n                        have = true;\n                    }\n                } else if an.as_str() == \"uses\" {} else if an.as_str() == \"external_body\" {\n                    if !is_exec(&f.kind) || f.name.name.as_str() == \"main\" {\n                        self.fixed(\"E1004\", span, \"`#[external_body]` is for an executable function other than `main`\", \"remove the attribute\", \"\");\n                    } else if !has_attr(f.attrs.as_slice(), \"rationale\") {\n                        self.missing_rationale(span, \"`#[external_body]`\");\n                    }\n                } else if an.as_str() == \"rationale\" {\n                    if !has_attr(f.attrs.as_slice(), \"external_body\") {\n                        self.fixed(\"E1002\", span, \"a rationale on a function that is not `#[external_body]`\", \"remove it: a rationale stands before `#[external_body]` or an `assume`\", \"\");\n                    } else {\n                        self.check_rationale_renamed(&f.attrs[i]);\n                    }\n                } else if an.as_str() == \"summary\" {\n                    self.check_summary(&f.attrs[i], f.attrs.as_slice());\n                } else {\n                    self.fixed(\"E0605\", span, types::cat3(\"unknown attribute `\", an.as_str(), \"` on a function\").as_str(), \"remove it: functions take `#[summary(\\\"..\\\")]`, `#[effects(..)]`, `#[uses(..)]`, `#[external_body]` and `#[rationale(..)]`\", \"\");\n                }\n            }\n            if is_exec(&f.kind) && !have {\n                let hi: u32 = if f.span.lo < 4294967293 {\n                    f.span.lo + 2\n                } else {\n                    f.span.lo\n                };\n                self.fixed(\"E0601\", source::Span { file: f.span.file, lo: f.span.lo, hi: hi }, types::cat3(\"`\", f.name.name.as_str(), \"` has no `#[effects(..)]` attribute\").as_str(), \"add `#[effects(pure)]` above the function\", \"#[effects(pure)]\\nfn\");\n            }\n            effect\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "body",
+      "code": "    impl Body {\n        #[effects(alloc)]\n        fn assume_stmt(self: &mut Body, cx: &mut FnCtx, a: &ast::Assume, mode: Mode, f: usize) -> ()\n            decreases f * 3,\n        {\n            if f == 0 {\n                return;\n            }\n            if !exec_mode(mode) {\n                self.c.help(\"E1003\", a.span, \"`assume` is not allowed in a specification or ghost code\", \"an escape is a statement of executable code; a ghost fact is proved (`assert`, a `proof fn`)\");\n            }\n            let want: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &a.cond, &want, Mode::Spec(false), f - 1);\n            let named: Option<usize> = match call_of(&a.cond) {\n                None => None,\n                Some(call) => { match self.resolve(call.path.as_slice(), cx.mod_path.as_str()) { None => None, Some(p) => self.c.fns.find(p.as_str()), } },\n            };\n            let pred: bool = match named {\n                None => false,\n                Some(i) => is_spec(self.c.fns.items[i].kind) && types::same(&self.c.fns.items[i].ret, &ast::TypeKind::Bool),\n            };\n            if !pred && !types::is_error(&t) {\n                self.c.help(\"E1003\", a.cond.span, \"`assume` takes one named predicate call\", \"move the condition into `spec fn name(..) -> bool { .. }` and assume `name(..)`\");\n            }\n            match &a.rationale {\n                None => self.c.missing_rationale(a.span, \"`assume`\"),\n                Some(r) => self.c.check_rationale_renamed(r),\n            }\n            if exec_mode(mode) {\n                need_own(cx, panic_effect(), \"`assume`\");\n            }\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "decls",
+      "remove": [
+       "decls::Checker::check_rationale"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "                \"rationale\" => self.check_rationale(a),",
+      "new": "                \"rationale\" => self.check_rationale_renamed(a),"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "            Some(a) => self.check_rationale(a),",
+      "new": "            Some(a) => self.check_rationale_renamed(a),"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "    fn check_rationale(&mut self, a: &Attr) {",
+      "new": "    fn check_rationale_renamed(&mut self, a: &Attr) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/sha256.rs",
+      "old": "    let mut s = String::from(\"sha256:\");",
+      "new": "    let mut s = \"sha256:\".to_string();"
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "decls::Checker::check_rationale",
+        "to": "check_rationale_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "sha256",
+      "code": "    #[effects(alloc)]\n    fn push_digit(out: &mut String, d: u32) -> () {\n        let digit_code: u32 = if d < 10 {\n            48 + d % 16\n        } else {\n            87 + d % 16\n        };\n        match char::from_u32(digit_code) {\n            None => {},\n            Some(c) => out.push(c),\n        }\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     "write",
+     {
+      "unit": "decls",
+      "code": "    impl Checker {\n        #[effects(alloc)]\n        fn check_rationale_renamed(self: &mut Checker, a: &ast::Attr) -> () {\n            let mut kind: bool = false;\n            let mut kind_written: bool = false;\n            let mut text: bool = false;\n            let mut bad: Vec<String> = Vec::new();\n            for i in 0..a.args.len()\n                invariant 0 <= i && i <= a.args.len(),\n            {\n                match &a.args[i] {\n                    ast::AttrArg::Ident(id) => bad.push(types::cat3(\"`\", id.name.as_str(), \"` needs a key (`kind = ..`)\")),\n                    ast::AttrArg::Str(s, sp) => { if blank(s.as_str()) { bad.push(String::from(\"the explanation is empty\")); } if text { bad.push(String::from(\"one explanation, as one string\")); } text = true; },\n                    ast::AttrArg::Pair(k, v) => { if k.name.as_str() == \"kind\" { kind_written = true; if rationale_kind(&**v) { if kind { bad.push(String::from(\"`kind` is given twice\")); } kind = true; } else { bad.push(String::from(\"`kind` is one of `nonlinear`, `solver_limit`, `boundary`, `performance`\")); } } else if k.name.as_str() == \"hash\" { if !is_str_arg(&**v) { bad.push(String::from(\"`hash` is a string (the tools write it)\")); } } else { bad.push(types::cat3(\"unknown key `\", k.name.as_str(), \"`\")); } },\n                }\n            }\n            if !kind_written {\n                bad.push(String::from(\"`kind = ..` is missing\"));\n            }\n            if !text {\n                bad.push(String::from(\"the explanation (a string) is missing\"));\n            }\n            if bad.len() > 0 {\n                self.help(\"E1002\", a.span, types::cat2(\"malformed rationale: \", types::join(bad.as_slice(), \"; \").as_str()).as_str(), \"write `#[rationale(kind = K, \\\"why the fact holds\\\")]`, `K` one of `nonlinear`, `solver_limit`, `boundary`, `performance`\");\n            }\n        }\n\n        #[effects(alloc)]\n        fn fn_effect(self: &mut Checker, f: &ast::FnDef) -> types::Effects {\n            let mut effect: types::Effects = types::pure();\n            let mut have: bool = false;\n            for i in 0..f.attrs.len()\n                invariant 0 <= i && i <= f.attrs.len(),\n            {\n                let an: String = f.attrs[i].name.name.clone();\n                let span: source::Span = f.attrs[i].span;\n                if an.as_str() == \"effects\" {\n                    if is_proof(&f.kind) {\n                        self.fixed(\"E0256\", span, \"a `proof fn` has no effect: it is ghost code, erased before it runs\", \"remove the attribute\", \"\");\n                    } else if is_spec(&f.kind) {\n                        self.fixed(\"E0604\", span, \"spec functions are pure by definition\", \"remove the attribute\", \"\");\n                    } else if have {\n                        self.fixed(\"E0605\", span, \"duplicate `#[effects(..)]` attribute\", \"remove the attribute\", \"\");\n                    } else {\n                        effect = self.effects_attr(&f.attrs[i]);\n                        have = true;\n                    }\n                } else if an.as_str() == \"uses\" {} else if an.as_str() == \"external_body\" {\n                    if !is_exec(&f.kind) || f.name.name.as_str() == \"main\" {\n                        self.fixed(\"E1004\", span, \"`#[external_body]` is for an executable function other than `main`\", \"remove the attribute\", \"\");\n                    } else if !has_attr(f.attrs.as_slice(), \"rationale\") {\n                        self.missing_rationale(span, \"`#[external_body]`\");\n                    }\n                } else if an.as_str() == \"rationale\" {\n                    if !has_attr(f.attrs.as_slice(), \"external_body\") {\n                        self.fixed(\"E1002\", span, \"a rationale on a function that is not `#[external_body]`\", \"remove it: a rationale stands before `#[external_body]` or an `assume`\", \"\");\n                    } else {\n                        self.check_rationale_renamed(&f.attrs[i]);\n                    }\n                } else if an.as_str() == \"summary\" {\n                    self.check_summary(&f.attrs[i], f.attrs.as_slice());\n                } else {\n                    self.fixed(\"E0605\", span, types::cat3(\"unknown attribute `\", an.as_str(), \"` on a function\").as_str(), \"remove it: functions take `#[summary(\\\"..\\\")]`, `#[effects(..)]`, `#[uses(..)]`, `#[external_body]` and `#[rationale(..)]`\", \"\");\n                }\n            }\n            if is_exec(&f.kind) && !have {\n                let hi: u32 = if f.span.lo < 4294967293 {\n                    f.span.lo + 2\n                } else {\n                    f.span.lo\n                };\n                self.fixed(\"E0601\", source::Span { file: f.span.file, lo: f.span.lo, hi: hi }, types::cat3(\"`\", f.name.name.as_str(), \"` has no `#[effects(..)]` attribute\").as_str(), \"add `#[effects(pure)]` above the function\", \"#[effects(pure)]\\nfn\");\n            }\n            effect\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "body",
+      "code": "    impl Body {\n        #[effects(alloc)]\n        fn assume_stmt(self: &mut Body, cx: &mut FnCtx, a: &ast::Assume, mode: Mode, f: usize) -> ()\n            decreases f * 3,\n        {\n            if f == 0 {\n                return;\n            }\n            if !exec_mode(mode) {\n                self.c.help(\"E1003\", a.span, \"`assume` is not allowed in a specification or ghost code\", \"an escape is a statement of executable code; a ghost fact is proved (`assert`, a `proof fn`)\");\n            }\n            let want: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &a.cond, &want, Mode::Spec(false), f - 1);\n            let named: Option<usize> = match call_of(&a.cond) {\n                None => None,\n                Some(call) => { match self.resolve(call.path.as_slice(), cx.mod_path.as_str()) { None => None, Some(p) => self.c.fns.find(p.as_str()), } },\n            };\n            let pred: bool = match named {\n                None => false,\n                Some(i) => is_spec(self.c.fns.items[i].kind) && types::same(&self.c.fns.items[i].ret, &ast::TypeKind::Bool),\n            };\n            if !pred && !types::is_error(&t) {\n                self.c.help(\"E1003\", a.cond.span, \"`assume` takes one named predicate call\", \"move the condition into `spec fn name(..) -> bool { .. }` and assume `name(..)`\");\n            }\n            match &a.rationale {\n                None => self.c.missing_rationale(a.span, \"`assume`\"),\n                Some(r) => self.c.check_rationale_renamed(r),\n            }\n            if exec_mode(mode) {\n                need_own(cx, panic_effect(), \"`assume`\");\n            }\n        }\n    }\n"
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "decls",
+      "remove": [
+       "decls::Checker::check_rationale"
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "                \"rationale\" => self.check_rationale(a),",
+      "new": "                \"rationale\" => self.check_rationale_renamed(a),"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "            Some(a) => self.check_rationale(a),",
+      "new": "            Some(a) => self.check_rationale_renamed(a),"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/check.rs",
+      "old": "    fn check_rationale(&mut self, a: &Attr) {",
+      "new": "    fn check_rationale_renamed(&mut self, a: &Attr) {"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+      "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+     }
+    ],
+    [
+     "edit_file",
+     {
+      "path": "src/diag.rs",
+      "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+      "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+     }
+    ]
+   ],
+   "bmb:port-rename": [
+    [
+     "write",
+     {
+      "rename": [
+       {
+        "def": "decls::Checker::check_rationale",
+        "to": "check_rationale_renamed"
+       }
+      ]
+     }
+    ],
+    [
+     "write",
+     {
+      "unit": "diag",
+      "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+     }
+    ]
+   ]
+  },
+  {
+   "fails": "done",
+   "bmb": [],
+   "rust": []
+  }
+ ]
+}

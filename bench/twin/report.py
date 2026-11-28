@@ -7,7 +7,9 @@
                                     successful changed (DIR holds the tasks)
 
 A file holds the rows of one run (`pair.py run --out FILE`: one agent, one
-documentation condition). Rows are grouped by agent, condition and
+documentation condition, one tool condition). Rows are grouped by agent,
+documentation condition, tool condition (`cond` of a row: `port`,
+`port-rename`; empty in the rows from before it was recorded) and
 family; an axis (comprehension, refactoring, replay, history) is the sum
 of its families. Per group and arm:
 
@@ -66,16 +68,16 @@ def table(rows):
     for r in rows:
         fam = family(r["id"])
         for name in (AXES[fam], f"{AXES[fam]}/{fam}"):
-            groups[(r["agent"], r.get("docs"), name)][r["arm"]].append(r)
-    out = ["| agent | docs | group | arm | n | ok | read | in | out | calls | limit | steps |",
-           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
-    for (agent, docs, name), arms in sorted(groups.items()):
+            groups[(r["agent"], r.get("docs"), r.get("cond") or "", name)][r["arm"]].append(r)
+    out = ["| agent | docs | tools | group | arm | n | ok | read | in | out | calls | limit | steps |",
+           "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+    for (agent, docs, cond, name), arms in sorted(groups.items()):
         for arm in ("bmb", "rust"):
             rs = arms.get(arm, [])
             if not rs:
                 continue
             steps = [st for r in rs for st in r.get("steps", [])]
-            out.append(f"| {agent} | {docs} | {name} | {arm} | {len(rs)} | {sum(bool(r['success']) for r in rs)} | "
+            out.append(f"| {agent} | {docs} | {cond} | {name} | {arm} | {len(rs)} | {sum(bool(r['success']) for r in rs)} | "
                        f"{sum(r['tokens'] for r in rs)} | {sum(usage(r, 'in') for r in rs)} | "
                        f"{sum(usage(r, 'out') for r in rs)} | {sum(r['tool_calls'] for r in rs)} | "
                        f"{sum(bool(r.get('limit_hit') or any(s.get('limit_hit') for s in r.get('steps', []))) for r in rs)} | "
@@ -107,10 +109,10 @@ def diff(files):
     for f in files:
         with open(f, encoding="utf-8") as h:
             runs.append([json.loads(ln) for ln in h if ln.strip()])
-    heads = {(r["agent"], r.get("docs")) for rows in runs for r in rows}
+    heads = {(r["agent"], r.get("docs"), r.get("cond") or "") for rows in runs for r in rows}
     if len(heads) != 1:
         sys.exit(f"diff: the runs of one agent and condition, got {sorted(heads)}")
-    agent, docs = next(iter(heads))
+    agent, docs, cond = next(iter(heads))
     names = []
     for rows in runs:
         for r in rows:
@@ -118,7 +120,7 @@ def diff(files):
             for name in (AXES[fam], f"{AXES[fam]}/{fam}"):
                 if name not in names:
                     names.append(name)
-    out = [f"{agent}, docs `{docs}`, {len(runs)} runs: BMB − Rust (ADR-0112)", "",
+    out = [f"{agent}, docs `{docs}`{f', tools `{cond}`' if cond else ''}, {len(runs)} runs: BMB − Rust (ADR-0112)", "",
            "| group | BMB successes (per run) | Rust successes (per run) | Difference %p | 95% interval %p | p | Verdict | Tokens read BMB/Rust: median (interval) | API tokens BMB/Rust |",
            "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
     for name in sorted(names):

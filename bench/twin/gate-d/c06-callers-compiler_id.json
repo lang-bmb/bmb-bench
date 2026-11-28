@@ -1,0 +1,102 @@
+{
+ "id": "c06-callers-compiler_id",
+ "kind": "comprehend",
+ "family": "callers",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions call `incremental::compiler_id` directly? Leave out `incremental::compiler_id` itself unless it calls itself. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions call `incremental::compiler_id` directly? Leave out `incremental::compiler_id` itself unless it calls itself. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "incremental::Session::in_memory",
+   "incremental::Session::new",
+   "incremental::Session::new_for"
+  ],
+  "bmb": [
+   "incremental::in_memory",
+   "lib::emit_checked",
+   "lib::verify_checked",
+   "lint::run",
+   "map::proofs",
+   "uses_fill::run"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "query",
+    {
+     "name": "edges",
+     "args": [
+      "incremental::compiler_id",
+      "in",
+      "1"
+     ]
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "incremental::in_memory",
+      "lib::emit_checked",
+      "lib::verify_checked",
+      "lint::run",
+      "map::proofs",
+      "uses_fill::run"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "(?<![\\w])compiler_id\\s*(?:::<[^>]*>)?\\("
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "incremental::Session::in_memory",
+      "incremental::Session::new",
+      "incremental::Session::new_for"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "lib::emit_checked",
+       "lib::verify_checked",
+       "lint::run",
+       "map::proofs",
+       "uses_fill::run"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "incremental::Session::new",
+       "incremental::Session::new_for"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

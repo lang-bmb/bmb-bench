@@ -1,0 +1,79 @@
+{
+ "id": "c31-state-spec_pc",
+ "kind": "comprehend",
+ "family": "state",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions change the field `spec_pc` of `encode_spec::Enc`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions change the field `spec_pc` of `verify::Enc`: assign it, add to it, remove from it, clear it, or pass it on as `&mut`? Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "verify::Enc::spec",
+   "verify::Enc::spec_match"
+  ],
+  "bmb": [
+   "encode_spec::Enc::spec_binary",
+   "encode_spec::Enc::spec_if",
+   "encode_spec::Enc::spec_match"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "encode_spec::Enc::spec_binary",
+      "encode_spec::Enc::spec_if",
+      "encode_spec::Enc::spec_match"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\\.spec_pc\\b"
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "verify::Enc::spec",
+      "verify::Enc::spec_match"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "encode_spec::Enc::spec_if",
+       "encode_spec::Enc::spec_match"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "verify::Enc::spec_match"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

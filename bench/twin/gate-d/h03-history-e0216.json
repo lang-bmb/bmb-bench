@@ -1,0 +1,734 @@
+{
+ "id": "h03-history-e0216",
+ "family": "history",
+ "kind": "change",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "scope": "any",
+ "setup": {
+  "rust": [
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    self.diags.push(\n                        Diag::new(\n                            \"E0207\",\n                            d.span,\n                            \"a trait method takes no `decreases`: recursion through a bound is not supported\",\n                        )\n                        .fix(\"remove it; an impl's function may recurse on its own type with its own `decreases`\", None),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.diags.push(\n                    Diag::new(\n                        \"E0310\",\n                        p.name.span,\n                        format!(\"the receiver of `{}` is named `self`\", f.name.name),\n                    )\n                    .fix(\n                        format!(\n                            \"rename `{}` to `self` in the signature and the body\",\n                            p.name.name\n                        ),\n                        None,\n                    ),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                self.diags.push(\n                    Diag::new(\n                        \"E0310\",\n                        p.name.span,\n                        \"`self` names only the receiver: the first parameter of an `impl T` function, typed `T`, `&T` or `&mut T`\",\n                    )\n                    .fix(\"choose another name\", None),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "            self.err(\n                \"E0207\",\n                sp,\n                \"spec functions take no `requires` / `ensures` in milestone 1\",\n            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                        self.diags.push(\n                            Diag::new(\"E0427\", p.span, format!(\"`{vt}` has no payload\"))\n                                .fix(format!(\"write `{vt}`\"), Some(vt.clone())),\n                        );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                        self.diags.push(\n                            Diag::new(\n                                \"E0427\",\n                                p.span,\n                                format!(\n                                    \"`{vt}` holds {} value(s), the pattern names {}\",\n                                    payload.len(),\n                                    p.binds.len()\n                                ),\n                            )\n                            .fix(\n                                \"one new name or `_` per payload position\",\n                                Some(format!(\"{vt}({holes})\")),\n                            ),\n                        );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                            self.diags.push(\n                                Diag::new(\n                                    \"E0512\",\n                                    b.name.span,\n                                    format!(\n                                        \"no trigger mentions bound variable `{}`\",\n                                        b.name.name\n                                    ),\n                                )\n                                .fix(\n                                    format!(\n                                        \"mark a term that mentions `{}` with `#[trigger]` as well (the triggers form one pattern)\",\n                                        b.name.name\n                                    ),\n                                    None,\n                                ),\n                            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/check.rs",
+     "old": "                    self.diags.push(\n                        Diag::new(\n                            \"E0207\",\n                            *span,\n                            format!(\n                                \"`{b}` is recursive through a call on a bounded `Self` (reaching `{to}`), which carries no measure (ADR-0046 §4)\"\n                            ),\n                        )\n                        .fix(\n                            \"call with a known `Self` type, or break the cycle\",\n                            None,\n                        ),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "                self.diags.push(\n                    Diag::new(\n                        \"E0216\",\n                        span,\n                        \"Verus's `verifier` attribute: BMB writes `#[external_body]`\",\n                    )\n                    .fix(\n                        \"write `#[external_body]` (with a `#[rationale(..)]` before it)\",\n                        Some(\"#[external_body]\".into()),\n                    ),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "                self.diags.push(Diag::new(\n                    \"E0216\",\n                    span,\n                    format!(\"Verus's `verifier::{}` attribute is not used\", seg.name),\n                ));",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "                    self.diags.push(\n                        Diag::new(\n                            \"E0207\",\n                            sp,\n                            format!(\"`{s}` items are not supported in milestone 1\"),\n                        )\n                        .fix(fix, None),\n                    );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "                self.diags.push(\n                    Diag::new(\n                        \"E0207\",\n                        self.span(),\n                        \"const generic parameters are not supported (ADR-0046 open question 1)\",\n                    )\n                    .fix(\n                        \"take the length as a value: a slice `&[T]` and its `len()`\",\n                        None,\n                    ),\n                );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "            self.diags.push(\n                Diag::new(\n                    \"E0207\",\n                    sp,\n                    \"`pub` is not used; every definition of a unit is part of its surface\",\n                )\n                .fix(\"remove `pub`\", Some(String::new())),\n            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "            self.diags.push(\n                Diag::new(\n                    \"E0207\",\n                    sp,\n                    \"generic traits are not supported (ADR-0046 §1)\",\n                )\n                .fix(\"put the type parameters on the methods\", None),\n            );",
+     "new": ""
+    }
+   ],
+   [
+    "edit_file",
+    {
+     "path": "src/parser.rs",
+     "old": "            self.diags.push(\n                Diag::new(\"E0207\", sp, \"supertraits are not supported (ADR-0046 §1)\")\n                    .fix(\"bound the type parameters by each trait: `T: A + B`\", None),\n            );",
+     "new": ""
+    }
+   ]
+  ],
+  "bmb": [
+   [
+    "write",
+    {
+     "unit": "body",
+     "code": "    impl Body {\n        #[effects(alloc)]\n        fn arm_binds(self: &mut Body, mp: &str, p: &ast::Pat, tp: &str, vs: &[types::VariantSig], k: usize, by_ref: bool, by_mut: bool) -> Vec<ast::TypeKind> {\n            let mut tys: Vec<ast::TypeKind> = Vec::new();\n            if k >= vs.len() {\n                return tys;\n            }\n            let n: usize = vs[k].tys.len();\n            let vt: String = variant_text(tp, vs[k].name.as_str(), mp);\n            if n == 0 && p.parens {\n            } else if p.binds.len() != n {\n                let msg: String = decls::counts(types::cat3(\"`\", vt.as_str(), \"` holds \").as_str(), n, \" value(s), the pattern names \", p.binds.len(), \"\");\n            }\n            for i in 0..n\n                invariant 0 <= i && i <= n && n == vs[k].tys.len(),\n            {\n                if by_ref {\n                    tys.push(ast::TypeKind::Ref(by_mut, types::boxed(vs[k].tys[i].clone())));\n                } else {\n                    tys.push(vs[k].tys[i].clone());\n                }\n            }\n            tys\n        }\n\n        #[effects(alloc)]\n        fn check_fn(self: &mut Body, d: &ast::FnDef, mp: &str, path: &str) -> () {\n            let at: usize = match self.c.fns.find(path) {\n                None => { return; },\n                Some(i) => i,\n            };\n            let sig: types::FnSig = self.c.fns.items[at].clone();\n            self.c.tparams = sig.generics.clone();\n            let mut cx: FnCtx = new_ctx(path, mp, sig.effect, is_proof(d.kind));\n            if !self.calls.has(path) {\n                let none: Vec<String> = Vec::new();\n                self.calls.insert(path, none);\n            }\n            for i in 0..d.attrs.len()\n                invariant 0 <= i && i <= d.attrs.len(),\n            {\n                if d.attrs[i].name.name == \"uses\" {\n                    self.check_uses(&d.attrs[i], mp);\n                }\n            }\n            for i in 0..d.params.len()\n                invariant 0 <= i && i <= d.params.len(),\n            {\n                let ty: ast::TypeKind = self.c.canon(&d.params[i].ty, mp, true, 1000000000);\n                self.check_param_type(&d.params[i].ty, d.kind, !ty_has_error(&ty, 1000000000));\n                self.declare(&mut cx, &d.params[i].name, ty, false, true);\n            }\n            self.check_value_type(&d.ret.ty, \"return type\");\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"Vec\") {\n                self.spec_vec(d.ret.ty.span);\n            }\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"String\") {\n                self.spec_string(d.ret.ty.span);\n            }\n            let ret_ty: ast::TypeKind = self.c.canon(&d.ret.ty, mp, true, 1000000000);\n            cx.ret = ret_ty.clone();\n            if is_spec(d.kind) {\n                if d.pre.len() > 0 {\n                } else if d.post.len() > 0 {\n                }\n            }\n            for i in 0..d.pre.len()\n                invariant 0 <= i && i <= d.pre.len(),\n            {\n                self.check_contract(&mut cx, &d.pre[i], false);\n            }\n            if d.post.len() > 0 {\n                let scope: Vec<Local> = Vec::new();\n                cx.scopes.push(scope);\n                match &d.ret.name {\n                    None => {},\n                    Some(n) => self.declare(&mut cx, n, ret_ty.clone(), false, false),\n                }\n                for i in 0..d.post.len()\n                    invariant 0 <= i && i <= d.post.len(),\n                {\n                    self.check_contract(&mut cx, &d.post[i], true);\n                }\n                cx.scopes.pop();\n            }\n            match &d.ret.name {\n                None => {},\n                Some(n) => { types::add(&mut cx.reserved, n.name.as_str()); },\n            }\n            match &d.measure {\n                None => {},\n                Some(m) => { let no: Option<ast::TypeKind> = None; let t: ast::TypeKind = self.expr(&mut cx, m, &no, Mode::Spec(false), 1000000000); self.measure_type(&t, m.span); },\n            }\n            if is_some(&sig.trait_of) && !sig.default {\n                self.c.tparams = Vec::new();\n                return;\n            }\n            let mode: Mode = match d.kind {\n                ast::FnKind::Exec => Mode::Exec,\n                ast::FnKind::Spec => Mode::Spec(false),\n                ast::FnKind::Proof => Mode::Ghost,\n            };\n            let want: Option<ast::TypeKind> = Some(ret_ty.clone());\n            self.open_lets = Vec::new();\n            self.typed_uses = Vec::new();\n            self.spec_at = Vec::new();\n            let t: ast::TypeKind = self.block(&mut cx, &d.body, &want, mode, 1000000000);\n            self.spec_widen = !is_exec(d.kind);\n            let end: source::Span = match &d.body.tail {\n                None => d.body.span,\n                Some(e) => e.span,\n            };\n            self.expect_ty(&t, &ret_ty, end);\n            self.spec_widen = false;\n            self.settle_lets(d, mp);\n            if is_exec(d.kind) {\n                if has_attr(d.attrs.as_slice(), \"external_body\") {\n                    need_own(&mut cx, panic_effect(), \"`#[external_body]`\");\n                    types::add(&mut self.external, path);\n                }\n                self.check_effects(d, &cx);\n                let info: moves::MoveInfo = self.check_moves(d, path);\n                self.needs.insert(path, Needs { own: cx.own, body: needed(&cx), moves: info });\n            }\n            self.c.tparams = Vec::new();\n        }\n\n        #[effects(alloc)]\n        fn quant_expr(self: &mut Body, cx: &mut FnCtx, e: &ast::Expr, q: &ast::Quant, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let kw: String = quant_kw(&q.q);\n            if exec_mode(mode) {\n                self.c.help(\"E0503\", e.span, types::cat3(\"`\", kw.as_str(), \"` is only allowed in specifications\").as_str(), \"state it in a `spec fn` used by a contract, or compute it in code with a loop\");\n                return ast::TypeKind::Error;\n            }\n            let scope: Vec<Local> = Vec::new();\n            cx.scopes.push(scope);\n            for i in 0..q.binders.len()\n                invariant 0 <= i && i <= q.binders.len(),\n            {\n                if !types::is_int(&q.binders[i].ty.kind) && !types::is_error(&q.binders[i].ty.kind) {\n                    self.c.help(\"E0402\", q.binders[i].ty.span, types::cat3(\"`\", kw.as_str(), \"` binders must be integers\").as_str(), \"bind an integer index (e.g. `i: usize`) and reach the value through it\");\n                }\n                self.declare(cx, &q.binders[i].name, q.binders[i].ty.kind.clone(), false, false);\n            }\n            let mut triggers: Vec<ast::Expr> = Vec::new();\n            collect_triggers(&*q.body, &mut triggers, 1000000000);\n            for k in 0..triggers.len()\n                invariant 0 <= k && k <= triggers.len(),\n            {\n                match ast::var_name(&triggers[k]) {\n                    None => {},\n                    Some(v) => { if binds(q.binders.as_slice(), v.as_str()) { let mut hint: String = types::cat5(\"mark a term that applies a function or an index to `\", v.as_str(), \"`, e.g. `#[trigger] p(\", v.as_str(), \")` or `#[trigger] a[\"); hint.push_str(v.as_str()); hint.push_str(\"]`\"); self.c.help(\"E0517\", triggers[k].span, types::cat3(\"`#[trigger]` marks the bound variable `\", v.as_str(), \"` alone\").as_str(), hint.as_str()); } },\n                }\n            }\n            if triggers.len() == 0 {\n                let first: Option<source::Span> = if q.binders.len() == 1 {\n                    first_index_on(&*q.body, q.binders[0].name.name.as_str())\n                } else {\n                    None\n                };\n                let msg: String = types::cat3(\"`\", kw.as_str(), \"` has no `#[trigger]`\");\n                match first {\n                    None => self.c.help(\"E0511\", e.span, msg.as_str(), \"mark a term that mentions every bound variable, e.g. `#[trigger] a[i]`\"),\n                    Some(at) => self.c.fixed(\"E0511\", source::Span { file: at.file, lo: at.lo, hi: at.lo }, msg.as_str(), \"mark the first term indexed by the bound variable\", \"#[trigger] \"),\n                }\n            } else {\n                for j in 0..q.binders.len()\n                    invariant 0 <= j && j <= q.binders.len(),\n                {\n                    if !any_mentions(triggers.as_slice(), q.binders[j].name.name.as_str(), true, 1000000000) {\n                    }\n                }\n            }\n            if cx.forall_depth < 4294967295 {\n                cx.forall_depth = cx.forall_depth + 1;\n            }\n            let wb: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &*q.body, &wb, mode, f - 1);\n            if cx.forall_depth > 0 {\n                cx.forall_depth = cx.forall_depth - 1;\n            }\n            cx.scopes.pop();\n            self.expect_ty(&t, &ast::TypeKind::Bool, q.body.span);\n            ast::TypeKind::Bool\n        }\n\n        #[effects(alloc)]\n        fn trait_cycles(self: &mut Body, defs: &table::Table<DefRow>) -> Vec<String> {\n            let mut edges: table::Table<Vec<Edge>> = table::new::<Vec<Edge>>();\n            for i in 0..self.gcalls.len()\n                invariant 0 <= i && i <= self.gcalls.len(),\n            {\n                add_edge(&mut edges, self.gcalls[i].caller.as_str(), Edge { callee: self.gcalls[i].callee.clone(), args: self.gcalls[i].args.clone() });\n            }\n            let callers: usize = self.calls.len();\n            for n in 0..callers\n                invariant 0 <= n && n <= callers,\n            {\n                match self.calls.nth(n) {\n                    None => {},\n                    Some(at) => { let caller: String = self.calls.key(n); let cs: Vec<String> = decls::sorted(self.calls.items[at].as_slice()); for j in 0..cs.len() invariant 0 <= j && j <= cs.len(), { if self.plain_fn(cs[j].as_str()) { let none: Vec<ast::TypeKind> = Vec::new(); add_edge(&mut edges, caller.as_str(), Edge { callee: cs[j].clone(), args: none }); } } },\n                }\n            }\n            let mut graph: table::Table<Vec<String>> = table::new::<Vec<String>>();\n            let mut bound_edges: Vec<Pair> = Vec::new();\n            let mut base_of: table::Table<String> = table::new::<String>();\n            let mut work: Vec<Edge> = Vec::new();\n            let total: usize = defs.len();\n            for n in 0..total\n                invariant 0 <= n && n <= total,\n            {\n                let path: String = defs.key(n);\n                if self.plain_fn(path.as_str()) {\n                    let none: Vec<ast::TypeKind> = Vec::new();\n                    work.push(Edge { callee: path.clone(), args: none });\n                }\n            }\n            let mut fuel: usize = 1000000000;\n            while work.len() > 0 && fuel > 0\n                invariant 0 <= fuel,\n                decreases fuel,\n            {\n                fuel = fuel - 1;\n                match work.pop() {\n                    None => {},\n                    Some(w) => { self.instance_edges(&w, &edges, &mut graph, &mut bound_edges, &mut base_of, &mut work); },\n                }\n            }\n            let mut out: Vec<String> = Vec::new();\n            let comps: Vec<Vec<String>> = sccs_with_cycles(&graph);\n            for i in 0..comps.len()\n                invariant 0 <= i && i <= comps.len(),\n            {\n                match first_bound(bound_edges.as_slice(), comps[i].as_slice()) {\n                    None => {},\n                    Some(to) => { for j in 0..comps[i].len() invariant 0 <= j && j <= comps[i].len(), { match base_of.find(comps[i][j].as_str()) { None => {}, Some(at) => { let b: String = base_of.items[at].clone(); if types::add(&mut out, b.as_str()) { match defs.find(b.as_str()) { None => {}, Some(d) => { }, } } }, } } },\n                }\n            }\n            out\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "decls",
+     "code": "    impl Checker {\n        #[effects(alloc)]\n        fn receiver_rule(self: &mut Checker, f: &ast::FnDef, impl_ty: &str, has: bool, mp: &str) -> () {\n            for k in 0..f.params.len()\n                invariant 0 <= k && k <= f.params.len(),\n            {\n                let ty: ast::TypeKind = self.canon(&f.params[k].ty, mp, false, 100000);\n                let v: ast::TypeKind = types::value(&ty);\n                let receiver_type: bool = has && !types::is_error(&v) && (match types::named_path(&v) { None => types::text(&v).as_str() == impl_ty, Some(np) => np.as_str() == impl_ty, });\n                let is_self: bool = f.params[k].name.name.as_str() == \"self\";\n                if k == 0 && receiver_type && !is_self {\n                } else if is_self && (k != 0 || !receiver_type) && !types::is_error(&ty) {\n                }\n            }\n        }\n\n        #[effects(alloc)]\n        fn trait_sigs(self: &mut Checker, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = unit_path(prefix, m);\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for s in 0..m.mods.len()\n                invariant 0 <= s && s <= m.mods.len(),\n            {\n                self.trait_sigs(&m.mods[s], sub.as_str(), f - 1);\n            }\n            for i in 0..m.traits.len()\n                invariant 0 <= i && i <= m.traits.len(),\n            {\n                let path: String = types::cat3(mp.as_str(), \"::\", m.traits[i].name.name.as_str());\n                let mine: bool = match self.traits.find(path.as_str()) {\n                    None => false,\n                    Some(at) => span_eq(self.traits.items[at].span, m.traits[i].name.span),\n                };\n                if mine {\n                    let mut sb: Vec<String> = Vec::new();\n                    sb.push(path.clone());\n                    let selfp: types::TParam = types::TParam { name: String::from(\"Self\"), bounds: sb };\n                    let mut ig: Vec<types::TParam> = Vec::new();\n                    ig.push(selfp.clone());\n                    let mut names: Vec<String> = Vec::new();\n                    for k in 0..m.traits[i].fns.len()\n                        invariant 0 <= k && k <= m.traits[i].fns.len() && i < m.traits.len(),\n                    {\n                        let fname: String = m.traits[i].fns[k].f.name.name.clone();\n                        if types::has(names.as_slice(), fname.as_str()) {\n                            self.err(\"E0302\", m.traits[i].fns[k].f.name.span, types::cat5(\"`\", fname.as_str(), \"` is defined more than once in trait `\", m.traits[i].name.name.as_str(), \"`\").as_str());\n                        } else {\n                            names.push(fname.clone());\n                            match &m.traits[i].fns[k].f.measure {\n                                None => {},\n                                Some(d) => { },\n                            }\n                            let own: Vec<types::TParam> = self.tparams_of(m.traits[i].fns[k].f.generics.as_slice(), false, mp.as_str());\n                            let mut tps: Vec<types::TParam> = Vec::new();\n                            tps.push(selfp.clone());\n                            ast::append::<types::TParam>(&mut tps, own);\n                            self.tparams = tps;\n                            self.receiver_rule(&m.traits[i].fns[k].f, \"Self\", true, mp.as_str());\n                            self.tparams = Vec::new();\n                            let fp: String = types::cat3(path.as_str(), \"::\", fname.as_str());\n                            self.collect_fn(&m.traits[i].fns[k].f, fp.as_str(), mp.as_str(), false, ig.as_slice());\n                            match self.fns.find(fp.as_str()) {\n                                None => {},\n                                Some(at) => { self.fns.items[at].trait_of = Some(path.clone()); self.fns.items[at].default = m.traits[i].fns[k].has_body; },\n                            }\n                        }\n                    }\n                    match self.traits.find(path.as_str()) {\n                        None => { let dropped: Vec<String> = names; },\n                        Some(at) => { self.traits.items[at].methods = names; },\n                    }\n                }\n            }\n        }\n    }\n"
+    }
+   ],
+   [
+    "write",
+    {
+     "unit": "parser",
+     "code": "    impl Parser {\n        #[effects(alloc)]\n        fn attr(self: &mut Parser) -> Option<ast::Attr> {\n            let lo: source::Span = self.bump();\n            self.bump();\n            let mut got: Option<ast::Ident> = None;\n            if self.is_kw(\"invariant\") {\n                let isp: source::Span = self.bump();\n                got = Some(ast::Ident { name: String::from(\"invariant\"), span: isp });\n            } else {\n                got = self.ident(\"attribute name\");\n            }\n            let name: ast::Ident = match got {\n                None => { self.recover_attr(); return None; },\n                Some(i) => i,\n            };\n            let mut verus_path: Option<ast::Ident> = None;\n            if name.name == \"verifier\" && self.is_p(\"::\") {\n                match self.t.ident(1) {\n                    None => {},\n                    Some(seg) => { self.bump(); let ssp: source::Span = self.bump(); verus_path = Some(ast::Ident { name: seg, span: ssp }); },\n                }\n            }\n            let mut args: Vec<ast::AttrArg> = Vec::new();\n            if self.eat_p(\"(\") {\n                self.attr_args(&mut args);\n                match self.expect_p(\")\") {\n                    None => { self.recover_attr(); return None; },\n                    Some(c) => {},\n                }\n            }\n            let hi: source::Span = match self.expect_p(\"]\") {\n                None => { self.recover_attr(); return None; },\n                Some(h) => h,\n            };\n            let span: source::Span = lo.to(hi);\n            let mut verus: String = String::new();\n            let mut is_verus: bool = false;\n            match &verus_path {\n                None => { if args.len() == 1 && name.name == \"verifier\" { match &args[0] { ast::AttrArg::Ident(vi) => { verus = vi.name.clone(); is_verus = true; }, ast::AttrArg::Str(s, p) => {}, ast::AttrArg::Pair(k2, v2) => {}, } } },\n                Some(vp) => { if args.len() == 0 { verus = vp.name.clone(); is_verus = true; } },\n            }\n            if is_verus && verus == \"external_body\" {\n                return Some(ast::Attr { name: ast::Ident { name: String::from(\"external_body\"), span: name.span }, args: Vec::new(), span: span });\n            }\n            match verus_path {\n                None => {},\n                Some(seg2) => { return None; },\n            }\n            Some(ast::Attr { name: name, args: args, span: span })\n        }\n\n        #[effects(alloc)]\n        fn no_pub(self: &mut Parser) -> () {\n            if self.is_kw(\"pub\") {\n                let sp: source::Span = self.bump();\n            }\n        }\n\n        #[effects(alloc)]\n        fn parse_generics(self: &mut Parser, d: usize) -> Vec<ast::TypeParam>\n            requires d <= 256,\n        {\n            let mut out: Vec<ast::TypeParam> = Vec::new();\n            self.generics_span = None;\n            if !self.is_p(\"<\") {\n                return out;\n            }\n            let lo: source::Span = self.bump();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\">\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                if !self.eat_p(\",\") {\n                    if self.is_kw(\"const\") {\n                        self.skip_angle_from();\n                        return out;\n                    }\n                    let name: ast::Ident = match self.ident(\"type parameter\") {\n                        None => { self.skip_angle_from(); return out; },\n                        Some(i) => i,\n                    };\n                    let mut bounds: Vec<Vec<ast::Ident>> = Vec::new();\n                    let mut fn_bound: Option<ast::FnBound> = None;\n                    if self.eat_p(\":\") {\n                        let mut m: usize = self.left();\n                        while m > 0\n                            decreases m,\n                        {\n                            m = m - 1;\n                            if (self.is_kw(\"Fn\") || self.is_kw(\"FnMut\") || self.is_kw(\"FnOnce\")) && self.t.is_p(1, \"(\") {\n                                let kind: ast::FnTrait = if self.is_kw(\"Fn\") {\n                                    ast::FnTrait::Fn\n                                } else if self.is_kw(\"FnMut\") {\n                                    ast::FnTrait::FnMut\n                                } else {\n                                    ast::FnTrait::FnOnce\n                                };\n                                let at: source::Span = self.bump();\n                                self.bump();\n                                let mut params: Vec<ast::Type> = Vec::new();\n                                let mut q: usize = self.left();\n                                while q > 0 && !self.is_p(\")\") && !self.eof()\n                                    decreases q,\n                                {\n                                    q = q - 1;\n                                    params.push(self.parse_type(d));\n                                    if !self.eat_p(\",\") {\n                                        q = 0;\n                                    }\n                                }\n                                self.expect_p(\")\");\n                                let ret: ast::Type = if self.eat_p(\"->\") {\n                                    self.parse_type(d)\n                                } else {\n                                    ast::Type { kind: ast::TypeKind::Unit, span: self.prev_span() }\n                                };\n                                fn_bound = Some(ast::FnBound { kind: kind, params: params, ret: ret, span: at.to(self.prev_span()) });\n                                if !self.eat_p(\"+\") {\n                                    m = 0;\n                                }\n                            } else {\n                                let path: Vec<ast::Ident> = self.bound_path();\n                                if path.len() == 0 {\n                                    self.err_expected(\"trait bound\");\n                                    self.skip_angle_from();\n                                    return out;\n                                }\n                                bounds.push(path);\n                                if !self.eat_p(\"+\") {\n                                    m = 0;\n                                }\n                            }\n                        }\n                    }\n                    let span: source::Span = name.span.to(self.prev_span());\n                    out.push(ast::TypeParam { name: name, bounds: bounds, fn_bound: fn_bound, span: span });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n            }\n            match self.expect_p(\">\") {\n                None => {},\n                Some(hi) => { self.generics_span = Some(lo.to(hi)); },\n            }\n            out\n        }\n\n        #[effects(alloc)]\n        fn parse_mod_inner(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::Mod>\n            requires d <= 256,\n            decreases (256 - d) * 64 + 60,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"module name\")?;\n            self.units.push(name.name.clone());\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::FnDef> = Vec::new();\n            let mut mods: Vec<ast::Mod> = Vec::new();\n            let mut types: Vec<ast::TypeDef> = Vec::new();\n            let mut impls: Vec<ast::Impl> = Vec::new();\n            let mut traits: Vec<ast::TraitDef> = Vec::new();\n            let mut trait_impls: Vec<ast::TraitImpl> = Vec::new();\n            let mut uses: Vec<ast::UseItem> = Vec::new();\n            let mut consts: Vec<ast::ConstDef> = Vec::new();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let item_attrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"const\") {\n                    match self.parse_const(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(c) => consts.push(c),\n                    }\n                } else if self.is_kw(\"mod\") {\n                    match self.parse_mod(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(m) => mods.push(m),\n                    }\n                } else if self.is_kw(\"fn\") || (self.is_kw(\"spec\") || self.is_kw(\"proof\")) && self.t.is_kw(1, \"fn\") {\n                    match self.parse_fn(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(f),\n                    }\n                } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {\n                    match self.parse_type_def(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(t) => types.push(t),\n                    }\n                } else if self.is_kw(\"impl\") {\n                    let mut k: usize = 0;\n                    while k < item_attrs.len()\n                        decreases item_attrs.len() - k,\n                    {\n                        self.err_rep(\"E0605\", item_attrs[k].span, cat3(\"unknown attribute `\", item_attrs[k].name.name.as_str(), \"` on an `impl` block\").as_str(), \"an `impl` block takes no attributes: write it on the functions inside\", \"\");\n                        k = k + 1;\n                    }\n                    match self.parse_impl(d) {\n                        None => self.recover_item(),\n                        Some(it) => { match it { ImplItem::Inherent(i) => impls.push(i), ImplItem::Trait(ti) => trait_impls.push(ti), } },\n                    }\n                } else if self.is_kw(\"trait\") {\n                    match self.parse_trait(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(tr) => traits.push(tr),\n                    }\n                } else if self.is_kw(\"use\") {\n                    match self.parse_use() {\n                        None => {},\n                        Some(u) => uses.push(u),\n                    }\n                } else if unsupported_item(text_of(self.t.ident(0)).as_str()) {\n                    let s: String = text_of(self.t.ident(0));\n                    let sp: source::Span = self.span();\n                    if s == \"unsafe\" {\n                        self.unsafe_habit(sp);\n                    } else if s == \"static\" {\n                        if self.t.is_kw(1, \"mut\") {\n                            self.err_fix(\"E0261\", sp, \"`static` items are not used\", \"global mutable state is passed as an argument (DESIGN §4.1 \\\"Effects\\\")\");\n                        } else {\n                            self.err_rep(\"E0261\", sp, \"`static` items are not used\", \"write `const`\", \"const\");\n                        }\n                    } else {\n                    }\n                    self.bump();\n                    self.recover_item();\n                } else {\n                    self.err_expected(\"`fn`, `spec fn` or `mod`\");\n                    if !self.is_p(\"}\") {\n                        self.bump();\n                        self.recover_item();\n                    }\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            let hi: source::Span = self.expect_p(\"}\")?;\n            let lens: Vec<ast::Len> = std::mem::replace(&mut self.lens, Vec::new());\n            Some(ast::Mod { name: name, attrs: attrs, fns: fns, mods: mods, types: types, impls: impls, traits: traits, trait_impls: trait_impls, uses: uses, consts: consts, lens: lens, span: lo.to(hi) })\n        }\n\n        #[effects(alloc)]\n        fn parse_trait(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::TraitDef>\n            requires d <= 256,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"trait name\")?;\n            if self.is_p(\"<\") {\n                self.skip_angle();\n            }\n            if self.is_p(\":\") {\n                let mut k: usize = self.left();\n                while k > 0 && !self.is_p(\"{\") && !self.eof()\n                    decreases k,\n                {\n                    k = k - 1;\n                    self.bump();\n                }\n            }\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::TraitFn> = Vec::new();\n            let outer: Option<String> = std::mem::replace(&mut self.impl_ty, Some(String::from(\"Self\")));\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let fattrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"fn\") || self.is_kw(\"spec\") && self.t.is_kw(1, \"fn\") {\n                    self.decl_ok = true;\n                    let r: Option<ast::FnDef> = self.parse_fn(fattrs, d);\n                    let has_body: bool = !self.decl_ok;\n                    self.decl_ok = false;\n                    match r {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(ast::TraitFn { f: f, has_body: has_body }),\n                    }\n                } else {\n                    self.err_expected(\"`fn` or `spec fn`\");\n                    self.bump();\n                    self.recover_item();\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            self.impl_ty = outer;\n            let hi: source::Span = self.expect_p(\"}\")?;\n            Some(ast::TraitDef { name: name, attrs: attrs, fns: fns, span: lo.to(hi) })\n        }\n    }\n"
+    }
+   ]
+  ]
+ },
+ "steps": [
+  {
+   "source": {
+    "code": "E0216",
+    "commit": "5644c8404",
+    "subject": "2F-02, 2F-03 (ADR-0030), 2E-02..2E-04 (ADR-0029): effect sets with alloc and panic; escapes with rationales and trust levels"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0216 yet: Verus's `#[verifier::external_body]`: BMB writes `#[external_body]`. It came with the commit \"2F-02, 2F-03 (ADR-0030), 2E-02..2E-04 (ADR-0029): effect sets with alloc and panic; escapes with rationales and trust levels\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    #[verifier::external_body]\n    {\"code\": \"E0216\", \"severity\": \"error\", \"message\": \"Verus's `verifier` attribute: BMB writes `#[external_body]`\", \"file\": \"err/escapes.bmb\", \"line\": 75, \"col\": 5, \"end_line\": 75, \"end_col\": 31, \"fix\": {\"message\": \"write `#[external_body]` (with a `#[rationale(..)]` before it)\", \"replacement\": \"#[external_body]\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-escapes",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/escapes.bmb"
+     ]
+    },
+    {
+     "name": "replay-verus_external_body",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/verus_external_body.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "                out.push(Attr {",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0216\",\n                        span,\n                        \"Verus's `verifier` attribute: BMB writes `#[external_body]`\",\n                    )\n                    .fix(\n                        \"write `#[external_body]` (with a `#[rationale(..)]` before it)\",\n                        Some(\"#[external_body]\".into()),\n                    ),\n                );\n                out.push(Attr {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "                continue;\n            }\n            out.push(Attr { name, args, span });",
+       "new": "                self.diags.push(Diag::new(\n                    \"E0216\",\n                    span,\n                    format!(\"Verus's `verifier::{}` attribute is not used\", seg.name),\n                ));\n                continue;\n            }\n            out.push(Attr { name, args, span });"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "parser",
+       "code": "    impl Parser {\n        #[effects(alloc)]\n        fn attr(self: &mut Parser) -> Option<ast::Attr> {\n            let lo: source::Span = self.bump();\n            self.bump();\n            let mut got: Option<ast::Ident> = None;\n            if self.is_kw(\"invariant\") {\n                let isp: source::Span = self.bump();\n                got = Some(ast::Ident { name: String::from(\"invariant\"), span: isp });\n            } else {\n                got = self.ident(\"attribute name\");\n            }\n            let name: ast::Ident = match got {\n                None => { self.recover_attr(); return None; },\n                Some(i) => i,\n            };\n            let mut verus_path: Option<ast::Ident> = None;\n            if name.name == \"verifier\" && self.is_p(\"::\") {\n                match self.t.ident(1) {\n                    None => {},\n                    Some(seg) => { self.bump(); let ssp: source::Span = self.bump(); verus_path = Some(ast::Ident { name: seg, span: ssp }); },\n                }\n            }\n            let mut args: Vec<ast::AttrArg> = Vec::new();\n            if self.eat_p(\"(\") {\n                self.attr_args(&mut args);\n                match self.expect_p(\")\") {\n                    None => { self.recover_attr(); return None; },\n                    Some(c) => {},\n                }\n            }\n            let hi: source::Span = match self.expect_p(\"]\") {\n                None => { self.recover_attr(); return None; },\n                Some(h) => h,\n            };\n            let span: source::Span = lo.to(hi);\n            let mut verus: String = String::new();\n            let mut is_verus: bool = false;\n            match &verus_path {\n                None => { if args.len() == 1 && name.name == \"verifier\" { match &args[0] { ast::AttrArg::Ident(vi) => { verus = vi.name.clone(); is_verus = true; }, ast::AttrArg::Str(s, p) => {}, ast::AttrArg::Pair(k2, v2) => {}, } } },\n                Some(vp) => { if args.len() == 0 { verus = vp.name.clone(); is_verus = true; } },\n            }\n            if is_verus && verus == \"external_body\" {\n                self.err_rep(\"E0216\", span, \"Verus's `verifier` attribute: BMB writes `#[external_body]`\", \"write `#[external_body]` (with a `#[rationale(..)]` before it)\", \"#[external_body]\");\n                return Some(ast::Attr { name: ast::Ident { name: String::from(\"external_body\"), span: name.span }, args: Vec::new(), span: span });\n            }\n            match verus_path {\n                None => {},\n                Some(seg2) => { self.err(\"E0216\", span, cat3(\"Verus's `verifier::\", seg2.name.as_str(), \"` attribute is not used\").as_str()); return None; },\n            }\n            Some(ast::Attr { name: name, args: args, span: span })\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0427",
+    "commit": "ec96f3abc",
+    "subject": "2B-04c: check match (one arm per variant, declaration order, payload bindings)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0427 yet: a pattern names the wrong number of payload values. It came with the commit \"2B-04c: check match (one arm per variant, declaration order, payload bindings)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    Shape::Dot() => 0,\n    {\"code\": \"E0427\", \"severity\": \"error\", \"message\": \"`Shape::Dot` has no payload\", \"file\": \"err/match.bmb\", \"line\": 71, \"col\": 13, \"end_line\": 71, \"end_col\": 25, \"fix\": {\"message\": \"write `Shape::Dot`\", \"replacement\": \"Shape::Dot\"}}\n\n    Shape::Square => 1,\n    {\"code\": \"E0427\", \"severity\": \"error\", \"message\": \"`Shape::Square` holds 1 value(s), the pattern names 0\", \"file\": \"err/match.bmb\", \"line\": 72, \"col\": 13, \"end_line\": 72, \"end_col\": 26, \"fix\": {\"message\": \"one new name or `_` per payload position\", \"replacement\": \"Shape::Square(_)\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-match",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/match.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    } else if p.binds.len() != payload.len() {",
+       "new": "                        self.diags.push(\n                            Diag::new(\"E0427\", p.span, format!(\"`{vt}` has no payload\"))\n                                .fix(format!(\"write `{vt}`\"), Some(vt.clone())),\n                        );\n                    } else if p.binds.len() != payload.len() {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    }\n                    tys = if by_ref {",
+       "new": "                        self.diags.push(\n                            Diag::new(\n                                \"E0427\",\n                                p.span,\n                                format!(\n                                    \"`{vt}` holds {} value(s), the pattern names {}\",\n                                    payload.len(),\n                                    p.binds.len()\n                                ),\n                            )\n                            .fix(\n                                \"one new name or `_` per payload position\",\n                                Some(format!(\"{vt}({holes})\")),\n                            ),\n                        );\n                    }\n                    tys = if by_ref {"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn arm_binds(self: &mut Body, mp: &str, p: &ast::Pat, tp: &str, vs: &[types::VariantSig], k: usize, by_ref: bool, by_mut: bool) -> Vec<ast::TypeKind> {\n            let mut tys: Vec<ast::TypeKind> = Vec::new();\n            if k >= vs.len() {\n                return tys;\n            }\n            let n: usize = vs[k].tys.len();\n            let vt: String = variant_text(tp, vs[k].name.as_str(), mp);\n            if n == 0 && p.parens {\n                self.c.fixed(\"E0427\", p.span, types::cat3(\"`\", vt.as_str(), \"` has no payload\").as_str(), types::cat3(\"write `\", vt.as_str(), \"`\").as_str(), vt.as_str());\n            } else if p.binds.len() != n {\n                let msg: String = decls::counts(types::cat3(\"`\", vt.as_str(), \"` holds \").as_str(), n, \" value(s), the pattern names \", p.binds.len(), \"\");\n                self.c.fixed(\"E0427\", p.span, msg.as_str(), \"one new name or `_` per payload position\", types::cat4(vt.as_str(), \"(\", holes(n).as_str(), \")\").as_str());\n            }\n            for i in 0..n\n                invariant 0 <= i && i <= n && n == vs[k].tys.len(),\n            {\n                if by_ref {\n                    tys.push(ast::TypeKind::Ref(by_mut, types::boxed(vs[k].tys[i].clone())));\n                } else {\n                    tys.push(vs[k].tys[i].clone());\n                }\n            }\n            tys\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0207",
+    "commit": "d3949466e",
+    "subject": "compiler: M1 front end (parse, check, JSONL diagnostics)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0207 yet: construct not supported in milestone 1. It came with the commit \"compiler: M1 front end (parse, check, JSONL diagnostics)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    fn sized<const N: usize>(x: i64) -> i64 {\n    {\"code\": \"E0207\", \"severity\": \"error\", \"message\": \"const generic parameters are not supported (ADR-0046 open question 1)\", \"file\": \"err/generics.bmb\", \"line\": 20, \"col\": 14, \"end_line\": 20, \"end_col\": 19, \"fix\": {\"message\": \"take the length as a value: a slice `&[T]` and its `len()`\"}}\n\n    pub fn exposed() -> () {}\n    {\"code\": \"E0207\", \"severity\": \"error\", \"message\": \"`pub` is not used; every definition of a unit is part of its surface\", \"file\": \"err/items.bmb\", \"line\": 16, \"col\": 5, \"end_line\": 16, \"end_col\": 8, \"fix\": {\"message\": \"remove `pub`\", \"replacement\": \"\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-generics",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/generics.bmb"
+     ]
+    },
+    {
+     "name": "replay-items",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/items.bmb"
+     ]
+    },
+    {
+     "name": "replay-spec_mode",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/spec_mode.bmb"
+     ]
+    },
+    {
+     "name": "replay-traits",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/traits.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                }\n                let own = self.tparams_of(&f.generics, false, &mp);",
+       "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0207\",\n                            d.span,\n                            \"a trait method takes no `decreases`: recursion through a bound is not supported\",\n                        )\n                        .fix(\"remove it; an impl's function may recurse on its own type with its own `decreases`\", None),\n                    );\n                }\n                let own = self.tparams_of(&f.generics, false, &mp);"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        }\n\n        for r in &f.requires {",
+       "new": "            self.err(\n                \"E0207\",\n                sp,\n                \"spec functions take no `requires` / `ensures` in milestone 1\",\n            );\n        }\n\n        for r in &f.requires {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                }\n            }\n        }\n        out",
+       "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0207\",\n                            *span,\n                            format!(\n                                \"`{b}` is recursive through a call on a bounded `Self` (reaching `{to}`), which carries no measure (ADR-0046 §4)\"\n                            ),\n                        )\n                        .fix(\n                            \"call with a known `Self` type, or break the cycle\",\n                            None,\n                        ),\n                    );\n                }\n            }\n        }\n        out"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "                }\n                self.bump();\n                self.recover_item();\n            } else {",
+       "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0207\",\n                            sp,\n                            format!(\"`{s}` items are not supported in milestone 1\"),\n                        )\n                        .fix(fix, None),\n                    );\n                }\n                self.bump();\n                self.recover_item();\n            } else {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "                self.skip_angle_from();\n                return out;\n            }\n            let Ok(name) = self.ident(\"type parameter\") else {",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0207\",\n                        self.span(),\n                        \"const generic parameters are not supported (ADR-0046 open question 1)\",\n                    )\n                    .fix(\n                        \"take the length as a value: a slice `&[T]` and its `len()`\",\n                        None,\n                    ),\n                );\n                self.skip_angle_from();\n                return out;\n            }\n            let Ok(name) = self.ident(\"type parameter\") else {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "        }\n    }\n\n    fn parse_trait(&mut self, attrs: Vec<Attr>) -> PResult<TraitDef> {",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E0207\",\n                    sp,\n                    \"`pub` is not used; every definition of a unit is part of its surface\",\n                )\n                .fix(\"remove `pub`\", Some(String::new())),\n            );\n        }\n    }\n\n    fn parse_trait(&mut self, attrs: Vec<Attr>) -> PResult<TraitDef> {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "            self.skip_angle();\n        }",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E0207\",\n                    sp,\n                    \"generic traits are not supported (ADR-0046 §1)\",\n                )\n                .fix(\"put the type parameters on the methods\", None),\n            );\n            self.skip_angle();\n        }"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "            while !self.is_p(\"{\") && !matches!(self.peek(), Tok::Eof) {",
+       "new": "            self.diags.push(\n                Diag::new(\"E0207\", sp, \"supertraits are not supported (ADR-0046 §1)\")\n                    .fix(\"bound the type parameters by each trait: `T: A + B`\", None),\n            );\n            while !self.is_p(\"{\") && !matches!(self.peek(), Tok::Eof) {"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_fn(self: &mut Body, d: &ast::FnDef, mp: &str, path: &str) -> () {\n            let at: usize = match self.c.fns.find(path) {\n                None => { return; },\n                Some(i) => i,\n            };\n            let sig: types::FnSig = self.c.fns.items[at].clone();\n            self.c.tparams = sig.generics.clone();\n            let mut cx: FnCtx = new_ctx(path, mp, sig.effect, is_proof(d.kind));\n            if !self.calls.has(path) {\n                let none: Vec<String> = Vec::new();\n                self.calls.insert(path, none);\n            }\n            for i in 0..d.attrs.len()\n                invariant 0 <= i && i <= d.attrs.len(),\n            {\n                if d.attrs[i].name.name == \"uses\" {\n                    self.check_uses(&d.attrs[i], mp);\n                }\n            }\n            for i in 0..d.params.len()\n                invariant 0 <= i && i <= d.params.len(),\n            {\n                let ty: ast::TypeKind = self.c.canon(&d.params[i].ty, mp, true, 1000000000);\n                self.check_param_type(&d.params[i].ty, d.kind, !ty_has_error(&ty, 1000000000));\n                self.declare(&mut cx, &d.params[i].name, ty, false, true);\n            }\n            self.check_value_type(&d.ret.ty, \"return type\");\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"Vec\") {\n                self.spec_vec(d.ret.ty.span);\n            }\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"String\") {\n                self.spec_string(d.ret.ty.span);\n            }\n            let ret_ty: ast::TypeKind = self.c.canon(&d.ret.ty, mp, true, 1000000000);\n            cx.ret = ret_ty.clone();\n            if is_spec(d.kind) {\n                if d.pre.len() > 0 {\n                    self.c.err(\"E0207\", d.pre[0].span, \"spec functions take no `requires` / `ensures` in milestone 1\");\n                } else if d.post.len() > 0 {\n                    self.c.err(\"E0207\", d.post[0].span, \"spec functions take no `requires` / `ensures` in milestone 1\");\n                }\n            }\n            for i in 0..d.pre.len()\n                invariant 0 <= i && i <= d.pre.len(),\n            {\n                self.check_contract(&mut cx, &d.pre[i], false);\n            }\n            if d.post.len() > 0 {\n                let scope: Vec<Local> = Vec::new();\n                cx.scopes.push(scope);\n                match &d.ret.name {\n                    None => {},\n                    Some(n) => self.declare(&mut cx, n, ret_ty.clone(), false, false),\n                }\n                for i in 0..d.post.len()\n                    invariant 0 <= i && i <= d.post.len(),\n                {\n                    self.check_contract(&mut cx, &d.post[i], true);\n                }\n                cx.scopes.pop();\n            }\n            match &d.ret.name {\n                None => {},\n                Some(n) => { types::add(&mut cx.reserved, n.name.as_str()); },\n            }\n            match &d.measure {\n                None => {},\n                Some(m) => { let no: Option<ast::TypeKind> = None; let t: ast::TypeKind = self.expr(&mut cx, m, &no, Mode::Spec(false), 1000000000); self.measure_type(&t, m.span); },\n            }\n            if is_some(&sig.trait_of) && !sig.default {\n                self.c.tparams = Vec::new();\n                return;\n            }\n            let mode: Mode = match d.kind {\n                ast::FnKind::Exec => Mode::Exec,\n                ast::FnKind::Spec => Mode::Spec(false),\n                ast::FnKind::Proof => Mode::Ghost,\n            };\n            let want: Option<ast::TypeKind> = Some(ret_ty.clone());\n            self.open_lets = Vec::new();\n            self.typed_uses = Vec::new();\n            self.spec_at = Vec::new();\n            let t: ast::TypeKind = self.block(&mut cx, &d.body, &want, mode, 1000000000);\n            self.spec_widen = !is_exec(d.kind);\n            let end: source::Span = match &d.body.tail {\n                None => d.body.span,\n                Some(e) => e.span,\n            };\n            self.expect_ty(&t, &ret_ty, end);\n            self.spec_widen = false;\n            self.settle_lets(d, mp);\n            if is_exec(d.kind) {\n                if has_attr(d.attrs.as_slice(), \"external_body\") {\n                    need_own(&mut cx, panic_effect(), \"`#[external_body]`\");\n                    types::add(&mut self.external, path);\n                }\n                self.check_effects(d, &cx);\n                let info: moves::MoveInfo = self.check_moves(d, path);\n                self.needs.insert(path, Needs { own: cx.own, body: needed(&cx), moves: info });\n            }\n            self.c.tparams = Vec::new();\n        }\n\n        #[effects(alloc)]\n        fn trait_cycles(self: &mut Body, defs: &table::Table<DefRow>) -> Vec<String> {\n            let mut edges: table::Table<Vec<Edge>> = table::new::<Vec<Edge>>();\n            for i in 0..self.gcalls.len()\n                invariant 0 <= i && i <= self.gcalls.len(),\n            {\n                add_edge(&mut edges, self.gcalls[i].caller.as_str(), Edge { callee: self.gcalls[i].callee.clone(), args: self.gcalls[i].args.clone() });\n            }\n            let callers: usize = self.calls.len();\n            for n in 0..callers\n                invariant 0 <= n && n <= callers,\n            {\n                match self.calls.nth(n) {\n                    None => {},\n                    Some(at) => { let caller: String = self.calls.key(n); let cs: Vec<String> = decls::sorted(self.calls.items[at].as_slice()); for j in 0..cs.len() invariant 0 <= j && j <= cs.len(), { if self.plain_fn(cs[j].as_str()) { let none: Vec<ast::TypeKind> = Vec::new(); add_edge(&mut edges, caller.as_str(), Edge { callee: cs[j].clone(), args: none }); } } },\n                }\n            }\n            let mut graph: table::Table<Vec<String>> = table::new::<Vec<String>>();\n            let mut bound_edges: Vec<Pair> = Vec::new();\n            let mut base_of: table::Table<String> = table::new::<String>();\n            let mut work: Vec<Edge> = Vec::new();\n            let total: usize = defs.len();\n            for n in 0..total\n                invariant 0 <= n && n <= total,\n            {\n                let path: String = defs.key(n);\n                if self.plain_fn(path.as_str()) {\n                    let none: Vec<ast::TypeKind> = Vec::new();\n                    work.push(Edge { callee: path.clone(), args: none });\n                }\n            }\n            let mut fuel: usize = 1000000000;\n            while work.len() > 0 && fuel > 0\n                invariant 0 <= fuel,\n                decreases fuel,\n            {\n                fuel = fuel - 1;\n                match work.pop() {\n                    None => {},\n                    Some(w) => { self.instance_edges(&w, &edges, &mut graph, &mut bound_edges, &mut base_of, &mut work); },\n                }\n            }\n            let mut out: Vec<String> = Vec::new();\n            let comps: Vec<Vec<String>> = sccs_with_cycles(&graph);\n            for i in 0..comps.len()\n                invariant 0 <= i && i <= comps.len(),\n            {\n                match first_bound(bound_edges.as_slice(), comps[i].as_slice()) {\n                    None => {},\n                    Some(to) => { for j in 0..comps[i].len() invariant 0 <= j && j <= comps[i].len(), { match base_of.find(comps[i][j].as_str()) { None => {}, Some(at) => { let b: String = base_of.items[at].clone(); if types::add(&mut out, b.as_str()) { match defs.find(b.as_str()) { None => {}, Some(d) => { self.c.help(\"E0207\", defs.items[d].span, types::cat5(\"`\", b.as_str(), \"` is recursive through a call on a bounded `Self` (reaching `\", to.as_str(), \"`), which carries no measure (ADR-0046 §4)\").as_str(), \"call with a known `Self` type, or break the cycle\"); }, } } }, } } },\n                }\n            }\n            out\n        }\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "decls",
+       "code": "    impl Checker {\n        #[effects(alloc)]\n        fn trait_sigs(self: &mut Checker, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = unit_path(prefix, m);\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for s in 0..m.mods.len()\n                invariant 0 <= s && s <= m.mods.len(),\n            {\n                self.trait_sigs(&m.mods[s], sub.as_str(), f - 1);\n            }\n            for i in 0..m.traits.len()\n                invariant 0 <= i && i <= m.traits.len(),\n            {\n                let path: String = types::cat3(mp.as_str(), \"::\", m.traits[i].name.name.as_str());\n                let mine: bool = match self.traits.find(path.as_str()) {\n                    None => false,\n                    Some(at) => span_eq(self.traits.items[at].span, m.traits[i].name.span),\n                };\n                if mine {\n                    let mut sb: Vec<String> = Vec::new();\n                    sb.push(path.clone());\n                    let selfp: types::TParam = types::TParam { name: String::from(\"Self\"), bounds: sb };\n                    let mut ig: Vec<types::TParam> = Vec::new();\n                    ig.push(selfp.clone());\n                    let mut names: Vec<String> = Vec::new();\n                    for k in 0..m.traits[i].fns.len()\n                        invariant 0 <= k && k <= m.traits[i].fns.len() && i < m.traits.len(),\n                    {\n                        let fname: String = m.traits[i].fns[k].f.name.name.clone();\n                        if types::has(names.as_slice(), fname.as_str()) {\n                            self.err(\"E0302\", m.traits[i].fns[k].f.name.span, types::cat5(\"`\", fname.as_str(), \"` is defined more than once in trait `\", m.traits[i].name.name.as_str(), \"`\").as_str());\n                        } else {\n                            names.push(fname.clone());\n                            match &m.traits[i].fns[k].f.measure {\n                                None => {},\n                                Some(d) => { self.help(\"E0207\", d.span, \"a trait method takes no `decreases`: recursion through a bound is not supported\", \"remove it; an impl's function may recurse on its own type with its own `decreases`\"); },\n                            }\n                            let own: Vec<types::TParam> = self.tparams_of(m.traits[i].fns[k].f.generics.as_slice(), false, mp.as_str());\n                            let mut tps: Vec<types::TParam> = Vec::new();\n                            tps.push(selfp.clone());\n                            ast::append::<types::TParam>(&mut tps, own);\n                            self.tparams = tps;\n                            self.receiver_rule(&m.traits[i].fns[k].f, \"Self\", true, mp.as_str());\n                            self.tparams = Vec::new();\n                            let fp: String = types::cat3(path.as_str(), \"::\", fname.as_str());\n                            self.collect_fn(&m.traits[i].fns[k].f, fp.as_str(), mp.as_str(), false, ig.as_slice());\n                            match self.fns.find(fp.as_str()) {\n                                None => {},\n                                Some(at) => { self.fns.items[at].trait_of = Some(path.clone()); self.fns.items[at].default = m.traits[i].fns[k].has_body; },\n                            }\n                        }\n                    }\n                    match self.traits.find(path.as_str()) {\n                        None => { let dropped: Vec<String> = names; },\n                        Some(at) => { self.traits.items[at].methods = names; },\n                    }\n                }\n            }\n        }\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "parser",
+       "code": "    impl Parser {\n        #[effects(alloc)]\n        fn no_pub(self: &mut Parser) -> () {\n            if self.is_kw(\"pub\") {\n                let sp: source::Span = self.bump();\n                self.err_rep(\"E0207\", sp, \"`pub` is not used; every definition of a unit is part of its surface\", \"remove `pub`\", \"\");\n            }\n        }\n\n        #[effects(alloc)]\n        fn parse_generics(self: &mut Parser, d: usize) -> Vec<ast::TypeParam>\n            requires d <= 256,\n        {\n            let mut out: Vec<ast::TypeParam> = Vec::new();\n            self.generics_span = None;\n            if !self.is_p(\"<\") {\n                return out;\n            }\n            let lo: source::Span = self.bump();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\">\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                if !self.eat_p(\",\") {\n                    if self.is_kw(\"const\") {\n                        self.err_fix_here(\"E0207\", \"const generic parameters are not supported (ADR-0046 open question 1)\", \"take the length as a value: a slice `&[T]` and its `len()`\");\n                        self.skip_angle_from();\n                        return out;\n                    }\n                    let name: ast::Ident = match self.ident(\"type parameter\") {\n                        None => { self.skip_angle_from(); return out; },\n                        Some(i) => i,\n                    };\n                    let mut bounds: Vec<Vec<ast::Ident>> = Vec::new();\n                    let mut fn_bound: Option<ast::FnBound> = None;\n                    if self.eat_p(\":\") {\n                        let mut m: usize = self.left();\n                        while m > 0\n                            decreases m,\n                        {\n                            m = m - 1;\n                            if (self.is_kw(\"Fn\") || self.is_kw(\"FnMut\") || self.is_kw(\"FnOnce\")) && self.t.is_p(1, \"(\") {\n                                let kind: ast::FnTrait = if self.is_kw(\"Fn\") {\n                                    ast::FnTrait::Fn\n                                } else if self.is_kw(\"FnMut\") {\n                                    ast::FnTrait::FnMut\n                                } else {\n                                    ast::FnTrait::FnOnce\n                                };\n                                let at: source::Span = self.bump();\n                                self.bump();\n                                let mut params: Vec<ast::Type> = Vec::new();\n                                let mut q: usize = self.left();\n                                while q > 0 && !self.is_p(\")\") && !self.eof()\n                                    decreases q,\n                                {\n                                    q = q - 1;\n                                    params.push(self.parse_type(d));\n                                    if !self.eat_p(\",\") {\n                                        q = 0;\n                                    }\n                                }\n                                self.expect_p(\")\");\n                                let ret: ast::Type = if self.eat_p(\"->\") {\n                                    self.parse_type(d)\n                                } else {\n                                    ast::Type { kind: ast::TypeKind::Unit, span: self.prev_span() }\n                                };\n                                fn_bound = Some(ast::FnBound { kind: kind, params: params, ret: ret, span: at.to(self.prev_span()) });\n                                if !self.eat_p(\"+\") {\n                                    m = 0;\n                                }\n                            } else {\n                                let path: Vec<ast::Ident> = self.bound_path();\n                                if path.len() == 0 {\n                                    self.err_expected(\"trait bound\");\n                                    self.skip_angle_from();\n                                    return out;\n                                }\n                                bounds.push(path);\n                                if !self.eat_p(\"+\") {\n                                    m = 0;\n                                }\n                            }\n                        }\n                    }\n                    let span: source::Span = name.span.to(self.prev_span());\n                    out.push(ast::TypeParam { name: name, bounds: bounds, fn_bound: fn_bound, span: span });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n            }\n            match self.expect_p(\">\") {\n                None => {},\n                Some(hi) => { self.generics_span = Some(lo.to(hi)); },\n            }\n            out\n        }\n\n        #[effects(alloc)]\n        fn parse_mod_inner(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::Mod>\n            requires d <= 256,\n            decreases (256 - d) * 64 + 60,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"module name\")?;\n            self.units.push(name.name.clone());\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::FnDef> = Vec::new();\n            let mut mods: Vec<ast::Mod> = Vec::new();\n            let mut types: Vec<ast::TypeDef> = Vec::new();\n            let mut impls: Vec<ast::Impl> = Vec::new();\n            let mut traits: Vec<ast::TraitDef> = Vec::new();\n            let mut trait_impls: Vec<ast::TraitImpl> = Vec::new();\n            let mut uses: Vec<ast::UseItem> = Vec::new();\n            let mut consts: Vec<ast::ConstDef> = Vec::new();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let item_attrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"const\") {\n                    match self.parse_const(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(c) => consts.push(c),\n                    }\n                } else if self.is_kw(\"mod\") {\n                    match self.parse_mod(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(m) => mods.push(m),\n                    }\n                } else if self.is_kw(\"fn\") || (self.is_kw(\"spec\") || self.is_kw(\"proof\")) && self.t.is_kw(1, \"fn\") {\n                    match self.parse_fn(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(f),\n                    }\n                } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {\n                    match self.parse_type_def(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(t) => types.push(t),\n                    }\n                } else if self.is_kw(\"impl\") {\n                    let mut k: usize = 0;\n                    while k < item_attrs.len()\n                        decreases item_attrs.len() - k,\n                    {\n                        self.err_rep(\"E0605\", item_attrs[k].span, cat3(\"unknown attribute `\", item_attrs[k].name.name.as_str(), \"` on an `impl` block\").as_str(), \"an `impl` block takes no attributes: write it on the functions inside\", \"\");\n                        k = k + 1;\n                    }\n                    match self.parse_impl(d) {\n                        None => self.recover_item(),\n                        Some(it) => { match it { ImplItem::Inherent(i) => impls.push(i), ImplItem::Trait(ti) => trait_impls.push(ti), } },\n                    }\n                } else if self.is_kw(\"trait\") {\n                    match self.parse_trait(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(tr) => traits.push(tr),\n                    }\n                } else if self.is_kw(\"use\") {\n                    match self.parse_use() {\n                        None => {},\n                        Some(u) => uses.push(u),\n                    }\n                } else if unsupported_item(text_of(self.t.ident(0)).as_str()) {\n                    let s: String = text_of(self.t.ident(0));\n                    let sp: source::Span = self.span();\n                    if s == \"unsafe\" {\n                        self.unsafe_habit(sp);\n                    } else if s == \"static\" {\n                        if self.t.is_kw(1, \"mut\") {\n                            self.err_fix(\"E0261\", sp, \"`static` items are not used\", \"global mutable state is passed as an argument (DESIGN §4.1 \\\"Effects\\\")\");\n                        } else {\n                            self.err_rep(\"E0261\", sp, \"`static` items are not used\", \"write `const`\", \"const\");\n                        }\n                    } else {\n                        self.err_fix(\"E0207\", sp, cat3(\"`\", s.as_str(), \"` items are not supported in milestone 1\").as_str(), \"units hold `fn`, `spec fn`, `const`, `struct`, `enum`, `trait` and `impl`\");\n                    }\n                    self.bump();\n                    self.recover_item();\n                } else {\n                    self.err_expected(\"`fn`, `spec fn` or `mod`\");\n                    if !self.is_p(\"}\") {\n                        self.bump();\n                        self.recover_item();\n                    }\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            let hi: source::Span = self.expect_p(\"}\")?;\n            let lens: Vec<ast::Len> = std::mem::replace(&mut self.lens, Vec::new());\n            Some(ast::Mod { name: name, attrs: attrs, fns: fns, mods: mods, types: types, impls: impls, traits: traits, trait_impls: trait_impls, uses: uses, consts: consts, lens: lens, span: lo.to(hi) })\n        }\n\n        #[effects(alloc)]\n        fn parse_trait(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::TraitDef>\n            requires d <= 256,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"trait name\")?;\n            if self.is_p(\"<\") {\n                self.err_fix_here(\"E0207\", \"generic traits are not supported (ADR-0046 §1)\", \"put the type parameters on the methods\");\n                self.skip_angle();\n            }\n            if self.is_p(\":\") {\n                self.err_fix_here(\"E0207\", \"supertraits are not supported (ADR-0046 §1)\", \"bound the type parameters by each trait: `T: A + B`\");\n                let mut k: usize = self.left();\n                while k > 0 && !self.is_p(\"{\") && !self.eof()\n                    decreases k,\n                {\n                    k = k - 1;\n                    self.bump();\n                }\n            }\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::TraitFn> = Vec::new();\n            let outer: Option<String> = std::mem::replace(&mut self.impl_ty, Some(String::from(\"Self\")));\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let fattrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"fn\") || self.is_kw(\"spec\") && self.t.is_kw(1, \"fn\") {\n                    self.decl_ok = true;\n                    let r: Option<ast::FnDef> = self.parse_fn(fattrs, d);\n                    let has_body: bool = !self.decl_ok;\n                    self.decl_ok = false;\n                    match r {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(ast::TraitFn { f: f, has_body: has_body }),\n                    }\n                } else {\n                    self.err_expected(\"`fn` or `spec fn`\");\n                    self.bump();\n                    self.recover_item();\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            self.impl_ty = outer;\n            let hi: source::Span = self.expect_p(\"}\")?;\n            Some(ast::TraitDef { name: name, attrs: attrs, fns: fns, span: lo.to(hi) })\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0310",
+    "commit": "2de6df771",
+    "subject": "2B-04a: check data type declarations, names and signatures (ADR-0026)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0310 yet: `self` names exactly the receiver. It came with the commit \"2B-04a: check data type declarations, names and signatures (ADR-0026)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    fn norm(p: &Point) -> i64 {\n    {\"code\": \"E0310\", \"severity\": \"error\", \"message\": \"the receiver of `norm` is named `self`\", \"file\": \"err/data_types.bmb\", \"line\": 25, \"col\": 17, \"end_line\": 25, \"end_col\": 18, \"fix\": {\"message\": \"rename `p` to `self` in the signature and the body\"}}\n\n    fn swap(a: i64, self: &Point) -> i64 {\n    {\"code\": \"E0310\", \"severity\": \"error\", \"message\": \"`self` names only the receiver: the first parameter of an `impl T` function, typed `T`, `&T` or `&mut T`\", \"file\": \"err/data_types.bmb\", \"line\": 30, \"col\": 25, \"end_line\": 30, \"end_col\": 29, \"fix\": {\"message\": \"choose another name\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-data_types",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/data_types.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            } else if is_self && (k != 0 || !receiver_type) && ty != TypeKind::Error {",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0310\",\n                        p.name.span,\n                        format!(\"the receiver of `{}` is named `self`\", f.name.name),\n                    )\n                    .fix(\n                        format!(\n                            \"rename `{}` to `self` in the signature and the body\",\n                            p.name.name\n                        ),\n                        None,\n                    ),\n                );\n            } else if is_self && (k != 0 || !receiver_type) && ty != TypeKind::Error {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n    }\n\n    fn collect_fn(&mut self, f: &FnDef, path: String, mp: &str, in_impl: bool, ig: &[TParam]) {",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0310\",\n                        p.name.span,\n                        \"`self` names only the receiver: the first parameter of an `impl T` function, typed `T`, `&T` or `&mut T`\",\n                    )\n                    .fix(\"choose another name\", None),\n                );\n            }\n        }\n    }\n\n    fn collect_fn(&mut self, f: &FnDef, path: String, mp: &str, in_impl: bool, ig: &[TParam]) {"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "decls",
+       "code": "    impl Checker {\n        #[effects(alloc)]\n        fn receiver_rule(self: &mut Checker, f: &ast::FnDef, impl_ty: &str, has: bool, mp: &str) -> () {\n            for k in 0..f.params.len()\n                invariant 0 <= k && k <= f.params.len(),\n            {\n                let ty: ast::TypeKind = self.canon(&f.params[k].ty, mp, false, 100000);\n                let v: ast::TypeKind = types::value(&ty);\n                let receiver_type: bool = has && !types::is_error(&v) && (match types::named_path(&v) { None => types::text(&v).as_str() == impl_ty, Some(np) => np.as_str() == impl_ty, });\n                let is_self: bool = f.params[k].name.name.as_str() == \"self\";\n                if k == 0 && receiver_type && !is_self {\n                    self.help(\"E0310\", f.params[k].name.span, types::cat3(\"the receiver of `\", f.name.name.as_str(), \"` is named `self`\").as_str(), types::cat3(\"rename `\", f.params[k].name.name.as_str(), \"` to `self` in the signature and the body\").as_str());\n                } else if is_self && (k != 0 || !receiver_type) && !types::is_error(&ty) {\n                    self.help(\"E0310\", f.params[k].name.span, \"`self` names only the receiver: the first parameter of an `impl T` function, typed `T`, `&T` or `&mut T`\", \"choose another name\");\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  },
+  {
+   "source": {
+    "code": "E0512",
+    "commit": "0d8d29fff",
+    "subject": "compiler: proof gate (1B-02..1B-13)"
+   },
+   "prompt": "`bmb check` does not report the diagnostic E0512 yet: the triggers of a `forall` or `exists` must together mention every bound variable. It came with the commit \"compiler: proof gate (1B-02..1B-13)\". Implement it. Examples of what `bmb check` must print (one JSON line per diagnostic; the path in `file` is the one given on the command line), each after the source line it points at:\n\n    spec fn not_integer(a: &[i64]) -> bool { exists|b: bool| #[trigger] a[0] == 0 && b }\n    {\"code\": \"E0512\", \"severity\": \"error\", \"message\": \"no trigger mentions bound variable `b`\", \"file\": \"err/exists.bmb\", \"line\": 5, \"col\": 53, \"end_line\": 5, \"end_col\": 54, \"fix\": {\"message\": \"mark a term that mentions `b` with `#[trigger]` as well (the triggers form one pattern)\"}}\n\n    spec fn unmentioned(a: &[i64]) -> bool { exists|i: usize, j: usize| #[trigger] a[i] == 0 && j < i }\n    {\"code\": \"E0512\", \"severity\": \"error\", \"message\": \"no trigger mentions bound variable `j`\", \"file\": \"err/exists.bmb\", \"line\": 7, \"col\": 63, \"end_line\": 7, \"end_col\": 64, \"fix\": {\"message\": \"mark a term that mentions `j` with `#[trigger]` as well (the triggers form one pattern)\"}}\n\nEverything else the program prints must stay as it is.",
+   "cases": [
+    {
+     "name": "replay-exists",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/exists.bmb"
+     ]
+    },
+    {
+     "name": "replay-specs",
+     "args": [
+      "check"
+     ],
+     "files": [
+      "tests/check/err/specs.bmb"
+     ]
+    }
+   ],
+   "oracle": {
+    "rust": [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        }\n                    }\n                }\n                cx.forall_depth += 1;",
+       "new": "                            self.diags.push(\n                                Diag::new(\n                                    \"E0512\",\n                                    b.name.span,\n                                    format!(\n                                        \"no trigger mentions bound variable `{}`\",\n                                        b.name.name\n                                    ),\n                                )\n                                .fix(\n                                    format!(\n                                        \"mark a term that mentions `{}` with `#[trigger]` as well (the triggers form one pattern)\",\n                                        b.name.name\n                                    ),\n                                    None,\n                                ),\n                            );\n                        }\n                    }\n                }\n                cx.forall_depth += 1;"
+      }
+     ]
+    ],
+    "bmb": [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn quant_expr(self: &mut Body, cx: &mut FnCtx, e: &ast::Expr, q: &ast::Quant, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let kw: String = quant_kw(&q.q);\n            if exec_mode(mode) {\n                self.c.help(\"E0503\", e.span, types::cat3(\"`\", kw.as_str(), \"` is only allowed in specifications\").as_str(), \"state it in a `spec fn` used by a contract, or compute it in code with a loop\");\n                return ast::TypeKind::Error;\n            }\n            let scope: Vec<Local> = Vec::new();\n            cx.scopes.push(scope);\n            for i in 0..q.binders.len()\n                invariant 0 <= i && i <= q.binders.len(),\n            {\n                if !types::is_int(&q.binders[i].ty.kind) && !types::is_error(&q.binders[i].ty.kind) {\n                    self.c.help(\"E0402\", q.binders[i].ty.span, types::cat3(\"`\", kw.as_str(), \"` binders must be integers\").as_str(), \"bind an integer index (e.g. `i: usize`) and reach the value through it\");\n                }\n                self.declare(cx, &q.binders[i].name, q.binders[i].ty.kind.clone(), false, false);\n            }\n            let mut triggers: Vec<ast::Expr> = Vec::new();\n            collect_triggers(&*q.body, &mut triggers, 1000000000);\n            for k in 0..triggers.len()\n                invariant 0 <= k && k <= triggers.len(),\n            {\n                match ast::var_name(&triggers[k]) {\n                    None => {},\n                    Some(v) => { if binds(q.binders.as_slice(), v.as_str()) { let mut hint: String = types::cat5(\"mark a term that applies a function or an index to `\", v.as_str(), \"`, e.g. `#[trigger] p(\", v.as_str(), \")` or `#[trigger] a[\"); hint.push_str(v.as_str()); hint.push_str(\"]`\"); self.c.help(\"E0517\", triggers[k].span, types::cat3(\"`#[trigger]` marks the bound variable `\", v.as_str(), \"` alone\").as_str(), hint.as_str()); } },\n                }\n            }\n            if triggers.len() == 0 {\n                let first: Option<source::Span> = if q.binders.len() == 1 {\n                    first_index_on(&*q.body, q.binders[0].name.name.as_str())\n                } else {\n                    None\n                };\n                let msg: String = types::cat3(\"`\", kw.as_str(), \"` has no `#[trigger]`\");\n                match first {\n                    None => self.c.help(\"E0511\", e.span, msg.as_str(), \"mark a term that mentions every bound variable, e.g. `#[trigger] a[i]`\"),\n                    Some(at) => self.c.fixed(\"E0511\", source::Span { file: at.file, lo: at.lo, hi: at.lo }, msg.as_str(), \"mark the first term indexed by the bound variable\", \"#[trigger] \"),\n                }\n            } else {\n                for j in 0..q.binders.len()\n                    invariant 0 <= j && j <= q.binders.len(),\n                {\n                    if !any_mentions(triggers.as_slice(), q.binders[j].name.name.as_str(), true, 1000000000) {\n                        self.c.help(\"E0512\", q.binders[j].name.span, types::cat3(\"no trigger mentions bound variable `\", q.binders[j].name.name.as_str(), \"`\").as_str(), types::cat3(\"mark a term that mentions `\", q.binders[j].name.name.as_str(), \"` with `#[trigger]` as well (the triggers form one pattern)\").as_str());\n                    }\n                }\n            }\n            if cx.forall_depth < 4294967295 {\n                cx.forall_depth = cx.forall_depth + 1;\n            }\n            let wb: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &*q.body, &wb, mode, f - 1);\n            if cx.forall_depth > 0 {\n                cx.forall_depth = cx.forall_depth - 1;\n            }\n            cx.scopes.pop();\n            self.expect_ty(&t, &ast::TypeKind::Bool, q.body.span);\n            ast::TypeKind::Bool\n        }\n    }\n"
+      }
+     ]
+    ]
+   }
+  }
+ ],
+ "weak": [
+  {
+   "fails": "corpus",
+   "bmb": [
+    [],
+    [],
+    [],
+    [],
+    []
+   ],
+   "rust": [
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  {
+   "fails": "corpus",
+   "bmb": [
+    [
+     [
+      "write",
+      {
+       "unit": "parser",
+       "code": "    impl Parser {\n        #[effects(alloc)]\n        fn attr(self: &mut Parser) -> Option<ast::Attr> {\n            let lo: source::Span = self.bump();\n            self.bump();\n            let mut got: Option<ast::Ident> = None;\n            if self.is_kw(\"invariant\") {\n                let isp: source::Span = self.bump();\n                got = Some(ast::Ident { name: String::from(\"invariant\"), span: isp });\n            } else {\n                got = self.ident(\"attribute name\");\n            }\n            let name: ast::Ident = match got {\n                None => { self.recover_attr(); return None; },\n                Some(i) => i,\n            };\n            let mut verus_path: Option<ast::Ident> = None;\n            if name.name == \"verifier\" && self.is_p(\"::\") {\n                match self.t.ident(1) {\n                    None => {},\n                    Some(seg) => { self.bump(); let ssp: source::Span = self.bump(); verus_path = Some(ast::Ident { name: seg, span: ssp }); },\n                }\n            }\n            let mut args: Vec<ast::AttrArg> = Vec::new();\n            if self.eat_p(\"(\") {\n                self.attr_args(&mut args);\n                match self.expect_p(\")\") {\n                    None => { self.recover_attr(); return None; },\n                    Some(c) => {},\n                }\n            }\n            let hi: source::Span = match self.expect_p(\"]\") {\n                None => { self.recover_attr(); return None; },\n                Some(h) => h,\n            };\n            let span: source::Span = lo.to(hi);\n            let mut verus: String = String::new();\n            let mut is_verus: bool = false;\n            match &verus_path {\n                None => { if args.len() == 1 && name.name == \"verifier\" { match &args[0] { ast::AttrArg::Ident(vi) => { verus = vi.name.clone(); is_verus = true; }, ast::AttrArg::Str(s, p) => {}, ast::AttrArg::Pair(k2, v2) => {}, } } },\n                Some(vp) => { if args.len() == 0 { verus = vp.name.clone(); is_verus = true; } },\n            }\n            if is_verus && verus == \"external_body\" {\n                self.err_rep(\"E0216\", span, \"Verus's `verifier` attribute: BMB writes `#[external_body]`\", \"write `#[external_body]` (with a `#[rationale(..)]` before it)\", \"#[external_body]\");\n                return Some(ast::Attr { name: ast::Ident { name: String::from(\"external_body\"), span: name.span }, args: Vec::new(), span: span });\n            }\n            match verus_path {\n                None => {},\n                Some(seg2) => { self.err(\"E0216\", span, cat3(\"Verus's `verifier::\", seg2.name.as_str(), \"` attribute is not used\").as_str()); return None; },\n            }\n            Some(ast::Attr { name: name, args: args, span: span })\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn arm_binds(self: &mut Body, mp: &str, p: &ast::Pat, tp: &str, vs: &[types::VariantSig], k: usize, by_ref: bool, by_mut: bool) -> Vec<ast::TypeKind> {\n            let mut tys: Vec<ast::TypeKind> = Vec::new();\n            if k >= vs.len() {\n                return tys;\n            }\n            let n: usize = vs[k].tys.len();\n            let vt: String = variant_text(tp, vs[k].name.as_str(), mp);\n            if n == 0 && p.parens {\n                self.c.fixed(\"E0427\", p.span, types::cat3(\"`\", vt.as_str(), \"` has no payload\").as_str(), types::cat3(\"write `\", vt.as_str(), \"`\").as_str(), vt.as_str());\n            } else if p.binds.len() != n {\n                let msg: String = decls::counts(types::cat3(\"`\", vt.as_str(), \"` holds \").as_str(), n, \" value(s), the pattern names \", p.binds.len(), \"\");\n                self.c.fixed(\"E0427\", p.span, msg.as_str(), \"one new name or `_` per payload position\", types::cat4(vt.as_str(), \"(\", holes(n).as_str(), \")\").as_str());\n            }\n            for i in 0..n\n                invariant 0 <= i && i <= n && n == vs[k].tys.len(),\n            {\n                if by_ref {\n                    tys.push(ast::TypeKind::Ref(by_mut, types::boxed(vs[k].tys[i].clone())));\n                } else {\n                    tys.push(vs[k].tys[i].clone());\n                }\n            }\n            tys\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn check_fn(self: &mut Body, d: &ast::FnDef, mp: &str, path: &str) -> () {\n            let at: usize = match self.c.fns.find(path) {\n                None => { return; },\n                Some(i) => i,\n            };\n            let sig: types::FnSig = self.c.fns.items[at].clone();\n            self.c.tparams = sig.generics.clone();\n            let mut cx: FnCtx = new_ctx(path, mp, sig.effect, is_proof(d.kind));\n            if !self.calls.has(path) {\n                let none: Vec<String> = Vec::new();\n                self.calls.insert(path, none);\n            }\n            for i in 0..d.attrs.len()\n                invariant 0 <= i && i <= d.attrs.len(),\n            {\n                if d.attrs[i].name.name == \"uses\" {\n                    self.check_uses(&d.attrs[i], mp);\n                }\n            }\n            for i in 0..d.params.len()\n                invariant 0 <= i && i <= d.params.len(),\n            {\n                let ty: ast::TypeKind = self.c.canon(&d.params[i].ty, mp, true, 1000000000);\n                self.check_param_type(&d.params[i].ty, d.kind, !ty_has_error(&ty, 1000000000));\n                self.declare(&mut cx, &d.params[i].name, ty, false, true);\n            }\n            self.check_value_type(&d.ret.ty, \"return type\");\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"Vec\") {\n                self.spec_vec(d.ret.ty.span);\n            }\n            if is_spec(d.kind) && named_one(&d.ret.ty.kind, \"String\") {\n                self.spec_string(d.ret.ty.span);\n            }\n            let ret_ty: ast::TypeKind = self.c.canon(&d.ret.ty, mp, true, 1000000000);\n            cx.ret = ret_ty.clone();\n            if is_spec(d.kind) {\n                if d.pre.len() > 0 {\n                    self.c.err(\"E0207\", d.pre[0].span, \"spec functions take no `requires` / `ensures` in milestone 1\");\n                } else if d.post.len() > 0 {\n                    self.c.err(\"E0207\", d.post[0].span, \"spec functions take no `requires` / `ensures` in milestone 1\");\n                }\n            }\n            for i in 0..d.pre.len()\n                invariant 0 <= i && i <= d.pre.len(),\n            {\n                self.check_contract(&mut cx, &d.pre[i], false);\n            }\n            if d.post.len() > 0 {\n                let scope: Vec<Local> = Vec::new();\n                cx.scopes.push(scope);\n                match &d.ret.name {\n                    None => {},\n                    Some(n) => self.declare(&mut cx, n, ret_ty.clone(), false, false),\n                }\n                for i in 0..d.post.len()\n                    invariant 0 <= i && i <= d.post.len(),\n                {\n                    self.check_contract(&mut cx, &d.post[i], true);\n                }\n                cx.scopes.pop();\n            }\n            match &d.ret.name {\n                None => {},\n                Some(n) => { types::add(&mut cx.reserved, n.name.as_str()); },\n            }\n            match &d.measure {\n                None => {},\n                Some(m) => { let no: Option<ast::TypeKind> = None; let t: ast::TypeKind = self.expr(&mut cx, m, &no, Mode::Spec(false), 1000000000); self.measure_type(&t, m.span); },\n            }\n            if is_some(&sig.trait_of) && !sig.default {\n                self.c.tparams = Vec::new();\n                return;\n            }\n            let mode: Mode = match d.kind {\n                ast::FnKind::Exec => Mode::Exec,\n                ast::FnKind::Spec => Mode::Spec(false),\n                ast::FnKind::Proof => Mode::Ghost,\n            };\n            let want: Option<ast::TypeKind> = Some(ret_ty.clone());\n            self.open_lets = Vec::new();\n            self.typed_uses = Vec::new();\n            self.spec_at = Vec::new();\n            let t: ast::TypeKind = self.block(&mut cx, &d.body, &want, mode, 1000000000);\n            self.spec_widen = !is_exec(d.kind);\n            let end: source::Span = match &d.body.tail {\n                None => d.body.span,\n                Some(e) => e.span,\n            };\n            self.expect_ty(&t, &ret_ty, end);\n            self.spec_widen = false;\n            self.settle_lets(d, mp);\n            if is_exec(d.kind) {\n                if has_attr(d.attrs.as_slice(), \"external_body\") {\n                    need_own(&mut cx, panic_effect(), \"`#[external_body]`\");\n                    types::add(&mut self.external, path);\n                }\n                self.check_effects(d, &cx);\n                let info: moves::MoveInfo = self.check_moves(d, path);\n                self.needs.insert(path, Needs { own: cx.own, body: needed(&cx), moves: info });\n            }\n            self.c.tparams = Vec::new();\n        }\n\n        #[effects(alloc)]\n        fn trait_cycles(self: &mut Body, defs: &table::Table<DefRow>) -> Vec<String> {\n            let mut edges: table::Table<Vec<Edge>> = table::new::<Vec<Edge>>();\n            for i in 0..self.gcalls.len()\n                invariant 0 <= i && i <= self.gcalls.len(),\n            {\n                add_edge(&mut edges, self.gcalls[i].caller.as_str(), Edge { callee: self.gcalls[i].callee.clone(), args: self.gcalls[i].args.clone() });\n            }\n            let callers: usize = self.calls.len();\n            for n in 0..callers\n                invariant 0 <= n && n <= callers,\n            {\n                match self.calls.nth(n) {\n                    None => {},\n                    Some(at) => { let caller: String = self.calls.key(n); let cs: Vec<String> = decls::sorted(self.calls.items[at].as_slice()); for j in 0..cs.len() invariant 0 <= j && j <= cs.len(), { if self.plain_fn(cs[j].as_str()) { let none: Vec<ast::TypeKind> = Vec::new(); add_edge(&mut edges, caller.as_str(), Edge { callee: cs[j].clone(), args: none }); } } },\n                }\n            }\n            let mut graph: table::Table<Vec<String>> = table::new::<Vec<String>>();\n            let mut bound_edges: Vec<Pair> = Vec::new();\n            let mut base_of: table::Table<String> = table::new::<String>();\n            let mut work: Vec<Edge> = Vec::new();\n            let total: usize = defs.len();\n            for n in 0..total\n                invariant 0 <= n && n <= total,\n            {\n                let path: String = defs.key(n);\n                if self.plain_fn(path.as_str()) {\n                    let none: Vec<ast::TypeKind> = Vec::new();\n                    work.push(Edge { callee: path.clone(), args: none });\n                }\n            }\n            let mut fuel: usize = 1000000000;\n            while work.len() > 0 && fuel > 0\n                invariant 0 <= fuel,\n                decreases fuel,\n            {\n                fuel = fuel - 1;\n                match work.pop() {\n                    None => {},\n                    Some(w) => { self.instance_edges(&w, &edges, &mut graph, &mut bound_edges, &mut base_of, &mut work); },\n                }\n            }\n            let mut out: Vec<String> = Vec::new();\n            let comps: Vec<Vec<String>> = sccs_with_cycles(&graph);\n            for i in 0..comps.len()\n                invariant 0 <= i && i <= comps.len(),\n            {\n                match first_bound(bound_edges.as_slice(), comps[i].as_slice()) {\n                    None => {},\n                    Some(to) => { for j in 0..comps[i].len() invariant 0 <= j && j <= comps[i].len(), { match base_of.find(comps[i][j].as_str()) { None => {}, Some(at) => { let b: String = base_of.items[at].clone(); if types::add(&mut out, b.as_str()) { match defs.find(b.as_str()) { None => {}, Some(d) => { self.c.help(\"E0207\", defs.items[d].span, types::cat5(\"`\", b.as_str(), \"` is recursive through a call on a bounded `Self` (reaching `\", to.as_str(), \"`), which carries no measure (ADR-0046 §4)\").as_str(), \"call with a known `Self` type, or break the cycle\"); }, } } }, } } },\n                }\n            }\n            out\n        }\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "decls",
+       "code": "    impl Checker {\n        #[effects(alloc)]\n        fn trait_sigs(self: &mut Checker, m: &ast::Mod, prefix: &str, f: usize) -> ()\n            decreases f,\n        {\n            if f == 0 {\n                return;\n            }\n            let mp: String = unit_path(prefix, m);\n            let sub: String = types::cat2(mp.as_str(), \"::\");\n            for s in 0..m.mods.len()\n                invariant 0 <= s && s <= m.mods.len(),\n            {\n                self.trait_sigs(&m.mods[s], sub.as_str(), f - 1);\n            }\n            for i in 0..m.traits.len()\n                invariant 0 <= i && i <= m.traits.len(),\n            {\n                let path: String = types::cat3(mp.as_str(), \"::\", m.traits[i].name.name.as_str());\n                let mine: bool = match self.traits.find(path.as_str()) {\n                    None => false,\n                    Some(at) => span_eq(self.traits.items[at].span, m.traits[i].name.span),\n                };\n                if mine {\n                    let mut sb: Vec<String> = Vec::new();\n                    sb.push(path.clone());\n                    let selfp: types::TParam = types::TParam { name: String::from(\"Self\"), bounds: sb };\n                    let mut ig: Vec<types::TParam> = Vec::new();\n                    ig.push(selfp.clone());\n                    let mut names: Vec<String> = Vec::new();\n                    for k in 0..m.traits[i].fns.len()\n                        invariant 0 <= k && k <= m.traits[i].fns.len() && i < m.traits.len(),\n                    {\n                        let fname: String = m.traits[i].fns[k].f.name.name.clone();\n                        if types::has(names.as_slice(), fname.as_str()) {\n                            self.err(\"E0302\", m.traits[i].fns[k].f.name.span, types::cat5(\"`\", fname.as_str(), \"` is defined more than once in trait `\", m.traits[i].name.name.as_str(), \"`\").as_str());\n                        } else {\n                            names.push(fname.clone());\n                            match &m.traits[i].fns[k].f.measure {\n                                None => {},\n                                Some(d) => { self.help(\"E0207\", d.span, \"a trait method takes no `decreases`: recursion through a bound is not supported\", \"remove it; an impl's function may recurse on its own type with its own `decreases`\"); },\n                            }\n                            let own: Vec<types::TParam> = self.tparams_of(m.traits[i].fns[k].f.generics.as_slice(), false, mp.as_str());\n                            let mut tps: Vec<types::TParam> = Vec::new();\n                            tps.push(selfp.clone());\n                            ast::append::<types::TParam>(&mut tps, own);\n                            self.tparams = tps;\n                            self.receiver_rule(&m.traits[i].fns[k].f, \"Self\", true, mp.as_str());\n                            self.tparams = Vec::new();\n                            let fp: String = types::cat3(path.as_str(), \"::\", fname.as_str());\n                            self.collect_fn(&m.traits[i].fns[k].f, fp.as_str(), mp.as_str(), false, ig.as_slice());\n                            match self.fns.find(fp.as_str()) {\n                                None => {},\n                                Some(at) => { self.fns.items[at].trait_of = Some(path.clone()); self.fns.items[at].default = m.traits[i].fns[k].has_body; },\n                            }\n                        }\n                    }\n                    match self.traits.find(path.as_str()) {\n                        None => { let dropped: Vec<String> = names; },\n                        Some(at) => { self.traits.items[at].methods = names; },\n                    }\n                }\n            }\n        }\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "parser",
+       "code": "    impl Parser {\n        #[effects(alloc)]\n        fn no_pub(self: &mut Parser) -> () {\n            if self.is_kw(\"pub\") {\n                let sp: source::Span = self.bump();\n                self.err_rep(\"E0207\", sp, \"`pub` is not used; every definition of a unit is part of its surface\", \"remove `pub`\", \"\");\n            }\n        }\n\n        #[effects(alloc)]\n        fn parse_generics(self: &mut Parser, d: usize) -> Vec<ast::TypeParam>\n            requires d <= 256,\n        {\n            let mut out: Vec<ast::TypeParam> = Vec::new();\n            self.generics_span = None;\n            if !self.is_p(\"<\") {\n                return out;\n            }\n            let lo: source::Span = self.bump();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\">\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                if !self.eat_p(\",\") {\n                    if self.is_kw(\"const\") {\n                        self.err_fix_here(\"E0207\", \"const generic parameters are not supported (ADR-0046 open question 1)\", \"take the length as a value: a slice `&[T]` and its `len()`\");\n                        self.skip_angle_from();\n                        return out;\n                    }\n                    let name: ast::Ident = match self.ident(\"type parameter\") {\n                        None => { self.skip_angle_from(); return out; },\n                        Some(i) => i,\n                    };\n                    let mut bounds: Vec<Vec<ast::Ident>> = Vec::new();\n                    let mut fn_bound: Option<ast::FnBound> = None;\n                    if self.eat_p(\":\") {\n                        let mut m: usize = self.left();\n                        while m > 0\n                            decreases m,\n                        {\n                            m = m - 1;\n                            if (self.is_kw(\"Fn\") || self.is_kw(\"FnMut\") || self.is_kw(\"FnOnce\")) && self.t.is_p(1, \"(\") {\n                                let kind: ast::FnTrait = if self.is_kw(\"Fn\") {\n                                    ast::FnTrait::Fn\n                                } else if self.is_kw(\"FnMut\") {\n                                    ast::FnTrait::FnMut\n                                } else {\n                                    ast::FnTrait::FnOnce\n                                };\n                                let at: source::Span = self.bump();\n                                self.bump();\n                                let mut params: Vec<ast::Type> = Vec::new();\n                                let mut q: usize = self.left();\n                                while q > 0 && !self.is_p(\")\") && !self.eof()\n                                    decreases q,\n                                {\n                                    q = q - 1;\n                                    params.push(self.parse_type(d));\n                                    if !self.eat_p(\",\") {\n                                        q = 0;\n                                    }\n                                }\n                                self.expect_p(\")\");\n                                let ret: ast::Type = if self.eat_p(\"->\") {\n                                    self.parse_type(d)\n                                } else {\n                                    ast::Type { kind: ast::TypeKind::Unit, span: self.prev_span() }\n                                };\n                                fn_bound = Some(ast::FnBound { kind: kind, params: params, ret: ret, span: at.to(self.prev_span()) });\n                                if !self.eat_p(\"+\") {\n                                    m = 0;\n                                }\n                            } else {\n                                let path: Vec<ast::Ident> = self.bound_path();\n                                if path.len() == 0 {\n                                    self.err_expected(\"trait bound\");\n                                    self.skip_angle_from();\n                                    return out;\n                                }\n                                bounds.push(path);\n                                if !self.eat_p(\"+\") {\n                                    m = 0;\n                                }\n                            }\n                        }\n                    }\n                    let span: source::Span = name.span.to(self.prev_span());\n                    out.push(ast::TypeParam { name: name, bounds: bounds, fn_bound: fn_bound, span: span });\n                    if !self.eat_p(\",\") {\n                        n = 0;\n                    }\n                }\n            }\n            match self.expect_p(\">\") {\n                None => {},\n                Some(hi) => { self.generics_span = Some(lo.to(hi)); },\n            }\n            out\n        }\n\n        #[effects(alloc)]\n        fn parse_mod_inner(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::Mod>\n            requires d <= 256,\n            decreases (256 - d) * 64 + 60,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"module name\")?;\n            self.units.push(name.name.clone());\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::FnDef> = Vec::new();\n            let mut mods: Vec<ast::Mod> = Vec::new();\n            let mut types: Vec<ast::TypeDef> = Vec::new();\n            let mut impls: Vec<ast::Impl> = Vec::new();\n            let mut traits: Vec<ast::TraitDef> = Vec::new();\n            let mut trait_impls: Vec<ast::TraitImpl> = Vec::new();\n            let mut uses: Vec<ast::UseItem> = Vec::new();\n            let mut consts: Vec<ast::ConstDef> = Vec::new();\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let item_attrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"const\") {\n                    match self.parse_const(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(c) => consts.push(c),\n                    }\n                } else if self.is_kw(\"mod\") {\n                    match self.parse_mod(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(m) => mods.push(m),\n                    }\n                } else if self.is_kw(\"fn\") || (self.is_kw(\"spec\") || self.is_kw(\"proof\")) && self.t.is_kw(1, \"fn\") {\n                    match self.parse_fn(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(f),\n                    }\n                } else if self.is_kw(\"struct\") || self.is_kw(\"enum\") {\n                    match self.parse_type_def(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(t) => types.push(t),\n                    }\n                } else if self.is_kw(\"impl\") {\n                    let mut k: usize = 0;\n                    while k < item_attrs.len()\n                        decreases item_attrs.len() - k,\n                    {\n                        self.err_rep(\"E0605\", item_attrs[k].span, cat3(\"unknown attribute `\", item_attrs[k].name.name.as_str(), \"` on an `impl` block\").as_str(), \"an `impl` block takes no attributes: write it on the functions inside\", \"\");\n                        k = k + 1;\n                    }\n                    match self.parse_impl(d) {\n                        None => self.recover_item(),\n                        Some(it) => { match it { ImplItem::Inherent(i) => impls.push(i), ImplItem::Trait(ti) => trait_impls.push(ti), } },\n                    }\n                } else if self.is_kw(\"trait\") {\n                    match self.parse_trait(item_attrs, d) {\n                        None => self.recover_item(),\n                        Some(tr) => traits.push(tr),\n                    }\n                } else if self.is_kw(\"use\") {\n                    match self.parse_use() {\n                        None => {},\n                        Some(u) => uses.push(u),\n                    }\n                } else if unsupported_item(text_of(self.t.ident(0)).as_str()) {\n                    let s: String = text_of(self.t.ident(0));\n                    let sp: source::Span = self.span();\n                    if s == \"unsafe\" {\n                        self.unsafe_habit(sp);\n                    } else if s == \"static\" {\n                        if self.t.is_kw(1, \"mut\") {\n                            self.err_fix(\"E0261\", sp, \"`static` items are not used\", \"global mutable state is passed as an argument (DESIGN §4.1 \\\"Effects\\\")\");\n                        } else {\n                            self.err_rep(\"E0261\", sp, \"`static` items are not used\", \"write `const`\", \"const\");\n                        }\n                    } else {\n                        self.err_fix(\"E0207\", sp, cat3(\"`\", s.as_str(), \"` items are not supported in milestone 1\").as_str(), \"units hold `fn`, `spec fn`, `const`, `struct`, `enum`, `trait` and `impl`\");\n                    }\n                    self.bump();\n                    self.recover_item();\n                } else {\n                    self.err_expected(\"`fn`, `spec fn` or `mod`\");\n                    if !self.is_p(\"}\") {\n                        self.bump();\n                        self.recover_item();\n                    }\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            let hi: source::Span = self.expect_p(\"}\")?;\n            let lens: Vec<ast::Len> = std::mem::replace(&mut self.lens, Vec::new());\n            Some(ast::Mod { name: name, attrs: attrs, fns: fns, mods: mods, types: types, impls: impls, traits: traits, trait_impls: trait_impls, uses: uses, consts: consts, lens: lens, span: lo.to(hi) })\n        }\n\n        #[effects(alloc)]\n        fn parse_trait(self: &mut Parser, attrs: Vec<ast::Attr>, d: usize) -> Option<ast::TraitDef>\n            requires d <= 256,\n        {\n            let lo: source::Span = self.bump();\n            let name: ast::Ident = self.ident(\"trait name\")?;\n            if self.is_p(\"<\") {\n                self.err_fix_here(\"E0207\", \"generic traits are not supported (ADR-0046 §1)\", \"put the type parameters on the methods\");\n                self.skip_angle();\n            }\n            if self.is_p(\":\") {\n                self.err_fix_here(\"E0207\", \"supertraits are not supported (ADR-0046 §1)\", \"bound the type parameters by each trait: `T: A + B`\");\n                let mut k: usize = self.left();\n                while k > 0 && !self.is_p(\"{\") && !self.eof()\n                    decreases k,\n                {\n                    k = k - 1;\n                    self.bump();\n                }\n            }\n            self.expect_p(\"{\")?;\n            let mut fns: Vec<ast::TraitFn> = Vec::new();\n            let outer: Option<String> = std::mem::replace(&mut self.impl_ty, Some(String::from(\"Self\")));\n            let mut n: usize = self.left();\n            while n > 0 && !self.is_p(\"}\") && !self.eof()\n                decreases n,\n            {\n                n = n - 1;\n                let start: usize = self.t.pos;\n                let fattrs: Vec<ast::Attr> = self.attrs();\n                self.no_pub();\n                if self.is_kw(\"fn\") || self.is_kw(\"spec\") && self.t.is_kw(1, \"fn\") {\n                    self.decl_ok = true;\n                    let r: Option<ast::FnDef> = self.parse_fn(fattrs, d);\n                    let has_body: bool = !self.decl_ok;\n                    self.decl_ok = false;\n                    match r {\n                        None => self.recover_item(),\n                        Some(f) => fns.push(ast::TraitFn { f: f, has_body: has_body }),\n                    }\n                } else {\n                    self.err_expected(\"`fn` or `spec fn`\");\n                    self.bump();\n                    self.recover_item();\n                }\n                if self.t.pos == start {\n                    self.bump();\n                }\n            }\n            self.impl_ty = outer;\n            let hi: source::Span = self.expect_p(\"}\")?;\n            Some(ast::TraitDef { name: name, attrs: attrs, fns: fns, span: lo.to(hi) })\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "decls",
+       "code": "    impl Checker {\n        #[effects(alloc)]\n        fn receiver_rule(self: &mut Checker, f: &ast::FnDef, impl_ty: &str, has: bool, mp: &str) -> () {\n            for k in 0..f.params.len()\n                invariant 0 <= k && k <= f.params.len(),\n            {\n                let ty: ast::TypeKind = self.canon(&f.params[k].ty, mp, false, 100000);\n                let v: ast::TypeKind = types::value(&ty);\n                let receiver_type: bool = has && !types::is_error(&v) && (match types::named_path(&v) { None => types::text(&v).as_str() == impl_ty, Some(np) => np.as_str() == impl_ty, });\n                let is_self: bool = f.params[k].name.name.as_str() == \"self\";\n                if k == 0 && receiver_type && !is_self {\n                    self.help(\"E0310\", f.params[k].name.span, types::cat3(\"the receiver of `\", f.name.name.as_str(), \"` is named `self`\").as_str(), types::cat3(\"rename `\", f.params[k].name.name.as_str(), \"` to `self` in the signature and the body\").as_str());\n                } else if is_self && (k != 0 || !receiver_type) && !types::is_error(&ty) {\n                    self.help(\"E0310\", f.params[k].name.span, \"`self` names only the receiver: the first parameter of an `impl T` function, typed `T`, `&T` or `&mut T`\", \"choose another name\");\n                }\n            }\n        }\n    }\n"
+      }
+     ]
+    ],
+    [
+     [
+      "write",
+      {
+       "unit": "body",
+       "code": "    impl Body {\n        #[effects(alloc)]\n        fn quant_expr(self: &mut Body, cx: &mut FnCtx, e: &ast::Expr, q: &ast::Quant, mode: Mode, f: usize) -> ast::TypeKind\n            decreases f * 3,\n        {\n            if f == 0 {\n                return ast::TypeKind::Error;\n            }\n            let kw: String = quant_kw(&q.q);\n            if exec_mode(mode) {\n                self.c.help(\"E0503\", e.span, types::cat3(\"`\", kw.as_str(), \"` is only allowed in specifications\").as_str(), \"state it in a `spec fn` used by a contract, or compute it in code with a loop\");\n                return ast::TypeKind::Error;\n            }\n            let scope: Vec<Local> = Vec::new();\n            cx.scopes.push(scope);\n            for i in 0..q.binders.len()\n                invariant 0 <= i && i <= q.binders.len(),\n            {\n                if !types::is_int(&q.binders[i].ty.kind) && !types::is_error(&q.binders[i].ty.kind) {\n                    self.c.help(\"E0402\", q.binders[i].ty.span, types::cat3(\"`\", kw.as_str(), \"` binders must be integers\").as_str(), \"bind an integer index (e.g. `i: usize`) and reach the value through it\");\n                }\n                self.declare(cx, &q.binders[i].name, q.binders[i].ty.kind.clone(), false, false);\n            }\n            let mut triggers: Vec<ast::Expr> = Vec::new();\n            collect_triggers(&*q.body, &mut triggers, 1000000000);\n            for k in 0..triggers.len()\n                invariant 0 <= k && k <= triggers.len(),\n            {\n                match ast::var_name(&triggers[k]) {\n                    None => {},\n                    Some(v) => { if binds(q.binders.as_slice(), v.as_str()) { let mut hint: String = types::cat5(\"mark a term that applies a function or an index to `\", v.as_str(), \"`, e.g. `#[trigger] p(\", v.as_str(), \")` or `#[trigger] a[\"); hint.push_str(v.as_str()); hint.push_str(\"]`\"); self.c.help(\"E0517\", triggers[k].span, types::cat3(\"`#[trigger]` marks the bound variable `\", v.as_str(), \"` alone\").as_str(), hint.as_str()); } },\n                }\n            }\n            if triggers.len() == 0 {\n                let first: Option<source::Span> = if q.binders.len() == 1 {\n                    first_index_on(&*q.body, q.binders[0].name.name.as_str())\n                } else {\n                    None\n                };\n                let msg: String = types::cat3(\"`\", kw.as_str(), \"` has no `#[trigger]`\");\n                match first {\n                    None => self.c.help(\"E0511\", e.span, msg.as_str(), \"mark a term that mentions every bound variable, e.g. `#[trigger] a[i]`\"),\n                    Some(at) => self.c.fixed(\"E0511\", source::Span { file: at.file, lo: at.lo, hi: at.lo }, msg.as_str(), \"mark the first term indexed by the bound variable\", \"#[trigger] \"),\n                }\n            } else {\n                for j in 0..q.binders.len()\n                    invariant 0 <= j && j <= q.binders.len(),\n                {\n                    if !any_mentions(triggers.as_slice(), q.binders[j].name.name.as_str(), true, 1000000000) {\n                        self.c.help(\"E0512\", q.binders[j].name.span, types::cat3(\"no trigger mentions bound variable `\", q.binders[j].name.name.as_str(), \"`\").as_str(), types::cat3(\"mark a term that mentions `\", q.binders[j].name.name.as_str(), \"` with `#[trigger]` as well (the triggers form one pattern)\").as_str());\n                    }\n                }\n            }\n            if cx.forall_depth < 4294967295 {\n                cx.forall_depth = cx.forall_depth + 1;\n            }\n            let wb: Option<ast::TypeKind> = Some(ast::TypeKind::Bool);\n            let t: ast::TypeKind = self.expr(cx, &*q.body, &wb, mode, f - 1);\n            if cx.forall_depth > 0 {\n                cx.forall_depth = cx.forall_depth - 1;\n            }\n            cx.scopes.pop();\n            self.expect_ty(&t, &ast::TypeKind::Bool, q.body.span);\n            ast::TypeKind::Bool\n        }\n    }\n"
+      }
+     ],
+     [
+      "write",
+      {
+       "unit": "diag",
+       "code": "    #[effects(alloc)]\n    fn render(d: &Diag, sm: &source::SourceMap) -> String {\n        let a: source::Pos = sm.line_col(d.span.file, d.span.lo);\n        let b: source::Pos = sm.line_col(d.span.file, d.span.hi);\n        let mut s: String = String::from(\"{\\\"code\\\":\");\n        std::json::push_string(&mut s, d.code.as_str());\n        s.push_str(\",\\\"sev\\\":\\\"\");\n        push_severity(&mut s, d.code.as_str());\n        s.push_str(\"\\\",\\\"message\\\":\");\n        std::json::push_string(&mut s, d.message.as_str());\n        s.push_str(\",\\\"file\\\":\");\n        sm.push_name(&mut s, d.span.file);\n        s.push_str(\",\\\"line\\\":\");\n        std::num::push_u64(&mut s, a.line as u64);\n        s.push_str(\",\\\"col\\\":\");\n        std::num::push_u64(&mut s, a.col as u64);\n        s.push_str(\",\\\"end_line\\\":\");\n        std::num::push_u64(&mut s, b.line as u64);\n        s.push_str(\",\\\"end_col\\\":\");\n        std::num::push_u64(&mut s, b.col as u64);\n        match &d.obligation {\n            None => {},\n            Some(o) => { s.push_str(\",\\\"obligation\\\":\"); std::json::push_string(&mut s, o.as_str()); },\n        }\n        match &d.bounded {\n            None => {},\n            Some(k) => { s.push_str(\",\\\"bounded\\\":{\\\"b\\\":\"); std::num::push_i64(&mut s, k.b); s.push_str(\",\\\"l\\\":\"); std::num::push_u64(&mut s, k.l as u64); s.push_str(\"}\"); },\n        }\n        match &d.fix {\n            None => {},\n            Some(f) => { s.push_str(\",\\\"fix\\\":{\\\"message\\\":\"); std::json::push_string(&mut s, f.message.as_str()); match &f.replacement { None => {}, Some(r) => { s.push_str(\",\\\"replacement\\\":\"); std::json::push_string(&mut s, r.as_str()); }, } s.push_str(\"}\"); },\n        }\n        s.push_str(\"}\");\n        s\n    }\n"
+      }
+     ]
+    ]
+   ],
+   "rust": [
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "                out.push(Attr {",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0216\",\n                        span,\n                        \"Verus's `verifier` attribute: BMB writes `#[external_body]`\",\n                    )\n                    .fix(\n                        \"write `#[external_body]` (with a `#[rationale(..)]` before it)\",\n                        Some(\"#[external_body]\".into()),\n                    ),\n                );\n                out.push(Attr {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "                continue;\n            }\n            out.push(Attr { name, args, span });",
+       "new": "                self.diags.push(Diag::new(\n                    \"E0216\",\n                    span,\n                    format!(\"Verus's `verifier::{}` attribute is not used\", seg.name),\n                ));\n                continue;\n            }\n            out.push(Attr { name, args, span });"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    } else if p.binds.len() != payload.len() {",
+       "new": "                        self.diags.push(\n                            Diag::new(\"E0427\", p.span, format!(\"`{vt}` has no payload\"))\n                                .fix(format!(\"write `{vt}`\"), Some(vt.clone())),\n                        );\n                    } else if p.binds.len() != payload.len() {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                    }\n                    tys = if by_ref {",
+       "new": "                        self.diags.push(\n                            Diag::new(\n                                \"E0427\",\n                                p.span,\n                                format!(\n                                    \"`{vt}` holds {} value(s), the pattern names {}\",\n                                    payload.len(),\n                                    p.binds.len()\n                                ),\n                            )\n                            .fix(\n                                \"one new name or `_` per payload position\",\n                                Some(format!(\"{vt}({holes})\")),\n                            ),\n                        );\n                    }\n                    tys = if by_ref {"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                }\n                let own = self.tparams_of(&f.generics, false, &mp);",
+       "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0207\",\n                            d.span,\n                            \"a trait method takes no `decreases`: recursion through a bound is not supported\",\n                        )\n                        .fix(\"remove it; an impl's function may recurse on its own type with its own `decreases`\", None),\n                    );\n                }\n                let own = self.tparams_of(&f.generics, false, &mp);"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "        }\n\n        for r in &f.requires {",
+       "new": "            self.err(\n                \"E0207\",\n                sp,\n                \"spec functions take no `requires` / `ensures` in milestone 1\",\n            );\n        }\n\n        for r in &f.requires {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                }\n            }\n        }\n        out",
+       "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0207\",\n                            *span,\n                            format!(\n                                \"`{b}` is recursive through a call on a bounded `Self` (reaching `{to}`), which carries no measure (ADR-0046 §4)\"\n                            ),\n                        )\n                        .fix(\n                            \"call with a known `Self` type, or break the cycle\",\n                            None,\n                        ),\n                    );\n                }\n            }\n        }\n        out"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "                }\n                self.bump();\n                self.recover_item();\n            } else {",
+       "new": "                    self.diags.push(\n                        Diag::new(\n                            \"E0207\",\n                            sp,\n                            format!(\"`{s}` items are not supported in milestone 1\"),\n                        )\n                        .fix(fix, None),\n                    );\n                }\n                self.bump();\n                self.recover_item();\n            } else {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "                self.skip_angle_from();\n                return out;\n            }\n            let Ok(name) = self.ident(\"type parameter\") else {",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0207\",\n                        self.span(),\n                        \"const generic parameters are not supported (ADR-0046 open question 1)\",\n                    )\n                    .fix(\n                        \"take the length as a value: a slice `&[T]` and its `len()`\",\n                        None,\n                    ),\n                );\n                self.skip_angle_from();\n                return out;\n            }\n            let Ok(name) = self.ident(\"type parameter\") else {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "        }\n    }\n\n    fn parse_trait(&mut self, attrs: Vec<Attr>) -> PResult<TraitDef> {",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E0207\",\n                    sp,\n                    \"`pub` is not used; every definition of a unit is part of its surface\",\n                )\n                .fix(\"remove `pub`\", Some(String::new())),\n            );\n        }\n    }\n\n    fn parse_trait(&mut self, attrs: Vec<Attr>) -> PResult<TraitDef> {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "            self.skip_angle();\n        }",
+       "new": "            self.diags.push(\n                Diag::new(\n                    \"E0207\",\n                    sp,\n                    \"generic traits are not supported (ADR-0046 §1)\",\n                )\n                .fix(\"put the type parameters on the methods\", None),\n            );\n            self.skip_angle();\n        }"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/parser.rs",
+       "old": "            while !self.is_p(\"{\") && !matches!(self.peek(), Tok::Eof) {",
+       "new": "            self.diags.push(\n                Diag::new(\"E0207\", sp, \"supertraits are not supported (ADR-0046 §1)\")\n                    .fix(\"bound the type parameters by each trait: `T: A + B`\", None),\n            );\n            while !self.is_p(\"{\") && !matches!(self.peek(), Tok::Eof) {"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            } else if is_self && (k != 0 || !receiver_type) && ty != TypeKind::Error {",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0310\",\n                        p.name.span,\n                        format!(\"the receiver of `{}` is named `self`\", f.name.name),\n                    )\n                    .fix(\n                        format!(\n                            \"rename `{}` to `self` in the signature and the body\",\n                            p.name.name\n                        ),\n                        None,\n                    ),\n                );\n            } else if is_self && (k != 0 || !receiver_type) && ty != TypeKind::Error {"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "            }\n        }\n    }\n\n    fn collect_fn(&mut self, f: &FnDef, path: String, mp: &str, in_impl: bool, ig: &[TParam]) {",
+       "new": "                self.diags.push(\n                    Diag::new(\n                        \"E0310\",\n                        p.name.span,\n                        \"`self` names only the receiver: the first parameter of an `impl T` function, typed `T`, `&T` or `&mut T`\",\n                    )\n                    .fix(\"choose another name\", None),\n                );\n            }\n        }\n    }\n\n    fn collect_fn(&mut self, f: &FnDef, path: String, mp: &str, in_impl: bool, ig: &[TParam]) {"
+      }
+     ]
+    ],
+    [
+     [
+      "edit_file",
+      {
+       "path": "src/check.rs",
+       "old": "                        }\n                    }\n                }\n                cx.forall_depth += 1;",
+       "new": "                            self.diags.push(\n                                Diag::new(\n                                    \"E0512\",\n                                    b.name.span,\n                                    format!(\n                                        \"no trigger mentions bound variable `{}`\",\n                                        b.name.name\n                                    ),\n                                )\n                                .fix(\n                                    format!(\n                                        \"mark a term that mentions `{}` with `#[trigger]` as well (the triggers form one pattern)\",\n                                        b.name.name\n                                    ),\n                                    None,\n                                ),\n                            );\n                        }\n                    }\n                }\n                cx.forall_depth += 1;"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "    s.push_str(&format!(\"\\\"severity\\\":\\\"{}\\\",\", severity(d.code)));",
+       "new": "    s.push_str(&format!(\"\\\"sev\\\":\\\"{}\\\",\", severity(d.code)));"
+      }
+     ],
+     [
+      "edit_file",
+      {
+       "path": "src/diag.rs",
+       "old": "            \"{{\\\"code\\\":{},\\\"severity\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\",",
+       "new": "            \"{{\\\"code\\\":{},\\\"sev\\\":\\\"{}\\\",\\\"description\\\":{}}}\\n\","
+      }
+     ]
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,106 @@
+{
+ "id": "c22-diag-e0207",
+ "kind": "comprehend",
+ "family": "diag",
+ "fixture": "port-full",
+ "commit": "575565504a76ae8582a019cbd70498e3c48706a6",
+ "prompt": {
+  "bmb": "Which functions report the diagnostic code `E0207`, that is, write the code in their own body? Leave out the table that lists every code. Answer with the full paths as the map shows them (for example `body::Body::call`).",
+  "rust": "Which functions report the diagnostic code `E0207`, that is, write the code in their own body? Leave out the table that lists every code. Answer with `module::function`, or `module::Type::method` for a method of an `impl` block; the module is the file under `src/` with `::` for `/` (for example `check::Checker::call`, `check::text::Checker::text_arg`)."
+ },
+ "truth": {
+  "rust": [
+   "check::Checker::check_fn",
+   "check::Checker::collect_trait_sigs",
+   "check::Checker::trait_cycles",
+   "parser::Parser::no_pub",
+   "parser::Parser::parse_generics",
+   "parser::Parser::parse_mod_inner",
+   "parser::Parser::parse_trait"
+  ],
+  "bmb": [
+   "body::Body::check_fn",
+   "body::Body::trait_cycles",
+   "decls::Checker::trait_sigs",
+   "parser::Parser::no_pub",
+   "parser::Parser::parse_generics",
+   "parser::Parser::parse_mod_inner",
+   "parser::Parser::parse_trait"
+  ]
+ },
+ "oracle": {
+  "bmb": [
+   [
+    "answer",
+    {
+     "defs": [
+      "body::Body::check_fn",
+      "body::Body::trait_cycles",
+      "decls::Checker::trait_sigs",
+      "parser::Parser::no_pub",
+      "parser::Parser::parse_generics",
+      "parser::Parser::parse_mod_inner",
+      "parser::Parser::parse_trait"
+     ]
+    }
+   ]
+  ],
+  "rust": [
+   [
+    "grep",
+    {
+     "pattern": "\"E0207\""
+    }
+   ],
+   [
+    "answer",
+    {
+     "defs": [
+      "check::Checker::check_fn",
+      "check::Checker::collect_trait_sigs",
+      "check::Checker::trait_cycles",
+      "parser::Parser::no_pub",
+      "parser::Parser::parse_generics",
+      "parser::Parser::parse_mod_inner",
+      "parser::Parser::parse_trait"
+     ]
+    }
+   ]
+  ]
+ },
+ "weak": [
+  {
+   "fails": "answer",
+   "bmb": [
+    [
+     "answer",
+     {
+      "defs": [
+       "body::Body::trait_cycles",
+       "decls::Checker::trait_sigs",
+       "parser::Parser::no_pub",
+       "parser::Parser::parse_generics",
+       "parser::Parser::parse_mod_inner",
+       "parser::Parser::parse_trait"
+      ]
+     }
+    ]
+   ],
+   "rust": [
+    [
+     "answer",
+     {
+      "defs": [
+       "check::Checker::collect_trait_sigs",
+       "check::Checker::trait_cycles",
+       "parser::Parser::no_pub",
+       "parser::Parser::parse_generics",
+       "parser::Parser::parse_mod_inner",
+       "parser::Parser::parse_trait"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}
